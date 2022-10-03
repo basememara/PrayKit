@@ -1,0 +1,19 @@
+## Swift Package generated
+.DS_Store
+/.build
+/Packages
+/*.xcodeproj
+xcuserdata/
+
+## Build generated
+build/
+DerivedData/
+
+## Xcode misc
+*.pbxuser
+*.xcuserstate
+*.hmap
+*.ipa
+
+## Other
+/Archive

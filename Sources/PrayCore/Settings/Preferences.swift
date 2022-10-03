@@ -1,0 +1,639 @@
+//
+//  Preferences.swift
+//  PrayCore
+//
+//  Created by Basem Emara on 2021-05-21.
+//  Copyright © 2021 Zamzam Inc. All rights reserved.
+//
+
+import Combine
+import CoreLocation.CLLocation
+import Foundation
+import ZamzamCore
+
+// swiftlint:disable:next type_body_length
+public final class Preferences {
+    public let defaults: UserDefaults
+
+    // MARK: - Calculation
+
+    @Defaults
+    public var calculationMethod: CalculationMethod {
+        didSet {
+            guard calculationMethod != oldValue else { return }
+            Self.subject.send(\Preferences.calculationMethod)
+        }
+    }
+
+    @Defaults
+    public var juristicMethod: Madhab {
+        didSet {
+            guard juristicMethod != oldValue else { return }
+            Self.subject.send(\Preferences.juristicMethod)
+        }
+    }
+
+    @Defaults
+    public var fajrDegrees: Double {
+        didSet {
+            guard fajrDegrees != oldValue else { return }
+            Self.subject.send(\Preferences.fajrDegrees)
+        }
+    }
+
+    @Defaults
+    public var maghribDegrees: Double {
+        didSet {
+            guard maghribDegrees != oldValue else { return }
+            Self.subject.send(\Preferences.maghribDegrees)
+        }
+    }
+
+    @Defaults
+    public var ishaDegrees: Double {
+        didSet {
+            guard ishaDegrees != oldValue else { return }
+            Self.subject.send(\Preferences.ishaDegrees)
+        }
+    }
+
+    @DefaultsOptional
+    public var elevationRule: ElevationRule? {
+        didSet {
+            guard elevationRule != oldValue else { return }
+            Self.subject.send(\Preferences.elevationRule)
+        }
+    }
+
+    // MARK: - Adjustments
+
+    @DefaultsOptional
+    public var adjustmentMinutes: AdjustmentMinutes? {
+        didSet {
+            guard adjustmentMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.adjustmentMinutes)
+        }
+    }
+
+    @DefaultsOptional
+    public var adjustmentElevation: ElevationRule? {
+        didSet {
+            guard adjustmentElevation != oldValue else { return }
+            Self.subject.send(\Preferences.adjustmentElevation)
+        }
+    }
+
+    // MARK: - Location
+
+    @Defaults
+    public var isGPSEnabled: Bool {
+        didSet {
+            guard isGPSEnabled != oldValue else { return }
+            Self.subject.send(\Preferences.isGPSEnabled)
+        }
+    }
+
+    @DefaultsOptional
+    public private(set) var prayersCoordinates: Coordinates?
+
+    // MARK: - Time
+
+    @Defaults
+    public var enable24hTimeFormat: Bool {
+        didSet {
+            guard enable24hTimeFormat != oldValue else { return }
+            Self.subject.send(\Preferences.enable24hTimeFormat)
+        }
+    }
+
+    @Defaults
+    public var iqamaMinutes: Int {
+        didSet {
+            guard iqamaMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.iqamaMinutes)
+        }
+    }
+
+    @Defaults
+    public var hijriDayOffset: Int {
+        didSet {
+            guard hijriDayOffset != oldValue else { return }
+            Self.subject.send(\Preferences.hijriDayOffset)
+        }
+    }
+
+    @Defaults
+    public var autoIncrementHijri: Bool {
+        didSet {
+            guard autoIncrementHijri != oldValue else { return }
+            Self.subject.send(\Preferences.autoIncrementHijri)
+        }
+    }
+
+    // MARK: - Notification
+
+    @Defaults
+    public var snoozeMinutes: Int {
+        didSet {
+            guard snoozeMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.snoozeMinutes)
+        }
+    }
+
+    @Defaults
+    public var preAdhanMinutes: PreAdhanMinutes {
+        didSet {
+            guard preAdhanMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.preAdhanMinutes)
+        }
+    }
+
+    @Defaults
+    public var adhanDuaa: AdhanDuaa {
+        didSet {
+            guard adhanDuaa != oldValue else { return }
+            Self.subject.send(\Preferences.adhanDuaa)
+        }
+    }
+
+    // MARK: - Sound
+
+    @Defaults
+    public var notificationAdhan: NotificationAdhan {
+        didSet {
+            guard notificationAdhan != oldValue else { return }
+            Self.subject.send(\Preferences.notificationAdhan)
+        }
+    }
+
+    @Defaults
+    public var notificationSounds: NotificationSounds {
+        didSet {
+            guard notificationSounds != oldValue else { return }
+            Self.subject.send(\Preferences.notificationSounds)
+        }
+    }
+
+    @Defaults
+    public var reminderSounds: ReminderSounds {
+        didSet {
+            guard reminderSounds != oldValue else { return }
+            Self.subject.send(\Preferences.reminderSounds)
+        }
+    }
+
+    // MARK: - Display
+
+    @Defaults
+    public var isPrayerAbbrEnabled: Bool {
+        didSet {
+            guard isPrayerAbbrEnabled != oldValue else { return }
+            Self.subject.send(\Preferences.isPrayerAbbrEnabled)
+        }
+    }
+
+    @Defaults
+    public var sunriseAfterIsha: Bool {
+        didSet {
+            guard sunriseAfterIsha != oldValue else { return }
+            Self.subject.send(\Preferences.sunriseAfterIsha)
+        }
+    }
+
+    @Defaults
+    public var appearanceMode: AppearanceMode {
+        didSet {
+            guard appearanceMode != oldValue else { return }
+            Self.subject.send(\Preferences.appearanceMode)
+        }
+    }
+
+    @Defaults
+    public var theme: AppTheme {
+        didSet {
+            guard theme != oldValue else { return }
+            Self.subject.send(\Preferences.theme)
+        }
+    }
+
+    // MARK: - Cache
+
+    @DefaultsOptional
+    public var lastCacheDate: Date? {
+        didSet {
+            guard lastCacheDate != oldValue else { return }
+            Self.subject.send(\Preferences.lastCacheDate)
+        }
+    }
+
+    @Defaults
+    public var lastTimeZone: TimeZone {
+        didSet {
+            guard lastTimeZone != oldValue else { return }
+            Self.subject.send(\Preferences.lastTimeZone)
+        }
+    }
+
+    @DefaultsOptional
+    public var lastRegionName: String? {
+        didSet {
+            guard lastRegionName != oldValue else { return }
+            Self.subject.send(\Preferences.lastRegionName)
+        }
+    }
+
+    // MARK: - Diagnostics
+
+    @Defaults
+    public var isDiagnosticsEnabled: Bool {
+        didSet {
+            guard isDiagnosticsEnabled != oldValue else { return }
+            Self.subject.send(\Preferences.isDiagnosticsEnabled)
+        }
+    }
+
+    // MARK: - Configure
+
+    // swiftlint:disable:next function_body_length
+    public init(defaults: UserDefaults) {
+        self.defaults = defaults
+
+        // Calculation
+        _calculationMethod = Defaults("calculationMethod", defaultValue: .moonsightingCommittee, from: defaults)
+        _juristicMethod = Defaults("juristicMethod", defaultValue: .standard, from: defaults)
+        _fajrDegrees = Defaults("fajrDegrees", defaultValue: 0, from: defaults)
+        _maghribDegrees = Defaults("maghribDegrees", defaultValue: 0, from: defaults)
+        _ishaDegrees = Defaults("ishaDegrees", defaultValue: 0, from: defaults)
+        _elevationRule = DefaultsOptional("elavationMethod", from: defaults)
+
+        // Adjustments
+        _adjustmentMinutes = DefaultsOptional("adjustmentMinutes", from: defaults)
+        _adjustmentElevation = DefaultsOptional("adjustmentElevation", from: defaults)
+
+        // Location
+        _isGPSEnabled = Defaults("isGPSEnabled", defaultValue: true, from: defaults)
+        _prayersCoordinates = DefaultsOptional("prayersCoordinates", from: defaults)
+
+        // Time
+        _enable24hTimeFormat = Defaults("enable24hTimeFormat", defaultValue: false, from: defaults)
+        _iqamaMinutes = Defaults("iqamaMinutes", defaultValue: 0, from: defaults)
+        _hijriDayOffset = Defaults("hijriDayOffset", defaultValue: 0, from: defaults)
+        _autoIncrementHijri = Defaults("autoIncrementHijri", defaultValue: true, from: defaults)
+
+        // Notification
+        _snoozeMinutes = Defaults("snoozeMinutes", defaultValue: 30, from: defaults)
+
+        _preAdhanMinutes = Defaults(
+            "preAdhanMinutes",
+            defaultValue: PreAdhanMinutes(
+                rawValue: [
+                    Prayer.fajr.rawValue: 0,
+                    Prayer.sunrise.rawValue: 20,
+                    Prayer.dhuhr.rawValue: 20,
+                    Prayer.asr.rawValue: 20,
+                    Prayer.maghrib.rawValue: 20,
+                    Prayer.isha.rawValue: 20
+                ]
+            ),
+            from: defaults
+        )
+
+        _adhanDuaa = Defaults("adhanDuaa", defaultValue: .off, from: defaults)
+
+        // Sound
+        _notificationAdhan = Defaults(
+            "notificationAdhan",
+            defaultValue: NotificationAdhan(
+                rawValue: [
+                    Prayer.fajr.rawValue: .alAqsa,
+                    Prayer.sunrise.rawValue: .alAqsa,
+                    Prayer.dhuhr.rawValue: .alAqsa,
+                    Prayer.asr.rawValue: .alAqsa,
+                    Prayer.maghrib.rawValue: .alAqsa,
+                    Prayer.isha.rawValue: .alAqsa
+                ]
+            ),
+            from: defaults
+        )
+        _notificationSounds = Defaults(
+            "notificationSounds",
+            defaultValue: NotificationSounds(
+                rawValue: [
+                    Prayer.fajr.rawValue: .adhan,
+                    Prayer.sunrise.rawValue: .silent,
+                    Prayer.dhuhr.rawValue: .adhan,
+                    Prayer.asr.rawValue: .adhan,
+                    Prayer.maghrib.rawValue: .adhan,
+                    Prayer.isha.rawValue: .adhan,
+                    Prayer.midnight.rawValue: .off,
+                    Prayer.lastThird.rawValue: .off
+                ]
+            ),
+            from: defaults
+        )
+        _reminderSounds = Defaults(
+            "reminderSounds",
+            defaultValue: ReminderSounds(
+                rawValue: [
+                    Prayer.fajr.rawValue: .default,
+                    Prayer.sunrise.rawValue: .default,
+                    Prayer.dhuhr.rawValue: .default,
+                    Prayer.asr.rawValue: .default,
+                    Prayer.maghrib.rawValue: .default,
+                    Prayer.isha.rawValue: .default,
+                    Prayer.midnight.rawValue: .off,
+                    Prayer.lastThird.rawValue: .off
+                ]
+            ),
+            from: defaults
+        )
+
+        // Display
+        _isPrayerAbbrEnabled = Defaults("isPrayerAbbrEnabled", defaultValue: false, from: defaults)
+        _sunriseAfterIsha = Defaults("sunriseAfterIsha", defaultValue: false, from: defaults)
+        _appearanceMode = Defaults("appearanceMode", defaultValue: .dark, from: defaults)
+        _theme = Defaults("theme", defaultValue: .default, from: defaults)
+
+        // Cache
+        _lastRegionName = DefaultsOptional("lastRegionName", from: defaults)
+        _lastCacheDate = DefaultsOptional("lastCacheDate", from: defaults)
+        _lastTimeZone = Defaults("lastTimeZoneIdentifier", defaultValue: .current, from: defaults)
+
+        // Diagnostics
+        _isDiagnosticsEnabled = Defaults("isDiagnosticsEnabled", defaultValue: false, from: defaults)
+    }
+}
+
+public extension Preferences {
+    func key(_ keyPath: PartialKeyPath<Preferences>) -> String {
+        switch keyPath {
+        case \.calculationMethod:
+            return _calculationMethod.key
+        case \.juristicMethod:
+            return _juristicMethod.key
+        case \.fajrDegrees:
+            return _fajrDegrees.key
+        case \.maghribDegrees:
+            return _maghribDegrees.key
+        case \.ishaDegrees:
+            return _ishaDegrees.key
+        case \.elevationRule:
+            return _elevationRule.key
+        case \.adjustmentMinutes:
+            return _adjustmentMinutes.key
+        case \.adjustmentElevation:
+            return _adjustmentElevation.key
+        case \.isGPSEnabled:
+            return _isGPSEnabled.key
+        case \.prayersCoordinates:
+            return _prayersCoordinates.key
+        case \.enable24hTimeFormat:
+            return _enable24hTimeFormat.key
+        case \.iqamaMinutes:
+            return _iqamaMinutes.key
+        case \.hijriDayOffset:
+            return _hijriDayOffset.key
+        case \.autoIncrementHijri:
+            return _autoIncrementHijri.key
+        case \.snoozeMinutes:
+            return _snoozeMinutes.key
+        case \.preAdhanMinutes:
+            return _preAdhanMinutes.key
+        case \.adhanDuaa:
+            return _adhanDuaa.key
+        case \.notificationAdhan:
+            return _notificationAdhan.key
+        case \.notificationSounds:
+            return _notificationSounds.key
+        case \.reminderSounds:
+            return _reminderSounds.key
+        case \.isPrayerAbbrEnabled:
+            return _isPrayerAbbrEnabled.key
+        case \.sunriseAfterIsha:
+            return _sunriseAfterIsha.key
+        case \.appearanceMode:
+            return _appearanceMode.key
+        case \.theme:
+            return _theme.key
+        case \.lastRegionName:
+            return _lastRegionName.key
+        case \.lastCacheDate:
+            return _lastCacheDate.key
+        case \.lastTimeZone:
+            return _lastTimeZone.key
+        case \.isDiagnosticsEnabled:
+            return _isDiagnosticsEnabled.key
+        default:
+            assertionFailure("No key defined for property")
+            return ""
+        }
+    }
+}
+
+// MARK: - Observers
+
+public extension Preferences {
+    private static let subject = PassthroughSubject<PartialKeyPath<Preferences>, Never>()
+
+    func publisher() -> AnyPublisher<PartialKeyPath<Preferences>, Never> {
+        Self.subject
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+
+    func publisher<Value>(for keyPath: KeyPath<Preferences, Value>, initial: Bool = false) -> AnyPublisher<Value, Never> {
+        let basePublisher = publisher()
+            .filter { $0 == keyPath }
+            .compactMap { self[keyPath: $0] as? Value }
+
+        return initial
+            ? basePublisher
+                .merge(with: Just(self[keyPath: keyPath]))
+                .eraseToAnyPublisher()
+            : basePublisher
+                .eraseToAnyPublisher()
+    }
+
+    func publisher(for keyPaths: [PartialKeyPath<Preferences>]) -> AnyPublisher<Void, Never> {
+        publisher()
+            .filter { keyPaths.contains($0) }
+            .debounce(for: 0.2, scheduler: DispatchQueue.main)
+            .map { _ in }
+            .eraseToAnyPublisher()
+    }
+}
+
+public extension Preferences {
+    enum KeyPathGroup {
+        case prayerRecalculation
+        case notificationReschedule
+        case locationUpdate
+        case iCloud
+        case watchUpdate
+        case complicationReload
+
+        fileprivate var keyPaths: [PartialKeyPath<Preferences>] {
+            switch self {
+            case .prayerRecalculation:
+                return [
+                    \.prayersCoordinates,
+                    \.calculationMethod,
+                    \.juristicMethod,
+                    \.fajrDegrees,
+                    \.maghribDegrees,
+                    \.ishaDegrees,
+                    \.elevationRule,
+                    \.adjustmentMinutes,
+                    \.adjustmentElevation
+                ]
+            case .notificationReschedule:
+                return [
+                    \.snoozeMinutes,
+                    \.preAdhanMinutes,
+                    \.notificationAdhan,
+                    \.notificationSounds,
+                    \.reminderSounds,
+                    \.sunriseAfterIsha
+                ]
+            case .locationUpdate:
+                return [
+                    \.prayersCoordinates,
+                    \.lastRegionName,
+                    \.lastTimeZone,
+                    \.lastCacheDate
+                ]
+            case .iCloud:
+                return (
+                    KeyPathGroup.prayerRecalculation.keyPaths
+                        + KeyPathGroup.notificationReschedule.keyPaths
+                        + [
+                            \.isGPSEnabled,
+                            \.enable24hTimeFormat,
+                            \.iqamaMinutes,
+                            \.hijriDayOffset,
+                            \.autoIncrementHijri,
+                            \.isPrayerAbbrEnabled,
+                            \.sunriseAfterIsha,
+                            \.appearanceMode,
+                            \.theme,
+                            \.isDiagnosticsEnabled
+                        ]
+                )
+                .filter { $0 != \.prayersCoordinates }
+            case .watchUpdate:
+                return KeyPathGroup.iCloud.keyPaths + KeyPathGroup.locationUpdate.keyPaths
+            case .complicationReload:
+                return KeyPathGroup.prayerRecalculation.keyPaths + [
+                    \.preAdhanMinutes,
+                    \.iqamaMinutes,
+                    \.enable24hTimeFormat,
+                    \.hijriDayOffset,
+                    \.autoIncrementHijri,
+                    \.sunriseAfterIsha,
+                    \.theme
+                ]
+            }
+        }
+    }
+
+    func publisher(for keyPathGroups: [KeyPathGroup]) -> AnyPublisher<Void, Never> {
+        publisher(
+            for: keyPathGroups
+                .map(\.keyPaths)
+                .reduce([PartialKeyPath<Preferences>](), +) // swiftlint:disable:this reduce_into
+        )
+    }
+
+    func publisher(for keyPathGroup: KeyPathGroup) -> AnyPublisher<Void, Never> {
+        publisher(for: [keyPathGroup])
+    }
+}
+
+// MARK: - Helpers
+
+public extension Preferences {
+    func set(gpsLocation location: CLLocation) {
+        let coordinates = Coordinates(from: location.coordinate)
+        guard coordinates != prayersCoordinates || lastRegionName == nil || lastCacheDate == nil else { return }
+        prayersCoordinates = coordinates
+
+        // Update calculation method if significant change if applicable
+        if lastTimeZone.identifier != TimeZone.current.identifier && ![.moonsightingCommittee, .muslimWorldLeague].contains(calculationMethod) {
+            calculationMethod = .recommended() ?? .moonsightingCommittee
+        }
+
+        lastTimeZone = .current
+        lastCacheDate = .now
+        location.geocoder { region, _ in self.lastRegionName ?= region }
+        Self.subject.send(\Preferences.prayersCoordinates)
+    }
+
+    func set(manualAddress coordinates: Coordinates, timeZone: TimeZone, regionName: String?) {
+        prayersCoordinates = coordinates
+        lastTimeZone = timeZone
+        lastRegionName = regionName
+        lastCacheDate = .now
+        calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee
+        Self.subject.send(\Preferences.prayersCoordinates)
+    }
+
+    func set(gpsOrManualCoordinates coordinates: Coordinates, timeZone: TimeZone, regionName: String?) {
+        guard coordinates != prayersCoordinates || lastRegionName == nil || lastCacheDate == nil else { return }
+        prayersCoordinates = coordinates
+        lastTimeZone = timeZone
+        lastRegionName = regionName
+        Self.subject.send(\Preferences.prayersCoordinates)
+    }
+}
+
+public extension Preferences {
+    var isPrayerSoundsDisabled: Bool {
+        notificationSounds.rawValue.allSatisfy { $0.value == .off }
+            && reminderSounds.rawValue.allSatisfy { $0.value == .off }
+    }
+
+    func disablePrayerSounds() {
+        Prayer.allCases.forEach {
+            notificationSounds[$0] = .off
+            reminderSounds[$0] = .off
+        }
+    }
+}
+
+// MARK: - Conformances
+
+extension CalculationMethod: UserDefaultsRepresentable {}
+extension Madhab: UserDefaultsRepresentable {}
+extension ElevationRule: UserDefaultsRepresentable {}
+extension AdjustmentMinutes: UserDefaultsRepresentable {}
+extension Map: UserDefaultsRepresentable {}
+extension AdhanSound: UserDefaultsRepresentable {}
+extension NotificationAdhan: UserDefaultsRepresentable {}
+extension NotificationSound: UserDefaultsRepresentable {}
+extension NotificationSounds: UserDefaultsRepresentable {}
+extension ReminderSounds: UserDefaultsRepresentable {}
+extension PreAdhanMinutes: UserDefaultsRepresentable {}
+extension AdhanDuaa: UserDefaultsRepresentable {}
+extension AppearanceMode: UserDefaultsRepresentable {}
+extension AppTheme: UserDefaultsRepresentable {}
+
+extension TimeZone: UserDefaultsRepresentable {
+    public var rawDefaultsValue: String { identifier }
+
+    public init(rawDefaultsValue: String) {
+        self = TimeZone(identifier: rawDefaultsValue) ?? .current
+    }
+}
+
+extension Coordinates: UserDefaultsRepresentable {
+    public var rawDefaultsValue: [Double] { [latitude, longitude] }
+
+    public init(rawDefaultsValue: [Double]) {
+        guard rawDefaultsValue.count == 2 else {
+            self = Coordinates(latitude: 0, longitude: 0)
+            return
+        }
+
+        self = Coordinates(latitude: rawDefaultsValue[0], longitude: rawDefaultsValue[1])
+    }
+}

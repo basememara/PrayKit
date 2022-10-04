@@ -469,69 +469,58 @@ public extension Preferences {
         case notificationReschedule
         case locationUpdate
         case iCloud
-        case watchUpdate
-        case complicationReload
+        case extensionReload
 
         fileprivate var keyPaths: [PartialKeyPath<Preferences>] {
             switch self {
             case .prayerRecalculation:
                 return [
                     \.prayersCoordinates,
-                    \.calculationMethod,
-                    \.juristicMethod,
-                    \.fajrDegrees,
-                    \.maghribDegrees,
-                    \.ishaDegrees,
-                    \.elevationRule,
-                    \.adjustmentMinutes,
-                    \.adjustmentElevation
+                     \.calculationMethod,
+                     \.juristicMethod,
+                     \.fajrDegrees,
+                     \.maghribDegrees,
+                     \.ishaDegrees,
+                     \.elevationRule,
+                     \.adjustmentMinutes,
+                     \.adjustmentElevation
                 ]
             case .notificationReschedule:
                 return [
                     \.snoozeMinutes,
-                    \.preAdhanMinutes,
-                    \.notificationAdhan,
-                    \.notificationSounds,
-                    \.reminderSounds,
-                    \.sunriseAfterIsha
+                     \.preAdhanMinutes,
+                     \.notificationAdhan,
+                     \.notificationSounds,
+                     \.reminderSounds,
+                     \.sunriseAfterIsha
                 ]
             case .locationUpdate:
                 return [
                     \.prayersCoordinates,
-                    \.lastRegionName,
-                    \.lastTimeZone,
-                    \.lastCacheDate
+                     \.lastRegionName,
+                     \.lastTimeZone,
+                     \.lastCacheDate
                 ]
             case .iCloud:
                 return (
                     KeyPathGroup.prayerRecalculation.keyPaths
-                        + KeyPathGroup.notificationReschedule.keyPaths
-                        + [
-                            \.isGPSEnabled,
-                            \.enable24hTimeFormat,
-                            \.iqamaMinutes,
-                            \.hijriDayOffset,
-                            \.autoIncrementHijri,
-                            \.isPrayerAbbrEnabled,
-                            \.sunriseAfterIsha,
-                            \.appearanceMode,
-                            \.theme,
-                            \.isDiagnosticsEnabled
-                        ]
+                    + KeyPathGroup.notificationReschedule.keyPaths
+                    + [
+                        \.isGPSEnabled,
+                         \.enable24hTimeFormat,
+                         \.iqamaMinutes,
+                         \.hijriDayOffset,
+                         \.autoIncrementHijri,
+                         \.isPrayerAbbrEnabled,
+                         \.sunriseAfterIsha,
+                         \.appearanceMode,
+                         \.theme,
+                         \.isDiagnosticsEnabled
+                    ]
                 )
                 .filter { $0 != \.prayersCoordinates }
-            case .watchUpdate:
+            case .extensionReload:
                 return KeyPathGroup.iCloud.keyPaths + KeyPathGroup.locationUpdate.keyPaths
-            case .complicationReload:
-                return KeyPathGroup.prayerRecalculation.keyPaths + [
-                    \.preAdhanMinutes,
-                    \.iqamaMinutes,
-                    \.enable24hTimeFormat,
-                    \.hijriDayOffset,
-                    \.autoIncrementHijri,
-                    \.sunriseAfterIsha,
-                    \.theme
-                ]
             }
         }
     }

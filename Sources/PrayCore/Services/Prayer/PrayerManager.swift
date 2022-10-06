@@ -34,6 +34,7 @@ public extension PrayerManager {
 public extension PrayerManager {
     enum Expanded {
         case finalHour
+        case hourly
         case intervals(TimeInterval)
         case none
     }
@@ -127,6 +128,8 @@ private extension PrayerManager {
         switch expanded {
         case .finalHour:
             entries = entries.expandedWithFinalHour()
+        case .hourly:
+            entries = entries.expandedHourly()
         case let .intervals(progress):
             entries = entries.expanded(using: preferences, calendar: calendar, progressIntervals: progress)
         case .none:
@@ -227,6 +230,38 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                     prayerDay: entry.prayerDay
                 )
             ]
+        }
+        .removeDuplicates()
+        .sorted(by: \.date)
+    }
+}
+
+private extension Array where Element == PrayerAPI.TimelineEntry {
+    func expandedHourly() -> Self {
+        reduce(into: []) { result, entry in
+            guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
+
+            result += [
+                PrayerAPI.TimelineEntry(
+                    date: currentPrayer.dateInterval.start,
+                    prayerDay: entry.prayerDay
+                ),
+                PrayerAPI.TimelineEntry(
+                    date: currentPrayer.dateInterval.end - .hours(1),
+                    prayerDay: entry.prayerDay
+                )
+            ]
+
+            result += stride(
+                from: currentPrayer.dateInterval.start.timeIntervalSince1970,
+                to: currentPrayer.dateInterval.end.timeIntervalSince1970,
+                by: 3600
+            ).map { timeInterval in
+                PrayerAPI.TimelineEntry(
+                    date: Date(timeIntervalSince1970: timeInterval),
+                    prayerDay: entry.prayerDay
+                )
+            }
         }
         .removeDuplicates()
         .sorted(by: \.date)

@@ -249,6 +249,10 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                 PrayerAPI.TimelineEntry(
                     date: currentPrayer.dateInterval.end - .hours(1),
                     prayerDay: entry.prayerDay
+                ),
+                PrayerAPI.TimelineEntry(
+                    date: currentPrayer.dateInterval.end - .hours(1) - .minutes(15),
+                    prayerDay: entry.prayerDay
                 )
             ]
 

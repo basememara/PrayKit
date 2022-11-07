@@ -59,10 +59,21 @@ public protocol PrayKitDependency {
 }
 ```
 
-The SwiftUI `EnvironmentValues` type can be extended to conform to the `PrayKitDependency` protocol and supply the concrete instances:
+A Swift property wrapper can be created to conform to the `PrayKitDependency` protocol and supply the concrete instances:
 
 ```swift
-extension EnvironmentValues: PrayKitDependency {
+@propertyWrapper
+struct PrayDependency: PrayKitDependency {
+    private static let shared = PrayDependency()
+
+    var wrappedValue: PrayKitDependency? { Self.shared }
+}
+```
+
+The property wrapper can be extended from here to satisfy the dependency container requirements:
+
+```swift
+extension PrayDependency {
     // Thread-safe single instance
     private static let preferences = Preferences(
         defaults: UserDefaults(suiteName: "{{your suite name}}") ?? .standard
@@ -73,7 +84,7 @@ extension EnvironmentValues: PrayKitDependency {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let localStorage: UserDefaults = .standard
 
     public func localStorage() -> UserDefaults {
@@ -83,7 +94,7 @@ extension EnvironmentValues {
 
 // MARK: Network
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let networkManager = NetworkManager(
         service: networkService,
         adapter: networkAdapter
@@ -94,7 +105,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let networkService = NetworkServiceFoundation()
 
     public func networkService() -> NetworkService {
@@ -106,7 +117,7 @@ extension EnvironmentValues {
 
 // MARK: Services
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let notificationService = NotificationServiceUN(
         prayerManager: prayerManager,
         userNotification: .current(),
@@ -121,7 +132,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let prayerManager = PrayerManager(
         service: prayerService,
         londonService: prayerServiceLondon,
@@ -134,7 +145,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let prayerService = PrayerServiceAdhan(log: log)
 
     public func prayerService() -> PrayerService {
@@ -142,7 +153,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let prayerServiceLondon = PrayerServiceLondon(
         networkManager: networkManager,
         apiKey: "{{your api key}}",
@@ -154,7 +165,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let qiblaService = QiblaServiceAdhan()
 
     public func qiblaService() -> QiblaService {
@@ -162,7 +173,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let hijriService = HijriServiceStatic(
         prayerManager: prayerManager,
         preferences: preferences
@@ -173,7 +184,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let locationManager = LocationManager(service: locationService)
 
     public func locationManager() -> LocationManager {
@@ -181,7 +192,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let locationService = LocationServiceCore(
         desiredAccuracy: kCLLocationAccuracyThreeKilometers,
         distanceFilter: 1000
@@ -194,7 +205,7 @@ extension EnvironmentValues {
 
 // MARK: Diagnostics
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let log = LogManager(services: logServices)
 
     public func log() -> LogManager {
@@ -202,7 +213,7 @@ extension EnvironmentValues {
     }
 }
 
-extension EnvironmentValues {
+extension PrayDependency {
     private static let logServices: [LogService] = [
         LogServiceConsole(
             minLevel: constants.isDebug || constants.isRunningOnSimulator ? .verbose : .none,
@@ -216,20 +227,19 @@ extension EnvironmentValues {
 }
 ```
 
-Lazy thread-safety was provided for free by using the static properties. More importantly though, `EnvironmentValues` now conforms to the dependency container. We can take this one step further by exposing this to any SwiftUI component by adding a property for the dependency container, which will return itself since it conforms to the container:
+Lazy thread-safety was provided for free by using the static properties, but this is not necessary if new instances every time is actually intended. More importantly though, `PrayDependency` now conforms to the dependency container and any component can grab it using:
 
 ```swift
-extension EnvironmentValues {
-    /// Dependency container for creating instances.
-    var dependency: PrayKitDependency? { self }
-}
+@PrayDependency var dependency
+
+let prayerManager = dependency?.prayerManager()
 ```
 
 Now in SwiftUI, you can add the following property wrapper to access the dependency injection container:
 
 ```swift
 struct ContentView: View {
-    @Environment(\.dependency) dependency
+    @PrayDependency var dependency
 
     var body: some View {
         Text("Salam, world!")

@@ -66,6 +66,7 @@ public enum NotificationSound: String, Equatable, CaseIterable, Codable {
     case wakeUp = "wake.up"
     case winds
     case xylophone
+    case vibrate
     case silent
     case off
 }
@@ -92,7 +93,7 @@ public extension NotificationSound {
 
     var fileURL: URL? {
         guard let file else { return nil }
-        return self == .default
+        return [.default, .vibrate].contains(self)
             ? Bundle.main.url(forResource: file, withExtension: nil)
             : FileManager.default
                 .urls(for: .libraryDirectory, in: .userDomainMask).first?
@@ -218,6 +219,8 @@ public extension NotificationSound {
             return "wind"
         case .xylophone:
             return "music.note.list"
+        case .vibrate:
+            return "waveform.path"
         case .silent:
             return "speaker.zzz"
         case .off:

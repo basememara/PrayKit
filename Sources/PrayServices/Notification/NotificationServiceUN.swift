@@ -291,10 +291,10 @@ public extension NotificationServiceUN {
         }
 
         #if os(iOS)
-        if preferences.isGPSEnabled {
+        if preferences.isGPSEnabled && preferences.geofenceRadius > 0 {
             let region = CLCircularRegion(
                 center: request.coordinates.location,
-                radius: 25_000,
+                radius: preferences.geofenceRadius,
                 identifier: "Home"
             ).apply {
                 $0.notifyOnEntry = false

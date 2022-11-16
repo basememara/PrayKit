@@ -96,6 +96,14 @@ public final class Preferences {
     @DefaultsOptional
     public private(set) var prayersCoordinates: Coordinates?
 
+    @Defaults
+    public var geofenceRadius: Double {
+        didSet {
+            guard geofenceRadius != oldValue else { return }
+            Self.subject.send(\Preferences.geofenceRadius)
+        }
+    }
+
     // MARK: - Time
 
     @Defaults
@@ -273,6 +281,7 @@ public final class Preferences {
         // Location
         _isGPSEnabled = Defaults("isGPSEnabled", defaultValue: true, from: defaults)
         _prayersCoordinates = DefaultsOptional("prayersCoordinates", from: defaults)
+        _geofenceRadius = Defaults("geofenceRadius", defaultValue: 75_000, from: defaults)
 
         // Time
         _enable24hTimeFormat = Defaults("enable24hTimeFormat", defaultValue: false, from: defaults)
@@ -387,6 +396,8 @@ public extension Preferences {
             return _isGPSEnabled.key
         case \.prayersCoordinates:
             return _prayersCoordinates.key
+        case \.geofenceRadius:
+            return _geofenceRadius.key
         case \.enable24hTimeFormat:
             return _enable24hTimeFormat.key
         case \.iqamaMinutes:
@@ -492,7 +503,8 @@ public extension Preferences {
                      \.notificationAdhan,
                      \.notificationSounds,
                      \.reminderSounds,
-                     \.sunriseAfterIsha
+                     \.sunriseAfterIsha,
+                     \.geofenceRadius
                 ]
             case .locationUpdate:
                 return [

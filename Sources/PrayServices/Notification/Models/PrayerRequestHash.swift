@@ -20,6 +20,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let notificationSounds: NotificationSounds
     let reminderSounds: ReminderSounds
     let isGPSEnabled: Bool
+    let geofenceRadius: Double
 
     init(request: PrayerAPI.Request, dateInterval: DateInterval, preferences: Preferences) {
         self.request = request
@@ -30,6 +31,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
         self.notificationSounds = preferences.notificationSounds
         self.reminderSounds = preferences.reminderSounds
         self.isGPSEnabled = preferences.isGPSEnabled
+        self.geofenceRadius = preferences.geofenceRadius
 
         let calendar = Calendar(
             identifier: .gregorian,

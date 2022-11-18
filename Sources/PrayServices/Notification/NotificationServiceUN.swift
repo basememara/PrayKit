@@ -313,6 +313,8 @@ public extension NotificationServiceUN {
                 guard let error = $0 else { return }
                 log.error("Failed to create a notifications for \"calibrate-beacon\"", error: error)
             }
+        } else {
+            await userNotification.remove(withCategory: NotificationCategory.beacon.rawValue)
         }
         #endif
     }

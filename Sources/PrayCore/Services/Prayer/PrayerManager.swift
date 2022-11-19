@@ -182,10 +182,10 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
             }
 
             // Add since prayer adhan
-            if preferences.iqamaMinutes > 0 {
+            if preferences.postAdhanMinutes[currentPrayer.type] > 0 {
                 result.append(
                     PrayerAPI.TimelineEntry(
-                        date: currentPrayer.dateInterval.start + .minutes(preferences.iqamaMinutes),
+                        date: currentPrayer.dateInterval.start + .minutes(preferences.postAdhanMinutes[currentPrayer.type]),
                         prayerDay: entry.prayerDay
                     )
                 )

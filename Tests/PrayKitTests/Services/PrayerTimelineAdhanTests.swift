@@ -23,7 +23,6 @@ extension PrayerTimelineAdhanTests {
         let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.intervals(0)
 
-        preferences.iqamaMinutes = iqamaMinutes
         preferences.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
@@ -34,6 +33,15 @@ extension PrayerTimelineAdhanTests {
                 Prayer.isha.rawValue: 9
             ]
         )
+
+        preferences.postAdhanMinutes = PostAdhanMinutes(
+            fajr: iqamaMinutes,
+            dhuhr: iqamaMinutes,
+            asr: iqamaMinutes,
+            maghrib: iqamaMinutes,
+            isha: iqamaMinutes
+        )
+        
         preferences.preAdhanMinutes.jumuah = 64
 
         // When
@@ -82,33 +90,37 @@ extension PrayerTimelineAdhanTests {
 
         func test(for prayer: Prayer, index: Int) throws {
             let date = try XCTUnwrap(timeline[index, prayer]?.dateInterval.start)
-            XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+            if preferences.preAdhanMinutes[prayer] != 0 {
+                XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+            }
             XCTAssertEqual(timeline[index + 1].date, date)
-            XCTAssertEqual(timeline[index + 2].date, date + .minutes(iqamaMinutes))
+            if preferences.postAdhanMinutes[prayer] > 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.postAdhanMinutes[prayer]))
+            }
         }
 
         try test(for: .fajr, index: 0)
         try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 6)
-        try test(for: .asr, index: 9)
-        try test(for: .maghrib, index: 12)
-        try test(for: .isha, index: 15)
-        try test(for: .fajr, index: 18)
-        try test(for: .sunrise, index: 21)
-        try test(for: .dhuhr, index: 24)
-        try test(for: .asr, index: 27)
-        try test(for: .maghrib, index: 30)
-        try test(for: .isha, index: 33)
-        try test(for: .fajr, index: 36)
-        try test(for: .sunrise, index: 39)
-        try test(for: .dhuhr, index: 42)
-        try test(for: .asr, index: 45)
-        try test(for: .maghrib, index: 48)
-        try test(for: .isha, index: 51)
+        try test(for: .dhuhr, index: 5)
+        try test(for: .asr, index: 8)
+        try test(for: .maghrib, index: 11)
+        try test(for: .isha, index: 14)
+        try test(for: .fajr, index: 17)
+        try test(for: .sunrise, index: 20)
+        try test(for: .dhuhr, index: 22)
+        try test(for: .asr, index: 25)
+        try test(for: .maghrib, index: 28)
+        try test(for: .isha, index: 31)
+        try test(for: .fajr, index: 34)
+        try test(for: .sunrise, index: 37)
+        try test(for: .dhuhr, index: 39)
+        try test(for: .asr, index: 42)
+        try test(for: .maghrib, index: 45)
+        try test(for: .isha, index: 48)
 
         // Jumuah reminder
-        XCTAssertEqual(timeline[60].date, time("11:27", on: "2022/02/25"))
-        XCTAssertEqual(timeline[60, .dhuhr]?.dateInterval.start, time("12:31", on: "2022/02/25"))
+        XCTAssertEqual(timeline[56].date, time("11:27", on: "2022/02/25"))
+        XCTAssertEqual(timeline[56, .dhuhr]?.dateInterval.start, time("12:31", on: "2022/02/25"))
     }
 }
 
@@ -119,7 +131,6 @@ extension PrayerTimelineAdhanTests {
         let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.intervals(0)
 
-        preferences.iqamaMinutes = iqamaMinutes
         preferences.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
@@ -130,6 +141,15 @@ extension PrayerTimelineAdhanTests {
                 Prayer.isha.rawValue: 9
             ]
         )
+
+        preferences.postAdhanMinutes = PostAdhanMinutes(
+            fajr: iqamaMinutes,
+            dhuhr: iqamaMinutes,
+            asr: iqamaMinutes,
+            maghrib: iqamaMinutes,
+            isha: iqamaMinutes
+        )
+
         preferences.preAdhanMinutes.jumuah = 64
 
         // When
@@ -178,33 +198,37 @@ extension PrayerTimelineAdhanTests {
 
         func test(for prayer: Prayer, index: Int) throws {
             let date = try XCTUnwrap(timeline[index, prayer]?.dateInterval.start)
-            XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+            if preferences.preAdhanMinutes[prayer] != 0 {
+                XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+            }
             XCTAssertEqual(timeline[index + 1].date, date)
-            XCTAssertEqual(timeline[index + 2].date, date + .minutes(iqamaMinutes))
+            if preferences.postAdhanMinutes[prayer] > 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.postAdhanMinutes[prayer]))
+            }
         }
 
         try test(for: .fajr, index: 0)
         try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 6)
-        try test(for: .asr, index: 9)
-        try test(for: .maghrib, index: 12)
-        try test(for: .isha, index: 15)
-        try test(for: .fajr, index: 18)
-        try test(for: .sunrise, index: 21)
-        try test(for: .dhuhr, index: 24)
-        try test(for: .asr, index: 27)
-        try test(for: .maghrib, index: 30)
-        try test(for: .isha, index: 33)
-        try test(for: .fajr, index: 36)
-        try test(for: .sunrise, index: 39)
-        try test(for: .dhuhr, index: 42)
-        try test(for: .asr, index: 45)
-        try test(for: .maghrib, index: 48)
-        try test(for: .isha, index: 51)
+        try test(for: .dhuhr, index: 5)
+        try test(for: .asr, index: 8)
+        try test(for: .maghrib, index: 11)
+        try test(for: .isha, index: 14)
+        try test(for: .fajr, index: 17)
+        try test(for: .sunrise, index: 20)
+        try test(for: .dhuhr, index: 22)
+        try test(for: .asr, index: 25)
+        try test(for: .maghrib, index: 28)
+        try test(for: .isha, index: 31)
+        try test(for: .fajr, index: 34)
+        try test(for: .sunrise, index: 37)
+        try test(for: .dhuhr, index: 39)
+        try test(for: .asr, index: 42)
+        try test(for: .maghrib, index: 45)
+        try test(for: .isha, index: 48)
 
         // Jumuah reminder
-        XCTAssertEqual(timeline[60].date, time("11:15", on: "2022/02/25"))
-        XCTAssertEqual(timeline[60, .dhuhr]?.dateInterval.start, time("12:19", on: "2022/02/25"))
+        XCTAssertEqual(timeline[56].date, time("11:15", on: "2022/02/25"))
+        XCTAssertEqual(timeline[56, .dhuhr]?.dateInterval.start, time("12:19", on: "2022/02/25"))
     }
 }
 
@@ -215,7 +239,6 @@ extension PrayerTimelineAdhanTests {
         let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.finalHour
 
-        preferences.iqamaMinutes = iqamaMinutes
         preferences.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
@@ -225,6 +248,14 @@ extension PrayerTimelineAdhanTests {
                 Prayer.maghrib.rawValue: 22,
                 Prayer.isha.rawValue: 9
             ]
+        )
+
+        preferences.postAdhanMinutes = PostAdhanMinutes(
+            fajr: iqamaMinutes,
+            dhuhr: iqamaMinutes,
+            asr: iqamaMinutes,
+            maghrib: iqamaMinutes,
+            isha: iqamaMinutes
         )
 
         // When

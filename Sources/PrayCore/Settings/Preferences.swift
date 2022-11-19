@@ -115,14 +115,6 @@ public final class Preferences {
     }
 
     @Defaults
-    public var iqamaMinutes: Int {
-        didSet {
-            guard iqamaMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.iqamaMinutes)
-        }
-    }
-
-    @Defaults
     public var hijriDayOffset: Int {
         didSet {
             guard hijriDayOffset != oldValue else { return }
@@ -153,6 +145,14 @@ public final class Preferences {
         didSet {
             guard preAdhanMinutes != oldValue else { return }
             Self.subject.send(\Preferences.preAdhanMinutes)
+        }
+    }
+
+    @Defaults
+    public var postAdhanMinutes: PostAdhanMinutes {
+        didSet {
+            guard postAdhanMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.postAdhanMinutes)
         }
     }
 
@@ -285,7 +285,6 @@ public final class Preferences {
 
         // Time
         _enable24hTimeFormat = Defaults("enable24hTimeFormat", defaultValue: false, from: defaults)
-        _iqamaMinutes = Defaults("iqamaMinutes", defaultValue: 0, from: defaults)
         _hijriDayOffset = Defaults("hijriDayOffset", defaultValue: 0, from: defaults)
         _autoIncrementHijri = Defaults("autoIncrementHijri", defaultValue: true, from: defaults)
 
@@ -303,6 +302,18 @@ public final class Preferences {
                     Prayer.maghrib.rawValue: 20,
                     Prayer.isha.rawValue: 20
                 ]
+            ),
+            from: defaults
+        )
+
+        _postAdhanMinutes = Defaults(
+            "postAdhanMinutes",
+            defaultValue: PostAdhanMinutes(
+                fajr: 0,
+                dhuhr: 0,
+                asr: 0,
+                maghrib: 0,
+                isha: 0
             ),
             from: defaults
         )
@@ -400,8 +411,6 @@ public extension Preferences {
             return _geofenceRadius.key
         case \.enable24hTimeFormat:
             return _enable24hTimeFormat.key
-        case \.iqamaMinutes:
-            return _iqamaMinutes.key
         case \.hijriDayOffset:
             return _hijriDayOffset.key
         case \.autoIncrementHijri:
@@ -410,6 +419,8 @@ public extension Preferences {
             return _snoozeMinutes.key
         case \.preAdhanMinutes:
             return _preAdhanMinutes.key
+        case \.postAdhanMinutes:
+            return _postAdhanMinutes.key
         case \.adhanDuaa:
             return _adhanDuaa.key
         case \.notificationAdhan:
@@ -500,6 +511,7 @@ public extension Preferences {
                 return [
                     \.snoozeMinutes,
                      \.preAdhanMinutes,
+                     \.postAdhanMinutes,
                      \.notificationAdhan,
                      \.notificationSounds,
                      \.reminderSounds,
@@ -520,7 +532,6 @@ public extension Preferences {
                     + [
                         \.isGPSEnabled,
                          \.enable24hTimeFormat,
-                         \.iqamaMinutes,
                          \.hijriDayOffset,
                          \.autoIncrementHijri,
                          \.isPrayerAbbrEnabled,
@@ -636,5 +647,22 @@ extension Coordinates: UserDefaultsRepresentable {
         }
 
         self = Coordinates(latitude: rawDefaultsValue[0], longitude: rawDefaultsValue[1])
+    }
+}
+
+extension PostAdhanMinutes: UserDefaultsRepresentable {
+    public var rawDefaultsValue: Data? { try? encode() }
+
+    public init(rawDefaultsValue: Data?) {
+        guard let value: PostAdhanMinutes = try? rawDefaultsValue?.decode() else {
+            self.fajr = 0
+            self.dhuhr = 0
+            self.asr = 0
+            self.maghrib = 0
+            self.isha = 0
+            return
+        }
+
+        self = value
     }
 }

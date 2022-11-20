@@ -10,6 +10,9 @@ public enum AppTheme: String, Equatable, CaseIterable, Codable {
     case `default`
     case web3
     case aqua
+    case dawn
+    case calm
+    case indigo
 }
 
 extension AppTheme: Identifiable {

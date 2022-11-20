@@ -65,6 +65,14 @@ public final class Preferences {
         }
     }
 
+    @Defaults
+    public var iqamaTimes: IqamaTimes {
+        didSet {
+            guard iqamaTimes != oldValue else { return }
+            Self.subject.send(\Preferences.iqamaTimes)
+        }
+    }
+
     // MARK: - Adjustments
 
     @DefaultsOptional
@@ -145,14 +153,6 @@ public final class Preferences {
         didSet {
             guard preAdhanMinutes != oldValue else { return }
             Self.subject.send(\Preferences.preAdhanMinutes)
-        }
-    }
-
-    @Defaults
-    public var postAdhanMinutes: PostAdhanMinutes {
-        didSet {
-            guard postAdhanMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.postAdhanMinutes)
         }
     }
 
@@ -273,6 +273,7 @@ public final class Preferences {
         _maghribDegrees = Defaults("maghribDegrees", defaultValue: 0, from: defaults)
         _ishaDegrees = Defaults("ishaDegrees", defaultValue: 0, from: defaults)
         _elevationRule = DefaultsOptional("elavationMethod", from: defaults)
+        _iqamaTimes = Defaults("iqamaTimes", defaultValue: IqamaTimes(), from: defaults)
 
         // Adjustments
         _adjustmentMinutes = DefaultsOptional("adjustmentMinutes", from: defaults)
@@ -302,18 +303,6 @@ public final class Preferences {
                     Prayer.maghrib.rawValue: 20,
                     Prayer.isha.rawValue: 20
                 ]
-            ),
-            from: defaults
-        )
-
-        _postAdhanMinutes = Defaults(
-            "postAdhanMinutes",
-            defaultValue: PostAdhanMinutes(
-                fajr: 0,
-                dhuhr: 0,
-                asr: 0,
-                maghrib: 0,
-                isha: 0
             ),
             from: defaults
         )
@@ -399,6 +388,8 @@ public extension Preferences {
             return _ishaDegrees.key
         case \.elevationRule:
             return _elevationRule.key
+        case \.iqamaTimes:
+            return _iqamaTimes.key
         case \.adjustmentMinutes:
             return _adjustmentMinutes.key
         case \.adjustmentElevation:
@@ -419,8 +410,6 @@ public extension Preferences {
             return _snoozeMinutes.key
         case \.preAdhanMinutes:
             return _preAdhanMinutes.key
-        case \.postAdhanMinutes:
-            return _postAdhanMinutes.key
         case \.adhanDuaa:
             return _adhanDuaa.key
         case \.notificationAdhan:
@@ -504,6 +493,7 @@ public extension Preferences {
                      \.maghribDegrees,
                      \.ishaDegrees,
                      \.elevationRule,
+                     \.iqamaTimes,
                      \.adjustmentMinutes,
                      \.adjustmentElevation
                 ]
@@ -511,7 +501,7 @@ public extension Preferences {
                 return [
                     \.snoozeMinutes,
                      \.preAdhanMinutes,
-                     \.postAdhanMinutes,
+                     \.iqamaTimes,
                      \.notificationAdhan,
                      \.notificationSounds,
                      \.reminderSounds,
@@ -650,16 +640,12 @@ extension Coordinates: UserDefaultsRepresentable {
     }
 }
 
-extension PostAdhanMinutes: UserDefaultsRepresentable {
+extension IqamaTimes: UserDefaultsRepresentable {
     public var rawDefaultsValue: Data? { try? encode() }
 
     public init(rawDefaultsValue: Data?) {
-        guard let value: PostAdhanMinutes = try? rawDefaultsValue?.decode() else {
-            self.fajr = 0
-            self.dhuhr = 0
-            self.asr = 0
-            self.maghrib = 0
-            self.isha = 0
+        guard let value: IqamaTimes = try? rawDefaultsValue?.decode() else {
+            self.init()
             return
         }
 

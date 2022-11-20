@@ -20,7 +20,6 @@ extension PrayerTimelineAdhanTests {
     // swiftlint:disable:next function_body_length
     func testToronto() async throws {
         // Given
-        let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.intervals(0)
 
         preferences.preAdhanMinutes = PreAdhanMinutes(
@@ -33,16 +32,16 @@ extension PrayerTimelineAdhanTests {
                 Prayer.isha.rawValue: 9
             ]
         )
-
-        preferences.postAdhanMinutes = PostAdhanMinutes(
-            fajr: iqamaMinutes,
-            dhuhr: iqamaMinutes,
-            asr: iqamaMinutes,
-            maghrib: iqamaMinutes,
-            isha: iqamaMinutes
-        )
         
         preferences.preAdhanMinutes.jumuah = 64
+
+        preferences.iqamaTimes = IqamaTimes(
+            fajr: .time(hour: 6, minutes: 1),
+            dhuhr: .minutes(12),
+            asr: .time(hour: 16, minutes: 38),
+            maghrib: .minutes(8),
+            isha: .time(hour: 01, minutes: 6)
+        )
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -89,13 +88,15 @@ extension PrayerTimelineAdhanTests {
         XCTAssertEqual(timeline[0, .lastThird]?.dateInterval.start, time("01:49", on: "2022/02/23"))
 
         func test(for prayer: Prayer, index: Int) throws {
-            let date = try XCTUnwrap(timeline[index, prayer]?.dateInterval.start)
+            let prayerTime = try XCTUnwrap(timeline[index, prayer])
+            let date = prayerTime.dateInterval.start
+            let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
             if preferences.preAdhanMinutes[prayer] != 0 {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.postAdhanMinutes[prayer] > 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.postAdhanMinutes[prayer]))
+            if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar] {
+                XCTAssertEqual(timeline[index + 2].date, iqamaTime)
             }
         }
 
@@ -128,7 +129,6 @@ extension PrayerTimelineAdhanTests {
     // swiftlint:disable:next function_body_length
     func testLondon() async throws {
         // Given
-        let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.intervals(0)
 
         preferences.preAdhanMinutes = PreAdhanMinutes(
@@ -142,15 +142,15 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.postAdhanMinutes = PostAdhanMinutes(
-            fajr: iqamaMinutes,
-            dhuhr: iqamaMinutes,
-            asr: iqamaMinutes,
-            maghrib: iqamaMinutes,
-            isha: iqamaMinutes
-        )
-
         preferences.preAdhanMinutes.jumuah = 64
+
+        preferences.iqamaTimes = IqamaTimes(
+            fajr: .time(hour: 6, minutes: 1),
+            dhuhr: .minutes(12),
+            asr: .time(hour: 16, minutes: 38),
+            maghrib: .minutes(8),
+            isha: .time(hour: 23, minutes: 6)
+        )
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -197,13 +197,15 @@ extension PrayerTimelineAdhanTests {
         XCTAssertEqual(timeline[0, .lastThird]?.dateInterval.start, time("01:23", on: "2022/02/23"))
 
         func test(for prayer: Prayer, index: Int) throws {
-            let date = try XCTUnwrap(timeline[index, prayer]?.dateInterval.start)
+            let prayerTime = try XCTUnwrap(timeline[index, prayer])
+            let date = prayerTime.dateInterval.start
+            let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
             if preferences.preAdhanMinutes[prayer] != 0 {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.postAdhanMinutes[prayer] > 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.postAdhanMinutes[prayer]))
+            if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar] {
+                XCTAssertEqual(timeline[index + 2].date, iqamaTime)
             }
         }
 
@@ -236,7 +238,6 @@ extension PrayerTimelineAdhanTests {
     // swiftlint:disable:next function_body_length
     func testFinalHour() async throws {
         // Given
-        let iqamaMinutes = 12
         let expanded = PrayerManager.Expanded.finalHour
 
         preferences.preAdhanMinutes = PreAdhanMinutes(
@@ -250,12 +251,12 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.postAdhanMinutes = PostAdhanMinutes(
-            fajr: iqamaMinutes,
-            dhuhr: iqamaMinutes,
-            asr: iqamaMinutes,
-            maghrib: iqamaMinutes,
-            isha: iqamaMinutes
+        preferences.iqamaTimes = IqamaTimes(
+            fajr: .time(hour: 6, minutes: 1),
+            dhuhr: .minutes(12),
+            asr: .time(hour: 16, minutes: 38),
+            maghrib: .minutes(8),
+            isha: .time(hour: 23, minutes: 6)
         )
 
         // When

@@ -10,13 +10,9 @@ import Foundation.NSDate
 
 public extension PrayerTime {
     /// Determines if the prayer is within the iqama time threshold with a small buffer.
-    func isRecent(at date: Date, iqamaMinutes: Int) -> Bool {
-        guard iqamaMinutes > 0 else { return false }
-
-        return date.isBetween(
-            dateInterval.start - 2,
-            dateInterval.start + Double(iqamaMinutes * 60) - 10
-        )
+    func isBeforeIqama(at date: Date, iqamaTime: Date?) -> Bool {
+        guard let iqamaTime else { return false }
+        return date.isBetween(dateInterval.start - 2, iqamaTime - 10)
     }
 }
 

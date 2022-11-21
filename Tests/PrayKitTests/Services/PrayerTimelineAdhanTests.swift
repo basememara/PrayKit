@@ -32,16 +32,8 @@ extension PrayerTimelineAdhanTests {
                 Prayer.isha.rawValue: 9
             ]
         )
-        
-        preferences.preAdhanMinutes.jumuah = 64
 
-        preferences.iqamaTimes = IqamaTimes(
-            fajr: .time(hour: 6, minutes: 1),
-            dhuhr: .minutes(12),
-            asr: .time(hour: 16, minutes: 38),
-            maghrib: .minutes(8),
-            isha: .time(hour: 01, minutes: 6)
-        )
+        preferences.iqamaTimerMinutes = 18
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -90,38 +82,33 @@ extension PrayerTimelineAdhanTests {
         func test(for prayer: Prayer, index: Int) throws {
             let prayerTime = try XCTUnwrap(timeline[index, prayer])
             let date = prayerTime.dateInterval.start
-            let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
             if preferences.preAdhanMinutes[prayer] != 0 {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar] {
-                XCTAssertEqual(timeline[index + 2].date, iqamaTime)
+            if preferences.iqamaTimerMinutes != 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.iqamaTimerMinutes))
             }
         }
 
         try test(for: .fajr, index: 0)
         try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 5)
-        try test(for: .asr, index: 8)
-        try test(for: .maghrib, index: 11)
-        try test(for: .isha, index: 14)
-        try test(for: .fajr, index: 17)
-        try test(for: .sunrise, index: 20)
-        try test(for: .dhuhr, index: 22)
-        try test(for: .asr, index: 25)
-        try test(for: .maghrib, index: 28)
-        try test(for: .isha, index: 31)
-        try test(for: .fajr, index: 34)
-        try test(for: .sunrise, index: 37)
-        try test(for: .dhuhr, index: 39)
-        try test(for: .asr, index: 42)
-        try test(for: .maghrib, index: 45)
-        try test(for: .isha, index: 48)
-
-        // Jumuah reminder
-        XCTAssertEqual(timeline[56].date, time("11:27", on: "2022/02/25"))
-        XCTAssertEqual(timeline[56, .dhuhr]?.dateInterval.start, time("12:31", on: "2022/02/25"))
+        try test(for: .dhuhr, index: 6)
+        try test(for: .asr, index: 9)
+        try test(for: .maghrib, index: 12)
+        try test(for: .isha, index: 15)
+        try test(for: .fajr, index: 18)
+        try test(for: .sunrise, index: 21)
+        try test(for: .dhuhr, index: 24)
+        try test(for: .asr, index: 27)
+        try test(for: .maghrib, index: 30)
+        try test(for: .isha, index: 33)
+        try test(for: .fajr, index: 36)
+        try test(for: .sunrise, index: 39)
+        try test(for: .dhuhr, index: 42)
+        try test(for: .asr, index: 45)
+        try test(for: .maghrib, index: 48)
+        try test(for: .isha, index: 51)
     }
 }
 
@@ -142,15 +129,7 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.preAdhanMinutes.jumuah = 64
-
-        preferences.iqamaTimes = IqamaTimes(
-            fajr: .time(hour: 6, minutes: 1),
-            dhuhr: .minutes(12),
-            asr: .time(hour: 16, minutes: 38),
-            maghrib: .minutes(8),
-            isha: .time(hour: 23, minutes: 6)
-        )
+        preferences.iqamaTimerMinutes = 18
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -163,6 +142,7 @@ extension PrayerTimelineAdhanTests {
             method: .london
         )
 
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
         let dateFormatter = DateFormatter(dateFormat: "MMM dd, h:mma", timeZone: timeZone)
         let timeFormatter = DateFormatter(dateFormat: "h:mma", timeZone: timeZone)
         let dateTimeFormatter = DateFormatter(dateFormat: "yyyy/MM/dd HH:mm", timeZone: timeZone)
@@ -199,38 +179,33 @@ extension PrayerTimelineAdhanTests {
         func test(for prayer: Prayer, index: Int) throws {
             let prayerTime = try XCTUnwrap(timeline[index, prayer])
             let date = prayerTime.dateInterval.start
-            let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
             if preferences.preAdhanMinutes[prayer] != 0 {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar] {
-                XCTAssertEqual(timeline[index + 2].date, iqamaTime)
+            if preferences.iqamaTimerMinutes != 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.iqamaTimerMinutes))
             }
         }
 
         try test(for: .fajr, index: 0)
         try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 5)
-        try test(for: .asr, index: 8)
-        try test(for: .maghrib, index: 11)
-        try test(for: .isha, index: 14)
-        try test(for: .fajr, index: 17)
-        try test(for: .sunrise, index: 20)
-        try test(for: .dhuhr, index: 22)
-        try test(for: .asr, index: 25)
-        try test(for: .maghrib, index: 28)
-        try test(for: .isha, index: 31)
-        try test(for: .fajr, index: 34)
-        try test(for: .sunrise, index: 37)
-        try test(for: .dhuhr, index: 39)
-        try test(for: .asr, index: 42)
-        try test(for: .maghrib, index: 45)
-        try test(for: .isha, index: 48)
-
-        // Jumuah reminder
-        XCTAssertEqual(timeline[56].date, time("11:15", on: "2022/02/25"))
-        XCTAssertEqual(timeline[56, .dhuhr]?.dateInterval.start, time("12:19", on: "2022/02/25"))
+        try test(for: .dhuhr, index: 6)
+        try test(for: .asr, index: 9)
+        try test(for: .maghrib, index: 12)
+        try test(for: .isha, index: 15)
+        try test(for: .fajr, index: 18)
+        try test(for: .sunrise, index: 21)
+        try test(for: .dhuhr, index: 24)
+        try test(for: .asr, index: 27)
+        try test(for: .maghrib, index: 30)
+        try test(for: .isha, index: 33)
+        try test(for: .fajr, index: 36)
+        try test(for: .sunrise, index: 39)
+        try test(for: .dhuhr, index: 42)
+        try test(for: .asr, index: 45)
+        try test(for: .maghrib, index: 48)
+        try test(for: .isha, index: 51)
     }
 }
 
@@ -249,14 +224,6 @@ extension PrayerTimelineAdhanTests {
                 Prayer.maghrib.rawValue: 22,
                 Prayer.isha.rawValue: 9
             ]
-        )
-
-        preferences.iqamaTimes = IqamaTimes(
-            fajr: .time(hour: 6, minutes: 1),
-            dhuhr: .minutes(12),
-            asr: .time(hour: 16, minutes: 38),
-            maghrib: .minutes(8),
-            isha: .time(hour: 23, minutes: 6)
         )
 
         // When

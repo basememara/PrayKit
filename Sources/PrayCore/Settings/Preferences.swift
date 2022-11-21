@@ -65,14 +65,6 @@ public final class Preferences {
         }
     }
 
-    @Defaults
-    public var iqamaTimes: IqamaTimes {
-        didSet {
-            guard iqamaTimes != oldValue else { return }
-            Self.subject.send(\Preferences.iqamaTimes)
-        }
-    }
-
     // MARK: - Adjustments
 
     @DefaultsOptional
@@ -109,6 +101,40 @@ public final class Preferences {
         didSet {
             guard geofenceRadius != oldValue else { return }
             Self.subject.send(\Preferences.geofenceRadius)
+        }
+    }
+
+    // MARK: - Iqama
+
+    @Defaults
+    public var iqamaTimes: IqamaTimes {
+        didSet {
+            guard iqamaTimes != oldValue else { return }
+            Self.subject.send(\Preferences.iqamaTimes)
+        }
+    }
+
+    @Defaults
+    public var iqamaReminders: IqamaReminders {
+        didSet {
+            guard iqamaReminders != oldValue else { return }
+            Self.subject.send(\Preferences.iqamaReminders)
+        }
+    }
+
+    @Defaults
+    public var iqamaTimerMinutes: Int {
+        didSet {
+            guard iqamaTimerMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.iqamaTimerMinutes)
+        }
+    }
+
+    @Defaults
+    public var isIqamaHidden: Bool {
+        didSet {
+            guard isIqamaHidden != oldValue else { return }
+            Self.subject.send(\Preferences.isIqamaHidden)
         }
     }
 
@@ -273,7 +299,6 @@ public final class Preferences {
         _maghribDegrees = Defaults("maghribDegrees", defaultValue: 0, from: defaults)
         _ishaDegrees = Defaults("ishaDegrees", defaultValue: 0, from: defaults)
         _elevationRule = DefaultsOptional("elavationMethod", from: defaults)
-        _iqamaTimes = Defaults("iqamaTimes", defaultValue: IqamaTimes(), from: defaults)
 
         // Adjustments
         _adjustmentMinutes = DefaultsOptional("adjustmentMinutes", from: defaults)
@@ -283,6 +308,17 @@ public final class Preferences {
         _isGPSEnabled = Defaults("isGPSEnabled", defaultValue: true, from: defaults)
         _prayersCoordinates = DefaultsOptional("prayersCoordinates", from: defaults)
         _geofenceRadius = Defaults("geofenceRadius", defaultValue: 75_000, from: defaults)
+
+        // Iqama
+        _iqamaTimes = Defaults("iqamaTimes", defaultValue: IqamaTimes(), from: defaults)
+        _iqamaTimerMinutes = Defaults("iqamaTimerMinutes", defaultValue: 20, from: defaults)
+        _isIqamaHidden = Defaults("isIqamaHidden", defaultValue: false, from: defaults)
+
+        _iqamaReminders = Defaults(
+            "iqamaReminders",
+            defaultValue: IqamaReminders(sound: .default, minutes: 20, jumuahMinutes: 60),
+            from: defaults
+        )
 
         // Time
         _enable24hTimeFormat = Defaults("enable24hTimeFormat", defaultValue: false, from: defaults)
@@ -388,8 +424,6 @@ public extension Preferences {
             return _ishaDegrees.key
         case \.elevationRule:
             return _elevationRule.key
-        case \.iqamaTimes:
-            return _iqamaTimes.key
         case \.adjustmentMinutes:
             return _adjustmentMinutes.key
         case \.adjustmentElevation:
@@ -400,6 +434,14 @@ public extension Preferences {
             return _prayersCoordinates.key
         case \.geofenceRadius:
             return _geofenceRadius.key
+        case \.iqamaTimes:
+            return _iqamaTimes.key
+        case \.iqamaReminders:
+            return _iqamaReminders.key
+        case \.iqamaTimerMinutes:
+            return _iqamaTimerMinutes.key
+        case \.isIqamaHidden:
+            return _isIqamaHidden.key
         case \.enable24hTimeFormat:
             return _enable24hTimeFormat.key
         case \.hijriDayOffset:
@@ -502,6 +544,7 @@ public extension Preferences {
                     \.snoozeMinutes,
                      \.preAdhanMinutes,
                      \.iqamaTimes,
+                     \.iqamaReminders,
                      \.notificationAdhan,
                      \.notificationSounds,
                      \.reminderSounds,
@@ -521,6 +564,8 @@ public extension Preferences {
                     + KeyPathGroup.notificationReschedule.keyPaths
                     + [
                         \.isGPSEnabled,
+                         \.iqamaTimerMinutes,
+                         \.isIqamaHidden,
                          \.enable24hTimeFormat,
                          \.hijriDayOffset,
                          \.autoIncrementHijri,
@@ -592,6 +637,7 @@ public extension Preferences {
     var isPrayerSoundsDisabled: Bool {
         notificationSounds.rawValue.allSatisfy { $0.value == .off }
             && reminderSounds.rawValue.allSatisfy { $0.value == .off }
+            && iqamaTimes.isEmpty
     }
 
     func disablePrayerSounds() {
@@ -599,6 +645,8 @@ public extension Preferences {
             notificationSounds[$0] = .off
             reminderSounds[$0] = .off
         }
+
+        iqamaTimes = IqamaTimes()
     }
 }
 
@@ -649,6 +697,15 @@ extension IqamaTimes: UserDefaultsRepresentable {
             return
         }
 
+        self = value
+    }
+}
+
+extension IqamaReminders: UserDefaultsRepresentable {
+    public var rawDefaultsValue: Data? { try? encode() }
+
+    public init?(rawDefaultsValue: Data?) {
+        guard let value: IqamaReminders = try? rawDefaultsValue?.decode() else { return nil }
         self = value
     }
 }

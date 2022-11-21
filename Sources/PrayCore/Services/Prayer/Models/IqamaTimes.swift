@@ -16,23 +16,33 @@ public struct IqamaTimes: Equatable, Codable {
     public let asr: IqamaType?
     public let maghrib: IqamaType?
     public let isha: IqamaType?
+    public let jumuah: IqamaType?
 
     public init(
         fajr: IqamaType?,
         dhuhr: IqamaType?,
         asr: IqamaType?,
         maghrib: IqamaType?,
-        isha: IqamaType?
+        isha: IqamaType?,
+        jumuah: IqamaType?
     ) {
         self.fajr = fajr
         self.dhuhr = dhuhr
         self.asr = asr
         self.maghrib = maghrib
         self.isha = isha
+        self.jumuah = jumuah
     }
 
     public init() {
-        self.init(fajr: nil, dhuhr: nil, asr: nil, maghrib: nil, isha: nil)
+        self.init(
+            fajr: nil,
+            dhuhr: nil,
+            asr: nil,
+            maghrib: nil,
+            isha: nil,
+            jumuah: nil
+        )
     }
 }
 
@@ -45,13 +55,15 @@ public extension IqamaTimes {
 
 public extension IqamaTimes {
     subscript(_ prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
+        let startTime = prayerTime.dateInterval.start
+        let endTime = prayerTime.dateInterval.end
         let iqamaType: IqamaType?
 
         switch prayerTime.type {
         case .fajr:
             iqamaType = fajr
         case .dhuhr:
-            iqamaType = dhuhr
+            iqamaType = startTime.isJumuah(using: calendar) ? jumuah ?? dhuhr : dhuhr
         case .asr:
             iqamaType = asr
         case .maghrib:
@@ -64,19 +76,17 @@ public extension IqamaTimes {
 
         switch iqamaType {
         case let .time(hour, minutes):
-            guard var iqamaTime = calendar.date(bySettingHour: hour, minute: minutes, second: 0, of: prayerTime.dateInterval.start) else { return nil }
+            guard var iqamaTime = calendar.date(bySettingHour: hour, minute: minutes, second: 0, of: startTime) else { return nil }
 
             // Consider when prayer time near midnight
-            if iqamaTime < prayerTime.dateInterval.start, prayerTime.type == .isha {
+            if iqamaTime < startTime, prayerTime.type == .isha {
                 iqamaTime += .days(1, calendar)
             }
 
-            guard iqamaTime.isBetween(prayerTime.dateInterval.start, prayerTime.dateInterval.end) else { return nil }
-            return iqamaTime
+            return iqamaTime.isBetween(startTime, endTime) ? iqamaTime : nil
         case let .minutes(minutes) where minutes > 0:
-            let iqamaTime = prayerTime.dateInterval.start + .minutes(minutes)
-            guard iqamaTime < prayerTime.dateInterval.end else { return nil }
-            return iqamaTime
+            let iqamaTime = startTime + .minutes(minutes)
+            return iqamaTime < endTime ? iqamaTime : nil
         default:
             return nil
         }
@@ -90,6 +100,7 @@ public extension IqamaTimes {
             && [.minutes(0), nil].contains(asr)
             && [.minutes(0), nil].contains(maghrib)
             && [.minutes(0), nil].contains(isha)
+            && [.minutes(0), nil].contains(jumuah)
     }
 }
 
@@ -101,7 +112,8 @@ extension IqamaTimes: CustomStringConvertible {
             dhuhr: \(String(describing: dhuhr)),
             asr: \(String(describing: asr)),
             maghrib: \(String(describing: maghrib)),
-            isha: \(String(describing: isha))
+            isha: \(String(describing: isha)),
+            jumuah: \(String(describing: jumuah))
         ]
         """
     }

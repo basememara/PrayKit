@@ -194,14 +194,7 @@ public extension NotificationServiceUN {
                 // Add reminder notifications
                 let reminderIdentifier = "\(identifier)-reminder"
                 let reminderSound = preferences.reminderSounds[prayerTime.type] ?? .off
-                var reminderMinutes = preferences.preAdhanMinutes[prayerTime.type]
-
-                // Handle jumuah reminder if applicable
-                if prayerTime.type == .dhuhr,
-                   prayerTime.dateInterval.start.isJumuah(using: calendar),
-                   preferences.preAdhanMinutes.jumuah > 0 {
-                    reminderMinutes = preferences.preAdhanMinutes.jumuah
-                }
+                let reminderMinutes = preferences.preAdhanMinutes[prayerTime.type]
 
                 if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
                     userNotification.add(
@@ -261,6 +254,39 @@ public extension NotificationServiceUN {
                     } else if reminderSound == .off {
                         userNotification.remove(withIdentifier: reminderIdentifier)
                     }
+                }
+
+                // Add iqama notification if applicable
+                let iqamaIdentifier = "\(identifier)-iqama-reminder"
+                let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
+                let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
+                let iqamaSound = preferences.iqamaReminders.sound
+
+                if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar], iqamaSound != .off && iqamaMinutes > 0 && counter > 0 {
+                    userNotification.add(
+                        date: iqamaTime - .minutes(iqamaMinutes),
+                        body: localized.iqamaNotificationBody(at: iqamaTime.formatted(timeFormatStyle), isJumuah: isJumuah),
+                        sound: iqamaSound.file.map {
+                            #if os(iOS)
+                            return UNNotificationSound(named: UNNotificationSoundName($0))
+                            #else
+                            return .default
+                            #endif
+                        },
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: iqamaIdentifier,
+                        category: NotificationCategory.reminder.rawValue,
+                        userInfo: userInfo
+                    ) {
+                        guard let error = $0 else { return }
+                        log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
+                    }
+
+                    // Update counter
+                    counter -= 1
+                } else if iqamaSound == .off {
+                    userNotification.remove(withIdentifier: iqamaIdentifier)
                 }
             }
         }
@@ -472,4 +498,5 @@ public protocol NotificationServiceLocalizable {
     func prayerNotificationBody(for prayerTime: PrayerTime, at time: String) -> String
     func prayerNotificationReminder(for prayerTime: PrayerTime) -> String
     func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int) -> String
+    func iqamaNotificationBody(at time: String, isJumuah: Bool) -> String
 }

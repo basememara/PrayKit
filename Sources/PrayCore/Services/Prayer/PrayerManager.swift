@@ -181,26 +181,22 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                 )
             }
 
-            // Add since prayer adhan
-            if let iqamaTime = preferences.iqamaTimes[currentPrayer, using: calendar] {
-                let entry = PrayerAPI.TimelineEntry(date: iqamaTime, prayerDay: entry.prayerDay)
-                result.append(entry)
-            }
-
             // Add reminder time
-            var reminderMinutes = preferences.preAdhanMinutes[currentPrayer.type]
-
-            // Handle jumuah reminder if applicable
-            if currentPrayer.type == .dhuhr,
-               currentPrayer.dateInterval.start.isJumuah(using: calendar),
-               preferences.preAdhanMinutes.jumuah > 0 {
-                reminderMinutes = preferences.preAdhanMinutes.jumuah
-            }
-
+            let reminderMinutes = preferences.preAdhanMinutes[currentPrayer.type]
             if reminderMinutes > 0 && currentPrayer.dateInterval.duration > Double(reminderMinutes) * 60 {
                 result.append(
                     PrayerAPI.TimelineEntry(
                         date: currentPrayer.dateInterval.start - .minutes(reminderMinutes),
+                        prayerDay: entry.prayerDay
+                    )
+                )
+            }
+
+            // Add since prayer adhan
+            if preferences.iqamaTimerMinutes > 0 && currentPrayer.dateInterval.duration > Double(preferences.iqamaTimerMinutes) * 60 {
+                result.append(
+                    PrayerAPI.TimelineEntry(
+                        date: currentPrayer.dateInterval.start + .minutes(preferences.iqamaTimerMinutes),
                         prayerDay: entry.prayerDay
                     )
                 )

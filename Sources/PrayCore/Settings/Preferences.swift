@@ -311,7 +311,7 @@ public final class Preferences {
 
         // Iqama
         _iqamaTimes = Defaults("iqamaTimes", defaultValue: IqamaTimes(), from: defaults)
-        _iqamaTimerMinutes = Defaults("iqamaTimerMinutes", defaultValue: 20, from: defaults)
+        _iqamaTimerMinutes = Defaults("iqamaTimerMinutes", defaultValue: 0, from: defaults)
         _isIqamaHidden = Defaults("isIqamaHidden", defaultValue: false, from: defaults)
 
         _iqamaReminders = Defaults(

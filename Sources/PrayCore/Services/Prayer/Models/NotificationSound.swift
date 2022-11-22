@@ -45,6 +45,7 @@ public enum NotificationSound: String, Equatable, CaseIterable, Codable {
     case march
     case message
     case morning
+    case prayerBetterSleep = "prayer.better.sleep"
     case presto
     case ring
     case sciFiBeatLong = "sci.fi.beat-long"
@@ -177,6 +178,8 @@ public extension NotificationSound {
             return "message.and.waveform"
         case .morning:
             return "sun.and.horizon"
+        case .prayerBetterSleep:
+            return "bed.double"
         case .presto:
             return "alarm"
         case .ring:

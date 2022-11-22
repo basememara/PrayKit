@@ -21,6 +21,7 @@ private extension CalculationMethod {
         .tunisian: ["Africa/Tunis"],
         .london: ["Europe/London"],
         .ummAlQura: ["Asia/Baghdad", "Asia/Damascus", "Asia/Riyadh"],
+        .kuwait: ["Asia/Kuwait"],
         .dubai: ["Asia/Dubai"],
         .qatar: ["Asia/Qatar"],
         .karachi: ["Asia/Kabul", "Asia/Karachi", "Asia/Kolkata", "Asia/Amman"],

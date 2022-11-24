@@ -123,10 +123,10 @@ public final class Preferences {
     }
 
     @Defaults
-    public var iqamaTimerMinutes: Int {
+    public var isIqamaTimerEnabled: Bool {
         didSet {
-            guard iqamaTimerMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.iqamaTimerMinutes)
+            guard isIqamaTimerEnabled != oldValue else { return }
+            Self.subject.send(\Preferences.isIqamaTimerEnabled)
         }
     }
 
@@ -319,7 +319,7 @@ public final class Preferences {
 
         // Iqama
         _iqamaTimes = Defaults("iqamaTimes", defaultValue: IqamaTimes(), from: defaults)
-        _iqamaTimerMinutes = Defaults("iqamaTimerMinutes", defaultValue: 0, from: defaults)
+        _isIqamaTimerEnabled = Defaults("isIqamaTimerEnabled", defaultValue: true, from: defaults)
         _isIqamaHidden = Defaults("isIqamaHidden", defaultValue: false, from: defaults)
 
         _iqamaReminders = Defaults(
@@ -447,8 +447,8 @@ public extension Preferences {
             return _iqamaTimes.key
         case \.iqamaReminders:
             return _iqamaReminders.key
-        case \.iqamaTimerMinutes:
-            return _iqamaTimerMinutes.key
+        case \.isIqamaTimerEnabled:
+            return _isIqamaTimerEnabled.key
         case \.isIqamaHidden:
             return _isIqamaHidden.key
         case \.enable24hTimeFormat:
@@ -575,7 +575,7 @@ public extension Preferences {
                     + KeyPathGroup.notificationReschedule.keyPaths
                     + [
                         \.isGPSEnabled,
-                         \.iqamaTimerMinutes,
+                         \.isIqamaTimerEnabled,
                          \.isIqamaHidden,
                          \.enable24hTimeFormat,
                          \.hijriDayOffset,

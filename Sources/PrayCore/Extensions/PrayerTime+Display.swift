@@ -9,8 +9,8 @@
 import Foundation.NSDate
 
 public extension PrayerTime {
-    /// Determines if the prayer is within the iqama time threshold with a small buffer.
-    func isIqamaTimer(at date: Date, minutes: Int) -> Bool {
+    /// Determines if the prayer is within the stopwatch timer threshold with a small buffer.
+    func isStopwatchTimer(at date: Date, minutes: Int) -> Bool {
         guard minutes > 0 else { return false }
 
         return date.isBetween(

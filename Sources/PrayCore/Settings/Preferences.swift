@@ -164,6 +164,14 @@ public final class Preferences {
         }
     }
 
+    @Defaults
+    public var stopwatchMinutes: Int {
+        didSet {
+            guard stopwatchMinutes != oldValue else { return }
+            Self.subject.send(\Preferences.stopwatchMinutes)
+        }
+    }
+
     // MARK: - Notification
 
     @Defaults
@@ -324,6 +332,7 @@ public final class Preferences {
         _enable24hTimeFormat = Defaults("enable24hTimeFormat", defaultValue: false, from: defaults)
         _hijriDayOffset = Defaults("hijriDayOffset", defaultValue: 0, from: defaults)
         _autoIncrementHijri = Defaults("autoIncrementHijri", defaultValue: true, from: defaults)
+        _stopwatchMinutes = Defaults("stopwatchMinutes", defaultValue: 0, from: defaults)
 
         // Notification
         _snoozeMinutes = Defaults("snoozeMinutes", defaultValue: 30, from: defaults)
@@ -448,6 +457,8 @@ public extension Preferences {
             return _hijriDayOffset.key
         case \.autoIncrementHijri:
             return _autoIncrementHijri.key
+        case \.stopwatchMinutes:
+            return _stopwatchMinutes.key
         case \.snoozeMinutes:
             return _snoozeMinutes.key
         case \.preAdhanMinutes:
@@ -569,6 +580,7 @@ public extension Preferences {
                          \.enable24hTimeFormat,
                          \.hijriDayOffset,
                          \.autoIncrementHijri,
+                         \.stopwatchMinutes,
                          \.isPrayerAbbrEnabled,
                          \.sunriseAfterIsha,
                          \.appearanceMode,

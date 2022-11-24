@@ -33,7 +33,7 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.iqamaTimerMinutes = 18
+        preferences.stopwatchMinutes = 18
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -86,8 +86,8 @@ extension PrayerTimelineAdhanTests {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.iqamaTimerMinutes != 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.iqamaTimerMinutes))
+            if preferences.stopwatchMinutes != 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.stopwatchMinutes))
             }
         }
 
@@ -129,7 +129,7 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.iqamaTimerMinutes = 18
+        preferences.stopwatchMinutes = 18
 
         // When
         let (timeline, timeZone) = try await fetchPrayerDay(
@@ -183,8 +183,8 @@ extension PrayerTimelineAdhanTests {
                 XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
             }
             XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.iqamaTimerMinutes != 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.iqamaTimerMinutes))
+            if preferences.stopwatchMinutes != 0 {
+                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.stopwatchMinutes))
             }
         }
 

@@ -193,10 +193,10 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
             }
 
             // Add since prayer adhan
-            if preferences.iqamaTimerMinutes > 0 && currentPrayer.dateInterval.duration > Double(preferences.iqamaTimerMinutes) * 60 {
+            if preferences.stopwatchMinutes > 0 && currentPrayer.dateInterval.duration > Double(preferences.stopwatchMinutes) * 60 {
                 result.append(
                     PrayerAPI.TimelineEntry(
-                        date: currentPrayer.dateInterval.start + .minutes(preferences.iqamaTimerMinutes),
+                        date: currentPrayer.dateInterval.start + .minutes(preferences.stopwatchMinutes),
                         prayerDay: entry.prayerDay
                     )
                 )

@@ -39,6 +39,7 @@ let package = Package(
             name: "PrayKitTests",
             dependencies: [
                 "PrayCore",
+                "PrayMocks",
                 "PrayServices"
             ]
         ),

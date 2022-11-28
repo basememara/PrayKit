@@ -33,10 +33,20 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
+        preferences.iqamaTimes = IqamaTimes(
+            fajr: .time(hour: 6, minutes: 31),
+            dhuhr: .minutes(12),
+            asr: .time(hour: 16, minutes: 38),
+            maghrib: .minutes(8),
+            isha: nil,
+            jumuah: .time(hour: 13, minutes: 30)
+        )
+
+        preferences.isIqamaTimerEnabled = true
         preferences.stopwatchMinutes = 18
 
         // When
-        let (timeline, timeZone) = try await fetchPrayerDay(
+        let (timeline, timeZone, date) = try await fetchPrayerDay(
             date: "2022/02/22 06:00",
             expanded: expanded,
             limit: 111,
@@ -46,6 +56,7 @@ extension PrayerTimelineAdhanTests {
             method: .northAmerica
         )
 
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
         let dateFormatter = DateFormatter(dateFormat: "MMM dd, hh:mma")
         let timeFormatter = DateFormatter(dateFormat: "hh:mma")
         let dateTimeFormatter = DateFormatter(dateFormat: "yyyy/MM/dd HH:mm", timeZone: timeZone)
@@ -79,36 +90,24 @@ extension PrayerTimelineAdhanTests {
         XCTAssertEqual(timeline[0, .midnight]?.dateInterval.start, time("23:51"))
         XCTAssertEqual(timeline[0, .lastThird]?.dateInterval.start, time("01:49", on: "2022/02/23"))
 
-        func test(for prayer: Prayer, index: Int) throws {
-            let prayerTime = try XCTUnwrap(timeline[index, prayer])
-            let date = prayerTime.dateInterval.start
-            if preferences.preAdhanMinutes[prayer] != 0 {
-                XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+        try Prayer.allCases.filter(\.isEssential).forEach {
+            let prayer = try XCTUnwrap(timeline[0, $0])
+
+            let stopwatchTime = prayer.dateInterval.start + .minutes(preferences.stopwatchMinutes)
+            if stopwatchTime > date {
+                XCTAssert(timeline.contains { $0.date == stopwatchTime })
             }
-            XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.stopwatchMinutes != 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.stopwatchMinutes))
+
+            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            if preAdhanTime > date {
+                XCTAssert(timeline.contains { $0.date == preAdhanTime })
+            }
+
+            let iqamaTime = preferences.iqamaTimes[prayer, using: calendar]
+            if let iqamaTime, iqamaTime > date {
+                XCTAssert(timeline.contains { $0.date == iqamaTime })
             }
         }
-
-        try test(for: .fajr, index: 0)
-        try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 6)
-        try test(for: .asr, index: 9)
-        try test(for: .maghrib, index: 12)
-        try test(for: .isha, index: 15)
-        try test(for: .fajr, index: 18)
-        try test(for: .sunrise, index: 21)
-        try test(for: .dhuhr, index: 24)
-        try test(for: .asr, index: 27)
-        try test(for: .maghrib, index: 30)
-        try test(for: .isha, index: 33)
-        try test(for: .fajr, index: 36)
-        try test(for: .sunrise, index: 39)
-        try test(for: .dhuhr, index: 42)
-        try test(for: .asr, index: 45)
-        try test(for: .maghrib, index: 48)
-        try test(for: .isha, index: 51)
     }
 }
 
@@ -129,10 +128,20 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
+        preferences.iqamaTimes = IqamaTimes(
+            fajr: .time(hour: 6, minutes: 1),
+            dhuhr: .minutes(12),
+            asr: .time(hour: 16, minutes: 38),
+            maghrib: .minutes(8),
+            isha: nil,
+            jumuah: .time(hour: 13, minutes: 30)
+        )
+
+        preferences.isIqamaTimerEnabled = false
         preferences.stopwatchMinutes = 18
 
         // When
-        let (timeline, timeZone) = try await fetchPrayerDay(
+        let (timeline, timeZone, date) = try await fetchPrayerDay(
             date: "2022/02/22 06:00",
             expanded: expanded,
             limit: 111,
@@ -142,7 +151,6 @@ extension PrayerTimelineAdhanTests {
             method: .london
         )
 
-        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
         let dateFormatter = DateFormatter(dateFormat: "MMM dd, h:mma", timeZone: timeZone)
         let timeFormatter = DateFormatter(dateFormat: "h:mma", timeZone: timeZone)
         let dateTimeFormatter = DateFormatter(dateFormat: "yyyy/MM/dd HH:mm", timeZone: timeZone)
@@ -176,36 +184,19 @@ extension PrayerTimelineAdhanTests {
         XCTAssertEqual(timeline[0, .midnight]?.dateInterval.start, time("23:25"))
         XCTAssertEqual(timeline[0, .lastThird]?.dateInterval.start, time("01:23", on: "2022/02/23"))
 
-        func test(for prayer: Prayer, index: Int) throws {
-            let prayerTime = try XCTUnwrap(timeline[index, prayer])
-            let date = prayerTime.dateInterval.start
-            if preferences.preAdhanMinutes[prayer] != 0 {
-                XCTAssertEqual(timeline[index].date, date - .minutes(preferences.preAdhanMinutes[prayer]))
+        try Prayer.allCases.filter(\.isEssential).forEach {
+            let prayer = try XCTUnwrap(timeline[0, $0])
+
+            let stopwatchTime = prayer.dateInterval.start + .minutes(preferences.stopwatchMinutes)
+            if stopwatchTime > date {
+                XCTAssert(timeline.contains { $0.date == stopwatchTime })
             }
-            XCTAssertEqual(timeline[index + 1].date, date)
-            if preferences.stopwatchMinutes != 0 {
-                XCTAssertEqual(timeline[index + 2].date, date + .minutes(preferences.stopwatchMinutes))
+
+            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            if preAdhanTime > date {
+                XCTAssert(timeline.contains { $0.date == preAdhanTime })
             }
         }
-
-        try test(for: .fajr, index: 0)
-        try test(for: .sunrise, index: 3)
-        try test(for: .dhuhr, index: 6)
-        try test(for: .asr, index: 9)
-        try test(for: .maghrib, index: 12)
-        try test(for: .isha, index: 15)
-        try test(for: .fajr, index: 18)
-        try test(for: .sunrise, index: 21)
-        try test(for: .dhuhr, index: 24)
-        try test(for: .asr, index: 27)
-        try test(for: .maghrib, index: 30)
-        try test(for: .isha, index: 33)
-        try test(for: .fajr, index: 36)
-        try test(for: .sunrise, index: 39)
-        try test(for: .dhuhr, index: 42)
-        try test(for: .asr, index: 45)
-        try test(for: .maghrib, index: 48)
-        try test(for: .isha, index: 51)
     }
 }
 
@@ -227,7 +218,7 @@ extension PrayerTimelineAdhanTests {
         )
 
         // When
-        let (timeline, timeZone) = try await fetchPrayerDay(
+        let (timeline, timeZone, date) = try await fetchPrayerDay(
             date: "2022/04/01 06:00",
             expanded: expanded,
             limit: 30,
@@ -270,36 +261,19 @@ extension PrayerTimelineAdhanTests {
         XCTAssertEqual(timeline[0, .midnight]?.dateInterval.start, time("00:40", on: "2022/04/02"))
         XCTAssertEqual(timeline[0, .lastThird]?.dateInterval.start, time("02:19", on: "2022/04/02"))
 
-        func test(for prayer: Prayer, index: Int) throws {
-            let date = try XCTUnwrap(timeline[index, prayer]?.dateInterval.start)
-            let date2 = prayer == .isha
-                ? try XCTUnwrap(timeline[index + 2, .fajr]?.dateInterval.start)
-                : try XCTUnwrap(timeline[index, prayer.next() ?? .fajr]?.dateInterval.start)
-            if let safeDate = timeline[safe: index - 1]?.date {
-                XCTAssertEqual(safeDate, date - .hours(1))
+        try Prayer.allCases.filter(\.isEssential).forEach {
+            let prayer = try XCTUnwrap(timeline[0, $0])
+
+            let finalHour = prayer.dateInterval.start - .hours(1)
+            if finalHour > date {
+                XCTAssert(timeline.contains { $0.date == finalHour })
             }
-            XCTAssertEqual(timeline[index].date, date)
-            XCTAssertEqual(timeline[index + 1].date, date2 - .hours(1))
-            if let safeDate = timeline[safe: index + 2]?.date {
-                XCTAssertEqual(safeDate, date2)
+
+            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            if preAdhanTime > date {
+                XCTAssert(timeline.contains { $0.date == preAdhanTime })
             }
         }
-
-        try test(for: .fajr, index: 0)
-        try test(for: .sunrise, index: 2)
-        try test(for: .dhuhr, index: 4)
-        try test(for: .asr, index: 6)
-        try test(for: .maghrib, index: 8)
-        try test(for: .isha, index: 10)
-        try test(for: .fajr, index: 12)
-        try test(for: .sunrise, index: 14)
-        try test(for: .dhuhr, index: 16)
-        try test(for: .asr, index: 18)
-        try test(for: .maghrib, index: 20)
-        try test(for: .isha, index: 22)
-        try test(for: .fajr, index: 24)
-        try test(for: .sunrise, index: 26)
-        try test(for: .dhuhr, index: 28)
     }
 }
 
@@ -317,7 +291,7 @@ private extension PrayerTimelineAdhanTests {
         jurisprudence: Madhab = .standard,
         elevation: ElevationRule? = nil,
         filter: PrayerFilter = .all
-    ) async throws -> ([PrayerAPI.TimelineEntry], TimeZone) {
+    ) async throws -> ([PrayerAPI.TimelineEntry], TimeZone, Date) {
         let coordinates = Coordinates(
             latitude: latitude,
             longitude: longitude
@@ -340,7 +314,7 @@ private extension PrayerTimelineAdhanTests {
             filter: filter
         )
 
-        return (try await prayerManager.fetch(from: date, expanded: expanded, limit: limit, with: request), timeZone)
+        return (try await prayerManager.fetch(from: date, expanded: expanded, limit: limit, with: request), timeZone, date)
     }
 }
 

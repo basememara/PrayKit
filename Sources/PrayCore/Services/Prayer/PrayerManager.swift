@@ -181,7 +181,9 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                 )
             }
 
-            result += additionalTimelineEntries(entry: entry, using: preferences, calendar: calendar)
+            result += preferences
+                .expandedTimeline(for: currentPrayer, using: calendar)
+                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
@@ -204,7 +206,9 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                 )
             ]
 
-            result += additionalTimelineEntries(entry: entry, using: preferences, calendar: calendar)
+            result += preferences
+                .expandedTimeline(for: currentPrayer, using: calendar)
+                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
@@ -238,48 +242,11 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                 )
             }
 
-            result += additionalTimelineEntries(entry: entry, using: preferences, calendar: calendar)
+            result += preferences
+                .expandedTimeline(for: currentPrayer, using: calendar)
+                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
-    }
-}
-
-private extension Array where Element == PrayerAPI.TimelineEntry {
-    func additionalTimelineEntries(entry: PrayerAPI.TimelineEntry, using preferences: Preferences, calendar: Calendar) -> [PrayerAPI.TimelineEntry] {
-        guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return [] }
-        var entries = [PrayerAPI.TimelineEntry]()
-
-        let reminderMinutes = preferences.preAdhanMinutes[currentPrayer.type]
-        if reminderMinutes > 0 && currentPrayer.dateInterval.duration > Double(reminderMinutes) * 60 {
-            entries.append(
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.start - .minutes(reminderMinutes),
-                    prayerDay: entry.prayerDay
-                )
-            )
-        }
-
-        // Add iqama countdown
-        if preferences.isIqamaTimerEnabled, let iqamaTime = preferences.iqamaTimes[currentPrayer, using: calendar] {
-            entries.append(
-                PrayerAPI.TimelineEntry(
-                    date: iqamaTime,
-                    prayerDay: entry.prayerDay
-                )
-            )
-        }
-
-        // Add since prayer adhan
-        if preferences.stopwatchMinutes > 0 && currentPrayer.dateInterval.duration > Double(preferences.stopwatchMinutes) * 60 {
-            entries.append(
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.start + .minutes(preferences.stopwatchMinutes),
-                    prayerDay: entry.prayerDay
-                )
-            )
-        }
-
-        return entries
     }
 }

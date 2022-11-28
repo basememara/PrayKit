@@ -662,6 +662,37 @@ public extension Preferences {
     }
 }
 
+public extension Preferences {
+    func expandedTimeline(for prayerTime: PrayerTime, using calendar: Calendar? = nil) -> [Date] {
+        let calendar = calendar ?? {
+            var current = Calendar.current
+            current.timeZone = lastTimeZone
+            return current
+        }()
+
+        var dates = [prayerTime.dateInterval.start]
+
+        let reminderMinutes = preAdhanMinutes[prayerTime.type]
+        if reminderMinutes > 0 && prayerTime.dateInterval.duration > Double(reminderMinutes) * 60 {
+            dates.append(prayerTime.dateInterval.start - .minutes(reminderMinutes))
+        }
+
+        // Add iqama countdown
+        if isIqamaTimerEnabled, let iqamaTime = iqamaTimes[prayerTime, using: calendar] {
+            dates.append(iqamaTime)
+        }
+
+        // Add since prayer adhan
+        if stopwatchMinutes > 0 && prayerTime.dateInterval.duration > Double(stopwatchMinutes) * 60 {
+            dates.append(prayerTime.dateInterval.start + .minutes(stopwatchMinutes))
+        }
+
+        return dates
+            .removeDuplicates()
+            .sorted()
+    }
+}
+
 // MARK: - Conformances
 
 extension CalculationMethod: UserDefaultsRepresentable {}

@@ -63,7 +63,7 @@ public extension IqamaTimes {
         case .fajr:
             iqamaType = fajr
         case .dhuhr:
-            iqamaType = startTime.isJumuah(using: calendar) ? jumuah ?? dhuhr : dhuhr
+            iqamaType = startTime.isJumuah(using: calendar) ? jumuah : dhuhr
         case .asr:
             iqamaType = asr
         case .maghrib:

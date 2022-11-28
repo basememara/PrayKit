@@ -16,6 +16,7 @@ public struct PrayerTimer: Equatable, Codable {
     public let date: Date
     public let progress: Double
     public let dangerThreshold: Double
+    public let isDangerThreshold: Bool
     public let isJumuah: Bool
     public let localizeAt: Date?
 }
@@ -45,6 +46,8 @@ public extension PrayerTimer {
         var countdownLocalizeAt: Date? = date
         var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
         var type = timerType == .countdown ? nextPrayer.type : currentPrayer.type
+        let progress = countdownDateInterval.progress(at: date).value
+        let dangerThreshold = countdownDateInterval.dangerThreshold(minutes: preAdhanMinutes)
 
         if date.isJumuah(using: calendar) {
             if nextPrayer.type == .dhuhr, let khutbaIqama = iqamaTimes[nextPrayer, using: calendar] {
@@ -65,8 +68,9 @@ public extension PrayerTimer {
         self.type = type
         self.timerType = timerType
         self.date = countdownDate
-        self.progress = countdownDateInterval.progress(at: date).value
-        self.dangerThreshold = countdownDateInterval.dangerThreshold(minutes: preAdhanMinutes)
+        self.progress = progress
+        self.dangerThreshold = dangerThreshold
+        self.isDangerThreshold = progress <= dangerThreshold
         self.isJumuah = date.isJumuah(using: calendar) && type == .dhuhr
         self.localizeAt = countdownLocalizeAt
     }

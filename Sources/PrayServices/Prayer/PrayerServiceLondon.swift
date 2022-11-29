@@ -15,6 +15,7 @@ public struct PrayerServiceLondon: PrayerService {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
+    private let lastDate = Date(year: 2024, month: 1, day: 1)
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager
@@ -36,7 +37,7 @@ public extension PrayerServiceLondon {
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
         // Validate does not go beyond available dates
-        guard date < .now.endOfYear(using: calendar) - .days(1) else {
+        guard date < lastDate ?? .now.endOfYear(using: calendar) else {
             log.error("London prayers not available for '\(date.formatted())'")
             return []
         }
@@ -59,9 +60,18 @@ public extension PrayerServiceLondon {
         }
 
         let tomorrowKey = dateFormatter.string(from: date.tomorrow(using: calendar))
-        guard let tomorrowPrayers = prayerDays[tomorrowKey] else { throw PrayError.invalidTimes }
+        let tomorrowPrayers: PrayerServiceLondon.LondonPrayerTimes?
 
-        guard let originalTomorrowFajrTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.fajr].joined(separator: " ")),
+        if prayerDays.keys.contains(tomorrowKey) {
+            tomorrowPrayers = prayerDays[tomorrowKey]
+        } else {
+            // Handle end of year cross-over
+            let tomorrowYear = calendar.component(.year, from: date.tomorrow(using: calendar))
+            tomorrowPrayers = try await fetch(for: tomorrowYear)[tomorrowKey]
+        }
+
+        guard let tomorrowPrayers,
+              let originalTomorrowFajrTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.fajr].joined(separator: " ")),
               let tomorrowSunriseTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.sunrise].joined(separator: " "))
         else {
             log.error("Could not initialize tomorrow prayer times from London prayer response.")

@@ -21,7 +21,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertEqual(prayerTimer.date, today(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 10))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -30,7 +30,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertEqual(prayerTimer.date, today(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 10))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -39,7 +39,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertEqual(prayerTimer.date, today(hour: 12, minute: 45))
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 45))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -48,7 +48,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .asr)
         XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertEqual(prayerTimer.date, today(hour: 14, minute: 26))
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 14, minute: 26))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -57,7 +57,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .asr)
         XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertEqual(prayerTimer.date, today(hour: 14, minute: 26))
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 14, minute: 26))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 }
@@ -68,7 +68,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertEqual(prayerTimer.date, friday(hour: 13, minute: 30))
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -77,7 +77,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertEqual(prayerTimer.date, friday(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 12, minute: 10))
         XCTAssertNil(prayerTimer.localizeAt)
     }
 
@@ -86,7 +86,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertEqual(prayerTimer.date, friday(hour: 13, minute: 30))
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -95,7 +95,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertEqual(prayerTimer.date, friday(hour: 13, minute: 30))
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 
@@ -104,7 +104,7 @@ extension PrayerTimerTests {
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .asr)
         XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertEqual(prayerTimer.date, friday(hour: 14, minute: 26))
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 14, minute: 26))
         XCTAssertNotNil(prayerTimer.localizeAt)
     }
 }

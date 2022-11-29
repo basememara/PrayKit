@@ -13,7 +13,9 @@ import ZamzamCore
 public struct PrayerTimer: Equatable, Codable {
     public let type: Prayer
     public let timerType: TimerType
-    public let date: Date
+    public let entryDate: Date
+    public let countdownDate: Date
+    public let timeRange: ClosedRange<Date>
     public let progress: Double
     public let dangerThreshold: Double
     public let isDangerThreshold: Bool
@@ -67,7 +69,9 @@ public extension PrayerTimer {
 
         self.type = type
         self.timerType = timerType
-        self.date = countdownDate
+        self.entryDate = date
+        self.countdownDate = countdownDate
+        self.timeRange = min(date, countdownDate)...max(date, countdownDate)
         self.progress = progress
         self.dangerThreshold = dangerThreshold
         self.isDangerThreshold = progress <= dangerThreshold
@@ -77,28 +81,51 @@ public extension PrayerTimer {
 }
 
 public extension PrayerTimer {
-    init?(at date: Date, using prayerDay: PrayerDay?, preferences: Preferences, calendar: Calendar? = nil) {
-        guard let currentPrayer = prayerDay?.current(at: date),
-              let nextPrayer = prayerDay?.next(at: date, sunriseAfterIsha: preferences.sunriseAfterIsha)
+    init?(
+        at date: Date,
+        using prayerDay: PrayerDay,
+        iqamaTimes: IqamaTimes,
+        isIqamaTimerEnabled: Bool,
+        stopwatchMinutes: Int,
+        preAdhanMinutes: PreAdhanMinutes,
+        sunriseAfterIsha: Bool,
+        timeZone: TimeZone
+    ) {
+        guard let currentPrayer = prayerDay.current(at: date),
+              let nextPrayer = prayerDay.next(at: date, sunriseAfterIsha: sunriseAfterIsha)
         else {
             return nil
         }
 
-        let calendar = calendar ?? {
-            var current = Calendar.current
-            current.timeZone = preferences.lastTimeZone
-            return current
-        }()
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
 
         self.init(
             currentPrayer: currentPrayer,
             nextPrayer: nextPrayer,
+            iqamaTimes: iqamaTimes,
+            isIqamaTimerEnabled: isIqamaTimerEnabled,
+            stopwatchMinutes: stopwatchMinutes,
+            preAdhanMinutes: preAdhanMinutes[currentPrayer.type],
+            calendar: calendar,
+            date: date
+        )
+    }
+}
+
+public extension PrayerTimer {
+    init?(at date: Date, using prayerDay: PrayerDay?, preferences: Preferences) {
+        guard let prayerDay else { return nil }
+
+        self.init(
+            at: date,
+            using: prayerDay,
             iqamaTimes: preferences.iqamaTimes,
             isIqamaTimerEnabled: preferences.isIqamaTimerEnabled,
             stopwatchMinutes: preferences.stopwatchMinutes,
-            preAdhanMinutes: preferences.preAdhanMinutes[currentPrayer.type],
-            calendar: calendar,
-            date: date
+            preAdhanMinutes: preferences.preAdhanMinutes,
+            sunriseAfterIsha: preferences.sunriseAfterIsha,
+            timeZone: preferences.lastTimeZone
         )
     }
 }

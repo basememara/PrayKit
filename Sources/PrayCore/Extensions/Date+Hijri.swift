@@ -12,24 +12,33 @@ import ZamzamCore
 public extension Date {
     func hijriString(
         for prayerDay: PrayerDay?,
-        using preferences: Preferences,
-        timeZone: TimeZone? = nil,
+        hijriDayOffset: Int,
+        autoIncrementHijri: Bool,
+        timeZone: TimeZone,
         template: String = "yyyyMMMMd"
     ) -> String {
         hijriString(
             template: template,
-            offSet: preferences.hijriDayOffset(for: prayerDay, at: self),
-            timeZone: timeZone ?? preferences.lastTimeZone
+            offSet: self.hijriDayOffset(
+                for: prayerDay,
+                hijriDayOffset: hijriDayOffset,
+                autoIncrementHijri: autoIncrementHijri
+            ),
+            timeZone: timeZone
         )
     }
 }
 
-public extension Preferences {
-    func hijriDayOffset(for prayerDay: PrayerDay?, at time: Date) -> Int {
+public extension Date {
+    func hijriDayOffset(
+        for prayerDay: PrayerDay?,
+        hijriDayOffset: Int,
+        autoIncrementHijri: Bool
+    ) -> Int {
         guard autoIncrementHijri,
-              let prayerTime = prayerDay?.current(at: time),
+              let prayerTime = prayerDay?.current(at: self),
               [.maghrib, .isha].contains(prayerTime.type),
-              prayerTime.dateInterval.start.inSameDay(as: time)
+              prayerTime.dateInterval.start.inSameDay(as: self)
         else {
             return hijriDayOffset
         }

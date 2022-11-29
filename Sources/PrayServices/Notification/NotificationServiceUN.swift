@@ -53,16 +53,12 @@ public extension NotificationServiceUN {
             return
         }
 
-        let dateInterval = DateInterval(
-            start: .now,
-            end: .now + .weeks(1)
-        )
-
-        let prayerRequestHash = PrayerRequestHash(
-            request: request,
-            dateInterval: dateInterval,
-            preferences: preferences
-        )
+        let dateInterval = DateInterval(start: .now, end: .now + .weeks(1))
+        let prayerRequestHash = PrayerRequestHash(request: request, dateInterval: dateInterval, preferences: preferences)
+        let iqamaUpdateIntervalIdentifier = "update-interval-iqama-reminder"
+        let iqamaUpdateIntervalOriginAt = (await userNotification.get(withIdentifier: iqamaUpdateIntervalIdentifier)?
+            .content.userInfo["origin_at"] as? TimeInterval)
+            .map { Date(timeIntervalSince1970: $0) } ?? .now
 
         guard await userNotification.get(withIdentifier: "calibrate")?.hasChanged(from: prayerRequestHash) ?? true else {
             log.info("Request is unchanged from last execution, exit schedule prayers")
@@ -98,17 +94,8 @@ public extension NotificationServiceUN {
 
         log.debug("Removed pending notifications to recreate fresh")
 
-        let calendar = Calendar(
-            identifier: .gregorian,
-            timeZone: preferences.lastTimeZone
-        )
-
-        let timeFormatStyle = Date.FormatStyle(
-            date: .omitted,
-            time: .shortened,
-            timeZone: preferences.lastTimeZone
-        )
-
+        let calendar = Calendar(identifier: .gregorian, timeZone: preferences.lastTimeZone)
+        let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: preferences.lastTimeZone)
         var lastScheduledDate = dateInterval.end
         var counter = 58 // Unofficial limit for scheduling local notifications
         #if !os(macOS)
@@ -291,6 +278,40 @@ public extension NotificationServiceUN {
                     userNotification.remove(withIdentifier: iqamaIdentifier)
                 }
             }
+        }
+
+        // Add iqama update interval if applicable
+        var iqamaUpdateInterval: TimeInterval?
+        switch (preferences.iqamaReminders.updateInterval, preferences.iqamaTimes.isEmpty) {
+        case (.weekly, false):
+            iqamaUpdateInterval = 7 * 24 * 3600
+        case (.biweekly, false):
+            iqamaUpdateInterval = 14 * 24 * 3600
+        case (.monthly, false):
+            iqamaUpdateInterval = 30 * 24 * 3600
+        case (.bimonthly, false):
+            iqamaUpdateInterval = 60 * 24 * 3600
+        case (_, true), (.off, _):
+            userNotification.remove(withIdentifier: iqamaUpdateIntervalIdentifier)
+        }
+
+        if let timeInterval = iqamaUpdateInterval {
+            let date = -iqamaUpdateIntervalOriginAt.timeIntervalSinceNow < timeInterval ? iqamaUpdateIntervalOriginAt : .now
+
+            userNotification.add(
+                date: date.addingTimeInterval(timeInterval),
+                body: "Check masjid iqama times",
+                interruptionLevel: .passive,
+                identifier: iqamaUpdateIntervalIdentifier,
+                category: NotificationCategory.reminder.rawValue,
+                userInfo: ["origin_at": iqamaUpdateIntervalOriginAt.timeIntervalSince1970]
+            ) {
+                guard let error = $0 else { return }
+                log.error("Failed to create a notifications for \"\(iqamaUpdateIntervalIdentifier)\"", error: error)
+            }
+
+            // Update counter
+            counter -= 1
         }
 
         // Ensure more prayer notifications are schedueled beyond limit

@@ -41,7 +41,14 @@ public extension PrayerManager {
 
     func fetch(from date: Date, expanded: Expanded, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerAPI.TimelineEntry] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
-        return try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, seed: [])
+        var entries = try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, seed: [])
+
+        // Insert specified date into timeline
+        guard let insertIndex = entries.lastIndex(where: { $0.date < date }) else { return entries }
+        let newEntry = PrayerAPI.TimelineEntry(date: date, prayerDay: entries[insertIndex].prayerDay)
+        entries.insert(newEntry, at: insertIndex)
+
+        return entries
     }
 }
 

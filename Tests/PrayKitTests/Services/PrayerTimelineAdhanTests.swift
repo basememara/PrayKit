@@ -80,7 +80,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        XCTAssertEqual(timeline.count, 111)
+        XCTAssertEqual(timeline.count, 112)
         XCTAssertEqual(timeline[0, .fajr]?.dateInterval.start, time("05:46"))
         XCTAssertEqual(timeline[0, .sunrise]?.dateInterval.start, time("07:05"))
         XCTAssertEqual(timeline[0, .dhuhr]?.dateInterval.start, time("12:32"))
@@ -174,7 +174,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        XCTAssertEqual(timeline.count, 111)
+        XCTAssertEqual(timeline.count, 112)
         XCTAssertEqual(timeline[0, .fajr]?.dateInterval.start, time("05:21"))
         XCTAssertEqual(timeline[0, .sunrise]?.dateInterval.start, time("06:58"))
         XCTAssertEqual(timeline[0, .dhuhr]?.dateInterval.start, time("12:19"))
@@ -251,7 +251,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        XCTAssertEqual(timeline.count, 30)
+        XCTAssertEqual(timeline.count, 31)
         XCTAssertEqual(timeline[0, .fajr]?.dateInterval.start, time("05:38"))
         XCTAssertEqual(timeline[0, .sunrise]?.dateInterval.start, time("06:59"))
         XCTAssertEqual(timeline[0, .dhuhr]?.dateInterval.start, time("13:22"))

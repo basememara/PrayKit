@@ -113,11 +113,7 @@ private extension PrayerManager {
             return seed
         }
 
-        let currentEntry = PrayerAPI.TimelineEntry(
-            date: currentPrayer.dateInterval.start,
-            prayerDay: response
-        )
-
+        let currentEntry = PrayerAPI.TimelineEntry(date: currentPrayer.dateInterval.start, prayerDay: response)
         var entries = response.times
             .filter { $0.dateInterval.start >= currentPrayer.dateInterval.end }
             .reduce(into: [currentEntry]) { result, next in

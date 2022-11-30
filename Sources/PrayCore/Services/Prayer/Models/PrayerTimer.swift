@@ -17,7 +17,7 @@ public struct PrayerTimer: Equatable, Codable {
     public let countdownDate: Date
     public let timeRange: ClosedRange<Date>
     public let timeRemaining: TimeInterval
-    public let progress: Double
+    public let progressRemaining: Double
     public let dangerThreshold: Double
     public let isDangerThreshold: Bool
     public let isJumuah: Bool
@@ -35,22 +35,21 @@ public extension PrayerTimer {
         preAdhanMinutes: Int,
         calendar: Calendar
     ) {
-        let countdownDateInterval = currentPrayer.dateInterval
         var iqamaTime: Date?
 
         if isIqamaTimerEnabled,
            let currentIqama = iqamaTimes[currentPrayer, using: calendar],
-           countdownDateInterval.start.isIqamaTimer(at: date, iqamaTime: currentIqama) {
+           currentPrayer.dateInterval.start.isIqamaTimer(at: date, iqamaTime: currentIqama) {
             iqamaTime = currentIqama
         }
 
-        let isStopwatchTimer = countdownDateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
-        var countdownDate = isStopwatchTimer ? countdownDateInterval.start : iqamaTime != nil ? iqamaTime ?? .now : countdownDateInterval.end
+        let isStopwatchTimer = currentPrayer.dateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
+        var countdownDate = isStopwatchTimer ? currentPrayer.dateInterval.start : iqamaTime != nil ? iqamaTime ?? .now : currentPrayer.dateInterval.end
         var countdownLocalizeAt: Date? = date
         var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
         var type = timerType == .countdown ? nextPrayer.type : currentPrayer.type
-        let progress = countdownDateInterval.progress(at: date).value
-        let dangerThreshold = countdownDateInterval.dangerThreshold(minutes: preAdhanMinutes)
+        let progressRemaining = 1 - currentPrayer.dateInterval.progress(at: date).value
+        let dangerThreshold = currentPrayer.dateInterval.dangerThreshold(minutes: preAdhanMinutes)
 
         if date.isJumuah(using: calendar) {
             if nextPrayer.type == .dhuhr, let khutbaIqama = iqamaTimes[nextPrayer, using: calendar] {
@@ -74,9 +73,9 @@ public extension PrayerTimer {
         self.countdownDate = countdownDate
         self.timeRange = min(date, countdownDate)...max(date, countdownDate)
         self.timeRemaining = countdownDate.timeIntervalSince(date)
-        self.progress = progress
+        self.progressRemaining = progressRemaining
         self.dangerThreshold = dangerThreshold
-        self.isDangerThreshold = progress <= dangerThreshold
+        self.isDangerThreshold = progressRemaining <= dangerThreshold
         self.isJumuah = date.isJumuah(using: calendar) && type == .dhuhr
         self.localizeAt = countdownLocalizeAt
     }

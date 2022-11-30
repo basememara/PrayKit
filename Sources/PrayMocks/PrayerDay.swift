@@ -231,3 +231,21 @@ public extension PrayerDay {
         )
     }
 }
+
+public extension PrayerDay {
+    func mockDates() -> (
+        normal: Date,
+        danger: Date,
+        distant: Date,
+        stopwatch: Date,
+        iqama: Date
+    ) {
+        (
+            (current()?.dateInterval.end ?? .now) - .minutes(175),
+            (current()?.dateInterval.end ?? .now) - .minutes(5),
+            (times[.sunrise]?.dateInterval.start ?? .now) + .minutes(10),
+            (current()?.dateInterval.start ?? .now) + .minutes(3),
+            (times[.maghrib]?.dateInterval.start ?? .now) + .minutes(19)
+        )
+    }
+}

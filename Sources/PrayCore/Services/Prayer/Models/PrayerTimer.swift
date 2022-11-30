@@ -11,9 +11,9 @@ import Foundation.NSDateInterval
 import ZamzamCore
 
 public struct PrayerTimer: Equatable, Codable {
+    public let date: Date
     public let type: Prayer
     public let timerType: TimerType
-    public let entryDate: Date
     public let countdownDate: Date
     public let timeRange: ClosedRange<Date>
     public let timeRemaining: TimeInterval
@@ -26,14 +26,14 @@ public struct PrayerTimer: Equatable, Codable {
 
 public extension PrayerTimer {
     init(
+        date: Date,
         currentPrayer: PrayerTime,
         nextPrayer: PrayerTime,
         iqamaTimes: IqamaTimes,
         isIqamaTimerEnabled: Bool,
         stopwatchMinutes: Int,
         preAdhanMinutes: Int,
-        calendar: Calendar,
-        date: Date
+        calendar: Calendar
     ) {
         let countdownDateInterval = currentPrayer.dateInterval
         var iqamaTime: Date?
@@ -68,9 +68,9 @@ public extension PrayerTimer {
             }
         }
 
+        self.date = date
         self.type = type
         self.timerType = timerType
-        self.entryDate = date
         self.countdownDate = countdownDate
         self.timeRange = min(date, countdownDate)...max(date, countdownDate)
         self.timeRemaining = countdownDate.timeIntervalSince(date)
@@ -103,14 +103,14 @@ public extension PrayerTimer {
         calendar.timeZone = timeZone
 
         self.init(
+            date: date,
             currentPrayer: currentPrayer,
             nextPrayer: nextPrayer,
             iqamaTimes: iqamaTimes,
             isIqamaTimerEnabled: isIqamaTimerEnabled,
             stopwatchMinutes: stopwatchMinutes,
             preAdhanMinutes: preAdhanMinutes[currentPrayer.type],
-            calendar: calendar,
-            date: date
+            calendar: calendar
         )
     }
 }

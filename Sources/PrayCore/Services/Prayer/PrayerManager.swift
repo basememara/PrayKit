@@ -39,7 +39,7 @@ public extension PrayerManager {
         case none
     }
 
-    func fetch(from date: Date, expanded: Expanded, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerAPI.TimelineEntry] {
+    func fetch(from date: Date, expanded: Expanded = .none, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerAPI.TimelineEntry] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         var entries = try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, seed: [])
 

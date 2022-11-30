@@ -16,6 +16,7 @@ public struct PrayerTimer: Equatable, Codable {
     public let entryDate: Date
     public let countdownDate: Date
     public let timeRange: ClosedRange<Date>
+    public let timeRemaining: TimeInterval
     public let progress: Double
     public let dangerThreshold: Double
     public let isDangerThreshold: Bool
@@ -72,6 +73,7 @@ public extension PrayerTimer {
         self.entryDate = date
         self.countdownDate = countdownDate
         self.timeRange = min(date, countdownDate)...max(date, countdownDate)
+        self.timeRemaining = countdownDate.timeIntervalSince(date)
         self.progress = progress
         self.dangerThreshold = dangerThreshold
         self.isDangerThreshold = progress <= dangerThreshold

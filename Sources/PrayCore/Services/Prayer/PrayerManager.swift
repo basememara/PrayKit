@@ -39,14 +39,15 @@ public extension PrayerManager {
         case none
     }
 
-    func fetch(from date: Date, expanded: Expanded = .none, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerAPI.TimelineEntry] {
+    func fetch(from date: Date, expanded: Expanded = .none, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerTimer] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         var entries = try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, seed: [])
 
         // Insert specified date into timeline
-        guard let insertIndex = entries.lastIndex(where: { $0.date < date }) else { return entries }
-        let newEntry = PrayerAPI.TimelineEntry(date: date, prayerDay: entries[insertIndex].prayerDay)
-        entries.insert(newEntry, at: insertIndex)
+        if let insertIndex = entries.lastIndex(where: { $0.date < date }),
+           let newEntry = PrayerTimer(at: date, using: entries[insertIndex].prayerDay, preferences: preferences) {
+            entries.insert(newEntry, at: insertIndex)
+        }
 
         return entries
     }
@@ -104,27 +105,31 @@ private extension PrayerManager {
         limit: Int,
         using calendar: Calendar,
         with request: PrayerAPI.Request,
-        seed: [PrayerAPI.TimelineEntry]
-    ) async throws -> [PrayerAPI.TimelineEntry] {
-        let response: PrayerDay
+        seed: [PrayerTimer]
+    ) async throws -> [PrayerTimer] {
+        let prayerDay: PrayerDay
 
         do {
-            response = try await fetch(for: date, using: calendar, with: request)
+            prayerDay = try await fetch(for: date, using: calendar, with: request)
         } catch {
             log.error("Could not fetch prayers for \(date, formatter: .zuluFormatter)", error: error)
             return seed
         }
 
-        guard let currentPrayer = response.current(at: date) else {
+        guard let currentPrayer = prayerDay.current(at: date) else {
             log.error("Could not retrieve current prayer from prayer day for \(date, formatter: .zuluFormatter)")
             return seed
         }
 
-        let currentEntry = PrayerAPI.TimelineEntry(date: currentPrayer.dateInterval.start, prayerDay: response)
-        var entries = response.times
+        guard let currentEntry = PrayerTimer(at: currentPrayer.dateInterval.start, using: prayerDay, preferences: preferences) else {
+            log.error("Could not initialize prayer timer from prayer day for \(date, formatter: .zuluFormatter)")
+            return seed
+        }
+
+        var entries = prayerDay.times
             .filter { $0.dateInterval.start >= currentPrayer.dateInterval.end }
             .reduce(into: [currentEntry]) { result, next in
-                let entry = PrayerAPI.TimelineEntry(date: next.dateInterval.start, prayerDay: response)
+                guard let entry = PrayerTimer(at: next.dateInterval.start, using: prayerDay, preferences: preferences) else { return }
                 result.append(entry)
             }
 
@@ -140,7 +145,7 @@ private extension PrayerManager {
         }
 
         let resultSeed = seed + entries
-        guard resultSeed.count < limit, let nextDate = response.tomorrow.first?.dateInterval.start else {
+        guard resultSeed.count < limit, let nextDate = prayerDay.tomorrow.first?.dateInterval.start else {
             return resultSeed.prefix(limit).array
         }
 
@@ -158,7 +163,7 @@ private extension PrayerManager {
 
 // MARK: - Extensions
 
-private extension Array where Element == PrayerAPI.TimelineEntry {
+private extension Array where Element == PrayerTimer {
     func expanded(using preferences: Preferences, calendar: Calendar, progressIntervals: TimeInterval) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
@@ -169,85 +174,86 @@ private extension Array where Element == PrayerAPI.TimelineEntry {
                     from: currentPrayer.dateInterval.start.timeIntervalSince1970,
                     to: currentPrayer.dateInterval.end.timeIntervalSince1970,
                     by: currentPrayer.dateInterval.duration / progressIntervals
-                ).map { timeInterval in
-                    PrayerAPI.TimelineEntry(
-                        date: Date(timeIntervalSince1970: timeInterval),
-                        prayerDay: entry.prayerDay
+                ).compactMap { timeInterval in
+                    PrayerTimer(
+                        at: Date(timeIntervalSince1970: timeInterval),
+                        using: entry.prayerDay,
+                        preferences: preferences
                     )
                 }
-            } else {
-                result.append(
-                    PrayerAPI.TimelineEntry(
-                        date: currentPrayer.dateInterval.start,
-                        prayerDay: entry.prayerDay
-                    )
-                )
+            } else if let prayerTimer = PrayerTimer(at: currentPrayer.dateInterval.start, using: entry.prayerDay, preferences: preferences) {
+                result.append(prayerTimer)
             }
 
             result += preferences
                 .expandedTimeline(for: currentPrayer, using: calendar)
-                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
+                .compactMap { PrayerTimer(at: $0, using: entry.prayerDay, preferences: preferences) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
     }
 }
 
-private extension Array where Element == PrayerAPI.TimelineEntry {
+private extension Array where Element == PrayerTimer {
     func expandedWithFinalHour(using preferences: Preferences, calendar: Calendar) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
             result += [
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.start,
-                    prayerDay: entry.prayerDay
+                PrayerTimer(
+                    at: currentPrayer.dateInterval.start,
+                    using: entry.prayerDay,
+                    preferences: preferences
                 ),
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.end - .hours(1),
-                    prayerDay: entry.prayerDay
+                PrayerTimer(
+                    at: currentPrayer.dateInterval.end - .hours(1),
+                    using: entry.prayerDay,
+                    preferences: preferences
                 )
-            ]
+            ].compactMap { $0 }
 
             result += preferences
                 .expandedTimeline(for: currentPrayer, using: calendar)
-                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
+                .compactMap { PrayerTimer(at: $0, using: entry.prayerDay, preferences: preferences) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
     }
 }
 
-private extension Array where Element == PrayerAPI.TimelineEntry {
+private extension Array where Element == PrayerTimer {
     func expandedHourly(using preferences: Preferences, calendar: Calendar) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
             result += [
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.start,
-                    prayerDay: entry.prayerDay
+                PrayerTimer(
+                    at: currentPrayer.dateInterval.start,
+                    using: entry.prayerDay,
+                    preferences: preferences
                 ),
-                PrayerAPI.TimelineEntry(
-                    date: currentPrayer.dateInterval.end - .hours(1),
-                    prayerDay: entry.prayerDay
+                PrayerTimer(
+                    at: currentPrayer.dateInterval.end - .hours(1),
+                    using: entry.prayerDay,
+                    preferences: preferences
                 )
-            ]
+            ].compactMap { $0 }
 
             result += stride(
                 from: currentPrayer.dateInterval.start.timeIntervalSince1970,
                 to: currentPrayer.dateInterval.end.timeIntervalSince1970,
                 by: 3600
-            ).map { timeInterval in
-                PrayerAPI.TimelineEntry(
-                    date: Date(timeIntervalSince1970: timeInterval),
-                    prayerDay: entry.prayerDay
+            ).compactMap { timeInterval in
+                PrayerTimer(
+                    at: Date(timeIntervalSince1970: timeInterval),
+                    using: entry.prayerDay,
+                    preferences: preferences
                 )
             }
 
             result += preferences
                 .expandedTimeline(for: currentPrayer, using: calendar)
-                .map { PrayerAPI.TimelineEntry(date: $0, prayerDay: entry.prayerDay) }
+                .compactMap { PrayerTimer(at: $0, using: entry.prayerDay, preferences: preferences) }
         }
         .removeDuplicates()
         .sorted(by: \.date)

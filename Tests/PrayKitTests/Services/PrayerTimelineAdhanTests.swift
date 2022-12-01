@@ -291,7 +291,7 @@ private extension PrayerTimelineAdhanTests {
         jurisprudence: Madhab = .standard,
         elevation: ElevationRule? = nil,
         filter: PrayerFilter = .all
-    ) async throws -> ([PrayerAPI.TimelineEntry], TimeZone, Date) {
+    ) async throws -> ([PrayerTimer], TimeZone, Date) {
         let coordinates = Coordinates(
             latitude: latitude,
             longitude: longitude
@@ -318,7 +318,7 @@ private extension PrayerTimelineAdhanTests {
     }
 }
 
-private extension Array where Element == PrayerAPI.TimelineEntry {
+private extension Array where Element == PrayerTimer {
     subscript(_ index: Int, _ prayer: Prayer) -> PrayerTime? {
         self[index].prayerDay.times[prayer]
     }

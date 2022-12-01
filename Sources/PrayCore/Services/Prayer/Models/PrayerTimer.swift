@@ -17,9 +17,10 @@ public struct PrayerTimer: Equatable, Codable {
     public let countdownDate: Date
     public let timeRange: ClosedRange<Date>
     public let timeRemaining: TimeInterval
+    public let timeDuration: TimeInterval
     public let progressRemaining: Double
-    public let dangerThreshold: Double
-    public let isDangerThreshold: Bool
+    public let dangerZone: Double
+    public let isDangerZone: Bool
     public let isJumuah: Bool
     public let localizeAt: Date?
 }
@@ -35,47 +36,70 @@ public extension PrayerTimer {
         preAdhanMinutes: Int,
         calendar: Calendar
     ) {
+        // Declare iqama time if applicable
         var iqamaTime: Date?
-
         if isIqamaTimerEnabled,
            let currentIqama = iqamaTimes[currentPrayer, using: calendar],
            currentPrayer.dateInterval.start.isIqamaTimer(at: date, iqamaTime: currentIqama) {
             iqamaTime = currentIqama
         }
 
-        let isStopwatchTimer = currentPrayer.dateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
-        var countdownDate = isStopwatchTimer ? currentPrayer.dateInterval.start : iqamaTime != nil ? iqamaTime ?? .now : currentPrayer.dateInterval.end
-        var countdownLocalizeAt: Date? = date
-        var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
-        var type = timerType == .countdown ? nextPrayer.type : currentPrayer.type
-        let progressRemaining = 1 - currentPrayer.dateInterval.progress(at: date).value
-        let dangerThreshold = currentPrayer.dateInterval.dangerThreshold(minutes: preAdhanMinutes)
+        // Determine stopwatch state
+        let isStopwatchTimer: Bool
+        switch (
+            currentPrayer.dateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes),
+            currentPrayer.type,
+            iqamaTime
+        ) {
+        case (_, .sunrise, _):
+            isStopwatchTimer = false
+        case (_, .maghrib, .some):
+            isStopwatchTimer = false
+        case let (value, _, _):
+            isStopwatchTimer = value
+        }
 
-        if date.isJumuah(using: calendar) {
-            if nextPrayer.type == .dhuhr, let khutbaIqama = iqamaTimes[nextPrayer, using: calendar] {
+        // Set countdown details
+        var currentDateInterval = currentPrayer.dateInterval
+        var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
+        var prayerTime = [.stopwatch, .iqama].contains(timerType) ? currentPrayer : nextPrayer
+        var countdownDate = timerType == .iqama ? iqamaTime ?? .now : prayerTime.dateInterval.start
+        var countdownLocalizeAt: Date? = date
+
+        // Handle jumuah if appliable
+        if date.isJumuah(using: calendar),
+           [currentPrayer.type, nextPrayer.type].contains(.dhuhr),
+           let khutbaIqama = iqamaTimes[currentPrayer.type == .dhuhr ? currentPrayer : nextPrayer, using: calendar] {
+            if isStopwatchTimer && currentPrayer.type == .dhuhr {
+                currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: khutbaIqama)
+                countdownLocalizeAt = nil
+            } else if khutbaIqama.isStopwatchTimer(at: date, minutes: stopwatchMinutes) {
+                currentDateInterval = DateInterval(start: khutbaIqama, end: nextPrayer.dateInterval.start)
+                prayerTime = currentPrayer
+                countdownDate = khutbaIqama
+                timerType = .stopwatch
+            } else if prayerTime.type == .asr {
+                currentDateInterval = DateInterval(start: khutbaIqama, end: nextPrayer.dateInterval.start)
+            } else {
+                currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: khutbaIqama)
                 countdownDate = khutbaIqama
                 timerType = .iqama
-                type = nextPrayer.type
-            } else if currentPrayer.type == .dhuhr {
-                if isStopwatchTimer {
-                    countdownLocalizeAt = nil
-                } else if let khutbaIqama = iqamaTimes[currentPrayer, using: calendar], khutbaIqama.isStopwatchTimer(at: date, minutes: stopwatchMinutes) {
-                    countdownDate = khutbaIqama
-                    timerType = .stopwatch
-                    type = currentPrayer.type
-                }
             }
         }
 
+        let progress = currentDateInterval.progress(at: date).value
+        let dangerZone = min(1, Double(max(preAdhanMinutes, 60) * 60) / currentDateInterval.duration) // Pre-adhan zone or less than an hour
+
         self.date = date
-        self.type = type
+        self.type = prayerTime.type
         self.timerType = timerType
         self.countdownDate = countdownDate
         self.timeRange = min(date, countdownDate)...max(date, countdownDate)
         self.timeRemaining = countdownDate.timeIntervalSince(date)
-        self.progressRemaining = progressRemaining
-        self.dangerThreshold = dangerThreshold
-        self.isDangerThreshold = progressRemaining <= dangerThreshold
+        self.timeDuration = currentDateInterval.duration
+        self.progressRemaining = 1 - progress
+        self.dangerZone = dangerZone
+        self.isDangerZone = timerType != .stopwatch ? progressRemaining <= dangerZone : false
         self.isJumuah = date.isJumuah(using: calendar) && type == .dhuhr
         self.localizeAt = countdownLocalizeAt
     }
@@ -152,13 +176,7 @@ private extension Date {
 
     /// Determines if the prayer is within the iqama timer threshold with a small buffer.
     func isIqamaTimer(at date: Date, iqamaTime: Date) -> Bool {
-        date.isBetween(self - 2, iqamaTime - 10)
-    }
-}
-
-private extension DateInterval {
-    /// Determines if the time is within the danger zone of running out of time.
-    func dangerThreshold(minutes: Int) -> Double {
-        max(1 - (duration - Double(minutes * 60)) / duration, 0.25)
+        guard self < iqamaTime else { return false }
+        return date.isBetween(self - 2, iqamaTime - 10)
     }
 }

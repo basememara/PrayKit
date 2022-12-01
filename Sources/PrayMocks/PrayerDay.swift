@@ -61,7 +61,7 @@ public extension PrayerDay {
                     type: .isha,
                     dateInterval: DateInterval(
                         start: calendar.date(bySettingHour: times[5].hour, minute: times[5].minute, second: 0, of: date) ?? .distantPast,
-                        end: calendar.date(bySettingHour: times[6].hour, minute: times[6].minute, second: 0, of: date.tomorrow(using: calendar)) ?? .distantFuture
+                        end: calendar.date(bySettingHour: times[0].hour, minute: times[0].minute, second: 0, of: date.tomorrow(using: calendar)) ?? .distantFuture
                     )
                 ),
                 PrayerTime(
@@ -130,7 +130,7 @@ public extension PrayerDay {
                     type: .isha,
                     dateInterval: DateInterval(
                         start: calendar.date(bySettingHour: times[5].hour, minute: times[5].minute, second: 0, of: date.yesterday(using: calendar)) ?? .distantPast,
-                        end: calendar.date(bySettingHour: times[6].hour, minute: times[6].minute, second: 0, of: date) ?? .distantFuture
+                        end: calendar.date(bySettingHour: times[0].hour, minute: times[0].minute, second: 0, of: date) ?? .distantFuture
                     )
                 ),
                 PrayerTime(
@@ -199,7 +199,7 @@ public extension PrayerDay {
                     type: .isha,
                     dateInterval: DateInterval(
                         start: calendar.date(bySettingHour: times[5].hour, minute: times[5].minute, second: 0, of: date.tomorrow(using: calendar)) ?? .distantPast,
-                        end: calendar.date(bySettingHour: times[6].hour, minute: times[6].minute, second: 0, of: date.tomorrow(using: calendar) + .days(1, calendar)) ?? .distantFuture
+                        end: calendar.date(bySettingHour: times[0].hour, minute: times[0].minute, second: 0, of: date.tomorrow(using: calendar) + .days(1, calendar)) ?? .distantFuture
                     )
                 ),
                 PrayerTime(

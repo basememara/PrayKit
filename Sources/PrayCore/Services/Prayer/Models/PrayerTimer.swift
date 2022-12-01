@@ -193,3 +193,11 @@ private extension Date {
         return date.isBetween(self - 2, iqamaTime - 10)
     }
 }
+
+// MARK: - Conformances
+
+#if canImport(WidgetKit)
+import WidgetKit
+
+extension PrayerTimer: TimelineEntry {}
+#endif

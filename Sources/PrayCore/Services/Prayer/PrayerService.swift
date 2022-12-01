@@ -82,15 +82,3 @@ public extension PrayerAPI {
         }
     }
 }
-
-public extension PrayerAPI {
-    struct TimelineEntry: Equatable, Codable {
-        public let date: Date
-        public let prayerDay: PrayerDay
-
-        public init(date: Date, prayerDay: PrayerDay) {
-            self.date = date
-            self.prayerDay = prayerDay
-        }
-    }
-}

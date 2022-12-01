@@ -24,6 +24,36 @@ public struct PrayerTimer: Equatable, Codable {
     public let isDangerZone: Bool
     public let isJumuah: Bool
     public let localizeAt: Date?
+
+    public init(
+        date: Date,
+        type: Prayer,
+        timerType: PrayerTimer.TimerType,
+        prayerDay: PrayerDay,
+        countdownDate: Date,
+        timeRange: ClosedRange<Date>,
+        timeRemaining: TimeInterval,
+        timeDuration: TimeInterval,
+        progressRemaining: Double,
+        dangerZone: Double,
+        isDangerZone: Bool,
+        isJumuah: Bool,
+        localizeAt: Date? = nil
+    ) {
+        self.date = date
+        self.type = type
+        self.timerType = timerType
+        self.prayerDay = prayerDay
+        self.countdownDate = countdownDate
+        self.timeRange = timeRange
+        self.timeRemaining = timeRemaining
+        self.timeDuration = timeDuration
+        self.progressRemaining = progressRemaining
+        self.dangerZone = dangerZone
+        self.isDangerZone = isDangerZone
+        self.isJumuah = isJumuah
+        self.localizeAt = localizeAt
+    }
 }
 
 public extension PrayerTimer {
@@ -99,21 +129,25 @@ public extension PrayerTimer {
         }
 
         let progress = currentDateInterval.progress(at: date).value
+        let progressRemaining = 1 - progress
         let dangerZone = min(1, Double(max(preAdhanMinutes, 60) * 60) / currentDateInterval.duration) // Pre-adhan zone or less than an hour
+        let isJumuah = date.isJumuah(using: calendar) && prayerTime.type == .dhuhr
 
-        self.date = date
-        self.type = prayerTime.type
-        self.timerType = timerType
-        self.prayerDay = prayerDay
-        self.countdownDate = countdownDate
-        self.timeRange = min(date, countdownDate)...max(date, countdownDate)
-        self.timeRemaining = countdownDate.timeIntervalSince(date)
-        self.timeDuration = currentDateInterval.duration
-        self.progressRemaining = 1 - progress
-        self.dangerZone = dangerZone
-        self.isDangerZone = timerType != .stopwatch ? progressRemaining <= dangerZone : false
-        self.isJumuah = date.isJumuah(using: calendar) && type == .dhuhr
-        self.localizeAt = countdownLocalizeAt
+        self.init(
+            date: date,
+            type: prayerTime.type,
+            timerType: timerType,
+            prayerDay: prayerDay,
+            countdownDate: countdownDate,
+            timeRange: min(date, countdownDate)...max(date, countdownDate),
+            timeRemaining: countdownDate.timeIntervalSince(date),
+            timeDuration: currentDateInterval.duration,
+            progressRemaining: 1 - progress,
+            dangerZone: dangerZone,
+            isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
+            isJumuah: isJumuah,
+            localizeAt: countdownLocalizeAt
+        )
     }
 }
 
@@ -157,41 +191,5 @@ private extension Date {
     func isIqamaTimer(at date: Date, iqamaTime: Date) -> Bool {
         guard self < iqamaTime else { return false }
         return date.isBetween(self - 2, iqamaTime - 10)
-    }
-}
-
-public extension PrayerTimer {
-    static func placeholder(from prayerDay: PrayerDay) -> PrayerTimer {
-        let date = Date.now
-
-        guard let prayerTimer = PrayerTimer(
-            at: date,
-            using: prayerDay,
-            iqamaTimes: IqamaTimes(),
-            isIqamaTimerEnabled: false,
-            stopwatchMinutes: 0,
-            preAdhanMinutes: PreAdhanMinutes(rawValue: [:]),
-            sunriseAfterIsha: false,
-            timeZone: .current
-        ) else {
-            let countdownDate = Date.now + .hours(1)
-            return PrayerTimer(
-                date: date,
-                type: .asr,
-                timerType: .countdown,
-                prayerDay: prayerDay,
-                countdownDate: countdownDate,
-                timeRange: date...countdownDate,
-                timeRemaining: countdownDate.timeIntervalSince(date),
-                timeDuration: DateInterval(start: date, end: countdownDate).duration,
-                progressRemaining: 0.5,
-                dangerZone: 0.25,
-                isDangerZone: false,
-                isJumuah: false,
-                localizeAt: nil
-            )
-        }
-
-        return prayerTimer
     }
 }

@@ -8,6 +8,7 @@
 
 import Foundation.NSDate
 import PrayCore
+import ZamzamCore
 
 public extension PrayerTimer {
     static func mock(
@@ -36,5 +37,41 @@ public extension PrayerTimer {
             sunriseAfterIsha: sunriseAfterIsha,
             timeZone: .current
         )
+    }
+}
+
+public extension PrayerTimer {
+    static func placeholder(from prayerDay: PrayerDay) -> PrayerTimer {
+        let date = Date.now
+
+        guard let prayerTimer = PrayerTimer(
+            at: date,
+            using: prayerDay,
+            iqamaTimes: IqamaTimes(),
+            isIqamaTimerEnabled: false,
+            stopwatchMinutes: 0,
+            preAdhanMinutes: PreAdhanMinutes(rawValue: [:]),
+            sunriseAfterIsha: false,
+            timeZone: .current
+        ) else {
+            let countdownDate = Date.now + .hours(1)
+            return PrayerTimer(
+                date: date,
+                type: .asr,
+                timerType: .countdown,
+                prayerDay: prayerDay,
+                countdownDate: countdownDate,
+                timeRange: date...countdownDate,
+                timeRemaining: countdownDate.timeIntervalSince(date),
+                timeDuration: DateInterval(start: date, end: countdownDate).duration,
+                progressRemaining: 0.5,
+                dangerZone: 0.25,
+                isDangerZone: false,
+                isJumuah: false,
+                localizeAt: nil
+            )
+        }
+
+        return prayerTimer
     }
 }

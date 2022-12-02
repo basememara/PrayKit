@@ -19,7 +19,7 @@ final class PrayerTimerTests: XCTestCase {
 // MARK: - Iqama, Stopwatch, Jumuah
 
 extension PrayerTimerTests {
-    func testBeforeIshaAdhan() async throws {
+    func testBeforeIshaAdhanWithIqama() async throws {
         let date = today(hour: 18, minute: 0)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .isha)
@@ -31,7 +31,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 15)
     }
 
-    func testAfterIshaAdhan() async throws {
+    func testAfterIshaAdhanWithIqama() async throws {
         let date = today(hour: 18, minute: 20)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .isha)
@@ -66,10 +66,8 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 10 * 60 + 7)
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeFajrAdhan() async throws {
+    func testBeforeFajrAdhanWithIqama() async throws {
         let date = today(hour: 5, minute: 40)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .fajr)
@@ -81,7 +79,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 12)
     }
 
-    func testAfterFajrAdhan() async throws {
+    func testAfterFajrAdhanWithIqama() async throws {
         let date = today(hour: 6, minute: 0)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .fajr)
@@ -116,10 +114,8 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 50)
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeSunrise() async throws {
+    func testBeforeSunriseWithIqama() async throws {
         let date = today(hour: 7, minute: 5)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .sunrise)
@@ -131,7 +127,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 15)
     }
 
-    func testAfterSunrise() async throws {
+    func testAfterSunriseWithIqama() async throws {
         let date = today(hour: 7, minute: 30)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
@@ -142,10 +138,8 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeDhuhrAdhan() async throws {
+    func testBeforeDhuhrAdhanWithIqama() async throws {
         let date = today(hour: 11, minute: 45)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
@@ -157,7 +151,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 25)
     }
 
-    func testAfterDhuhrAdhan() async throws {
+    func testAfterDhuhrAdhanWithIqama() async throws {
         let date = today(hour: 12, minute: 20)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
@@ -192,10 +186,8 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 85)
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeAsrAdhan() async throws {
+    func testBeforeAsrAdhanWithIqama() async throws {
         let date = today(hour: 14, minute: 15)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .asr)
@@ -207,7 +199,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 10)
     }
 
-    func testAfterAsrAdhan() async throws {
+    func testAfterAsrAdhanWithIqama() async throws {
         let date = today(hour: 14, minute: 40)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .asr)
@@ -242,10 +234,8 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 95)
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeMaghribAdhan() async throws {
+    func testBeforeMaghribAdhanWithIqama() async throws {
         let date = today(hour: 16, minute: 40)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .maghrib)
@@ -257,7 +247,7 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 10)
     }
 
-    func testAfterMaghribAdhan() async throws {
+    func testAfterMaghribAdhanWithIqama() async throws {
         let date = today(hour: 16, minute: 55)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .maghrib)
@@ -394,21 +384,61 @@ extension PrayerTimerTests {
     }
 }
 
+// MARK: No Jumuah
+
+extension PrayerTimerTests {
+    func testAfterSunriseBeforeNoJumuah() async throws {
+        let date = friday(hour: 7, minute: 30)
+        let prayerTimer = try prayerTimer(at: date, isJumuahEnabled: false)
+        XCTAssertEqual(prayerTimer.type, .dhuhr)
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssertFalse(prayerTimer.isDangerZone)
+        XCTAssert(prayerTimer.isJumuah)
+        XCTAssertNotNil(prayerTimer.localizeAt)
+        assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
+    }
+
+    func testAfterSunriseBeforeDhuhrOnNoJumuah() async throws {
+        let date = friday(hour: 11, minute: 45)
+        let prayerTimer = try prayerTimer(at: date, isJumuahEnabled: false)
+        XCTAssertEqual(prayerTimer.type, .dhuhr)
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssert(prayerTimer.isDangerZone)
+        XCTAssert(prayerTimer.isJumuah)
+        XCTAssertNotNil(prayerTimer.localizeAt)
+        assertCalculations(for: prayerTimer, minutes: 25)
+    }
+
+    func testAfterDhuhrAdhanOnNoJumuah() async throws {
+        let date = friday(hour: 12, minute: 20)
+        let prayerTimer = try prayerTimer(at: date, isJumuahEnabled: false)
+        XCTAssertEqual(prayerTimer.type, .dhuhr)
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 12, minute: 10))
+        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
+        XCTAssertFalse(prayerTimer.isDangerZone)
+        XCTAssert(prayerTimer.isJumuah)
+        XCTAssertNotNil(prayerTimer.localizeAt)
+        assertCalculations(for: prayerTimer, minutes: -10)
+    }
+
+    func testBeforeDhuhrIqamaOnNoJumuah() async throws {
+        let date = friday(hour: 12, minute: 30)
+        let prayerTimer = try prayerTimer(at: date, isJumuahEnabled: false)
+        XCTAssertEqual(prayerTimer.type, .asr)
+        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 14, minute: 25))
+        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssertFalse(prayerTimer.isDangerZone)
+        XCTAssertFalse(prayerTimer.isJumuah)
+        XCTAssertNotNil(prayerTimer.localizeAt)
+        assertCalculations(for: prayerTimer, minutes: 60 + 55)
+    }
+}
+
 // MARK: - Iqama, Stopwatch, Sunrise
 
 extension PrayerTimerTests {
-    func testBeforeIshaAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 18, minute: 0)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .isha)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 18, minute: 15))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 15)
-    }
-
     func testAfterIshaAdhanWithSunriseAfterIsha() async throws {
         let date = today(hour: 18, minute: 20)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
@@ -437,26 +467,24 @@ extension PrayerTimerTests {
         let date = today(hour: 19, minute: 45)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
         XCTAssertEqual(prayerTimer.type, .fajr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 5, minute: 52) + .days(1))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 6, minute: 15) + .days(1))
+        XCTAssertEqual(prayerTimer.timerType, .iqama)
         XCTAssertFalse(prayerTimer.isDangerZone)
         XCTAssertFalse(prayerTimer.isJumuah)
         XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 10 * 60 + 7)
+        assertCalculations(for: prayerTimer, minutes: 10 * 60 + 30, lastAdhanTime: today(hour: 18, minute: 15))
     }
-}
 
-extension PrayerTimerTests {
-    func testBeforeFajrAdhanWithSunriseAfterIsha() async throws {
+    func testBeforeFajrAdhanIqamaWithSunriseAfterIsha() async throws {
         let date = today(hour: 5, minute: 40)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
         XCTAssertEqual(prayerTimer.type, .fajr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 5, minute: 52))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 6, minute: 15))
+        XCTAssertEqual(prayerTimer.timerType, .iqama)
         XCTAssert(prayerTimer.isDangerZone)
         XCTAssertFalse(prayerTimer.isJumuah)
         XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 12)
+        assertCalculations(for: prayerTimer, minutes: 35, lastAdhanTime: today(hour: 18, minute: 15) - .days(1, calendar))
     }
 
     func testAfterFajrAdhanWithSunriseAfterIsha() async throws {
@@ -494,9 +522,7 @@ extension PrayerTimerTests {
         XCTAssertNotNil(prayerTimer.localizeAt)
         assertCalculations(for: prayerTimer, minutes: 50)
     }
-}
 
-extension PrayerTimerTests {
     func testBeforeSunriseWithSunriseAfterIsha() async throws {
         let date = today(hour: 7, minute: 5)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
@@ -522,150 +548,36 @@ extension PrayerTimerTests {
     }
 }
 
+// MARK: - Stopwatch, Sunrise
+
 extension PrayerTimerTests {
-    func testBeforeDhuhrAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 11, minute: 45)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
+    func testBeforeIsha() async throws {
+        let date = today(hour: 18, minute: 35)
+        let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false)
+        XCTAssertEqual(prayerTimer.type, .fajr)
+        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 5, minute: 52) + .days(1, calendar))
+        XCTAssertEqual(prayerTimer.timerType, .countdown)
+        XCTAssertFalse(prayerTimer.isDangerZone)
+        XCTAssertFalse(prayerTimer.isJumuah)
+        XCTAssertNotNil(prayerTimer.localizeAt)
+        assertCalculations(for: prayerTimer, minutes: 11 * 60 + 17)
+    }
+
+    func testBeforeDhuhr() async throws {
+        let date = today(hour: 7, minute: 30)
+        let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 10))
         XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 25)
-    }
-
-    func testAfterDhuhrAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 12, minute: 20)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .dhuhr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 10))
-        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
         XCTAssertFalse(prayerTimer.isDangerZone)
         XCTAssertFalse(prayerTimer.isJumuah)
         XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: -10)
+        assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 
-    func testBeforeDhuhrIqamaWithSunriseAfterIsha() async throws {
-        let date = today(hour: 12, minute: 30)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .dhuhr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 12, minute: 45))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 12, minute: 10))
-    }
-
-    func testAfterDhuhrIqamaWithSunriseAfterIsha() async throws {
-        let date = today(hour: 13, minute: 0)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 14, minute: 25))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 85)
-    }
-}
-
-extension PrayerTimerTests {
-    func testBeforeAsrAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 14, minute: 15)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 14, minute: 25))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 10)
-    }
-
-    func testAfterAsrAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 14, minute: 40)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 14, minute: 25))
-        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: -15)
-    }
-
-    func testBeforeAsrIqamaWithSunriseAfterIsha() async throws {
-        let date = today(hour: 14, minute: 45)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 15, minute: 0))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 14, minute: 25))
-    }
-
-    func testAfterAsrIqamaWithSunriseAfterIsha() async throws {
-        let date = today(hour: 15, minute: 15)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .maghrib)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 16, minute: 50))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 95)
-    }
-}
-
-extension PrayerTimerTests {
-    func testBeforeMaghribAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 16, minute: 40)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .maghrib)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 16, minute: 50))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 10)
-    }
-
-    func testAfterMaghribAdhanWithSunriseAfterIsha() async throws {
-        let date = today(hour: 16, minute: 55)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .maghrib)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 17, minute: 0))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 5, lastAdhanTime: today(hour: 16, minute: 50))
-    }
-
-    func testAfterMaghribIqamaWithSunriseAfterIsha() async throws {
-        let date = today(hour: 17, minute: 10)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .isha)
-        XCTAssertEqual(prayerTimer.countdownDate, today(hour: 18, minute: 15))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 65)
-    }
-}
-
-// MARK: Jumuah
-
-extension PrayerTimerTests {
-    func testAfterSunriseBeforeJumuahWithSunriseAfterIsha() async throws {
+    func testBeforeDhuhrOnJumuah() async throws {
         let date = friday(hour: 7, minute: 30)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
+        let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
         XCTAssertEqual(prayerTimer.timerType, .iqama)
@@ -675,102 +587,20 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: 6 * 60, lastAdhanTime: friday(hour: 7, minute: 20))
     }
 
-    func testAfterSunriseBeforeDhuhrOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 11, minute: 45)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .dhuhr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssert(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 1 * 60 + 45, lastAdhanTime: friday(hour: 7, minute: 20))
-    }
-
-    func testAfterDhuhrAdhanOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 12, minute: 20)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
+    func testBeforeDhuhrOnJumuahNoKhutba() async throws {
+        let date = friday(hour: 7, minute: 30)
+        let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false, isJumuahEnabled: false)
         XCTAssertEqual(prayerTimer.type, .dhuhr)
         XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 12, minute: 10))
-        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssert(prayerTimer.isJumuah)
-        XCTAssertNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: -10)
-    }
-
-    func testBeforeDhuhrIqamaOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 12, minute: 30)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .dhuhr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssert(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 60, lastAdhanTime: friday(hour: 12, minute: 10))
-    }
-
-    func testAfterJumuahKhutbaWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 13, minute: 45)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .dhuhr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 13, minute: 30))
-        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssert(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: -15)
-    }
-
-    func testBeforeAsrAdhanOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 14, minute: 15)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 14, minute: 25))
-        XCTAssertEqual(prayerTimer.timerType, .countdown)
-        XCTAssert(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 10)
-    }
-
-    func testAfterAsrAdhanOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 14, minute: 40)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 14, minute: 25))
-        XCTAssertEqual(prayerTimer.timerType, .stopwatch)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: -15)
-    }
-
-    func testBeforeAsrIqamaOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 14, minute: 45)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .asr)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 15, minute: 0))
-        XCTAssertEqual(prayerTimer.timerType, .iqama)
-        XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
-        XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: friday(hour: 14, minute: 25))
-    }
-
-    func testAfterAsrIqamaOnJumuahWithSunriseAfterIsha() async throws {
-        let date = friday(hour: 15, minute: 15)
-        let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
-        XCTAssertEqual(prayerTimer.type, .maghrib)
-        XCTAssertEqual(prayerTimer.countdownDate, friday(hour: 16, minute: 50))
         XCTAssertEqual(prayerTimer.timerType, .countdown)
         XCTAssertFalse(prayerTimer.isDangerZone)
-        XCTAssertFalse(prayerTimer.isJumuah)
+        XCTAssert(prayerTimer.isJumuah)
         XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 95)
+        assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 }
+
+// MARK: - Helpers
 
 private extension PrayerTimerTests {
     func assertCalculations(for prayerTimer: PrayerTimer, minutes: Int, lastAdhanTime: Date? = nil) {
@@ -787,10 +617,14 @@ private extension PrayerTimerTests {
     }
 }
 
-// MARK: - Helpers
-
 private extension PrayerTimerTests {
-    func prayerTimer(at date: Date, isIqamaTimerEnabled: Bool = true, stopwatchMinutes: Int = 20, sunriseAfterIsha: Bool = false) throws -> PrayerTimer {
+    func prayerTimer(
+        at date: Date,
+        isIqamaTimerEnabled: Bool = true,
+        stopwatchMinutes: Int = 20,
+        sunriseAfterIsha: Bool = false,
+        isJumuahEnabled: Bool = true
+    ) throws -> PrayerTimer {
         let prayerDay = PrayerDay.mock(
             at: date,
             times: [(5, 52), (7, 20), (12, 10), (14, 25), (16, 50), (18, 15), (0, 28), (1, 46)],
@@ -804,7 +638,7 @@ private extension PrayerTimerTests {
             asr: .time(hour: 15, minutes: 0),
             maghrib: .minutes(10),
             isha: .time(hour: 19, minutes: 30),
-            jumuah: .time(hour: 13, minutes: 30)
+            jumuah: isJumuahEnabled ? .time(hour: 13, minutes: 30) : nil
         )
 
         return try XCTUnwrap(

@@ -110,7 +110,8 @@ public extension PrayerTimer {
         // Handle jumuah if appliable
         if date.isJumuah(using: calendar),
            [currentPrayer.type, nextPrayer.type].contains(.dhuhr),
-           let khutbaIqama = iqamaTimes[currentPrayer.type == .dhuhr ? currentPrayer : nextPrayer, using: calendar] {
+           let khutbaIqama = iqamaTimes[currentPrayer.type == .dhuhr ? currentPrayer : nextPrayer, using: calendar]
+        {
             if isStopwatchTimer && currentPrayer.type == .dhuhr {
                 currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: khutbaIqama)
                 countdownLocalizeAt = nil
@@ -126,6 +127,15 @@ public extension PrayerTimer {
                 countdownDate = khutbaIqama
                 timerType = .iqama
             }
+        } else if sunriseAfterIsha,
+                  currentPrayer.type == .isha,
+                  prayerTime.type != .isha,
+                  let fajrPrayerTime = prayerDay.times[.fajr],
+                  let fajrIqama = iqamaTimes[fajrPrayerTime, using: calendar] {
+            prayerTime = fajrPrayerTime
+            countdownDate = fajrIqama < currentPrayer.dateInterval.start ? fajrIqama + .days(1, calendar) : fajrIqama
+            currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: countdownDate)
+            timerType = .iqama
         }
 
         let progress = currentDateInterval.progress(at: date).value

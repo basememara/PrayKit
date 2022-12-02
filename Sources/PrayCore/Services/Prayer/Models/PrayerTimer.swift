@@ -16,6 +16,7 @@ public struct PrayerTimer: Equatable, Codable {
     public let timerType: TimerType
     public let prayerDay: PrayerDay
     public let countdownDate: Date
+    public let khutbaTime: Date?
     public let timeRange: ClosedRange<Date>
     public let timeRemaining: TimeInterval
     public let timeDuration: TimeInterval
@@ -31,6 +32,7 @@ public struct PrayerTimer: Equatable, Codable {
         timerType: PrayerTimer.TimerType,
         prayerDay: PrayerDay,
         countdownDate: Date,
+        khutbaTime: Date?,
         timeRange: ClosedRange<Date>,
         timeRemaining: TimeInterval,
         timeDuration: TimeInterval,
@@ -45,6 +47,7 @@ public struct PrayerTimer: Equatable, Codable {
         self.timerType = timerType
         self.prayerDay = prayerDay
         self.countdownDate = countdownDate
+        self.khutbaTime = khutbaTime
         self.timeRange = timeRange
         self.timeRemaining = timeRemaining
         self.timeDuration = timeDuration
@@ -142,6 +145,7 @@ public extension PrayerTimer {
         let progressRemaining = 1 - progress
         let dangerZone = min(1, Double(max(preAdhanMinutes, 60) * 60) / currentDateInterval.duration) // Pre-adhan zone or less than an hour
         let isJumuah = date.isJumuah(using: calendar) && prayerTime.type == .dhuhr
+        let khutbaTime = date.isJumuah(using: calendar) ? prayerDay.times[.dhuhr].map { iqamaTimes[$0, using: calendar] } ?? nil : nil
 
         self.init(
             date: date,
@@ -149,6 +153,7 @@ public extension PrayerTimer {
             timerType: timerType,
             prayerDay: prayerDay,
             countdownDate: countdownDate,
+            khutbaTime: khutbaTime,
             timeRange: min(date, countdownDate)...max(date, countdownDate),
             timeRemaining: countdownDate.timeIntervalSince(date),
             timeDuration: currentDateInterval.duration,

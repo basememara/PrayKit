@@ -101,10 +101,10 @@ public extension PrayerTimer {
         }
 
         // Set countdown details
-        var currentDateInterval = currentPrayer.dateInterval
         var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
         var prayerTime = [.stopwatch, .iqama].contains(timerType) ? currentPrayer : nextPrayer
         var countdownDate = timerType == .iqama ? iqamaTime ?? .now : prayerTime.dateInterval.start
+        var currentDateInterval = currentPrayer.dateInterval
         var countdownLocalizeAt: Date? = date
 
         // Handle jumuah if appliable

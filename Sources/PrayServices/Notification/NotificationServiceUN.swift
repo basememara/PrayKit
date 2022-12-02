@@ -257,9 +257,7 @@ public extension NotificationServiceUN {
                 if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar], iqamaSound != .off && iqamaMinutes > 0 && counter > 0 {
                     userNotification.add(
                         date: iqamaTime - .minutes(iqamaMinutes),
-                        body: isJumuah
-                            ? localized.khutbaNotificationBody(at: iqamaTime.formatted(timeFormatStyle))
-                            : localized.iqamaNotificationBody(for: prayerTime, at: iqamaTime.formatted(timeFormatStyle)),
+                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
                         sound: iqamaSound.file.map {
                             #if os(iOS)
                             return UNNotificationSound(named: UNNotificationSoundName($0))
@@ -531,6 +529,5 @@ public protocol NotificationServiceLocalizable {
     func prayerNotificationBody(for prayerTime: PrayerTime, at time: String) -> String
     func prayerNotificationReminder(for prayerTime: PrayerTime) -> String
     func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int) -> String
-    func iqamaNotificationBody(for prayerTime: PrayerTime, at time: String) -> String
-    func khutbaNotificationBody(at time: String) -> String
+    func iqamaNotificationBody(for prayerTime: PrayerTime, minutes: Int, isJumuah: Bool) -> String
 }

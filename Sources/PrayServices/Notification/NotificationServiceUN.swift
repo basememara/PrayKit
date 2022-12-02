@@ -123,6 +123,7 @@ public extension NotificationServiceUN {
                 guard counter > 0 else { return }
 
                 let isObligation = prayerTime.type.isObligation
+                let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
                 let prefixIdentifier = prayerTime.dateInterval.start
                     .shortString(timeZone: preferences.lastTimeZone, calendar: calendar, locale: .posix)
 
@@ -184,8 +185,13 @@ public extension NotificationServiceUN {
                 let reminderMinutes = preferences.preAdhanMinutes[prayerTime.type]
 
                 if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
+                    // Jumuah replaces dhuhr prayer
+                    let date = isJumuah
+                        ? preferences.iqamaTimes[prayerTime, using: calendar] ?? prayerTime.dateInterval.start
+                        : prayerTime.dateInterval.start
+
                     userNotification.add(
-                        date: prayerTime.dateInterval.start - .minutes(reminderMinutes),
+                        date: date - .minutes(reminderMinutes),
                         body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
                         sound: reminderSound.file.map {
                             #if os(iOS)
@@ -245,7 +251,6 @@ public extension NotificationServiceUN {
 
                 // Add iqama notification if applicable
                 let iqamaIdentifier = "\(identifier)-iqama-reminder"
-                let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
                 let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
                 let iqamaSound = preferences.iqamaReminders.sound
 
@@ -270,6 +275,11 @@ public extension NotificationServiceUN {
                     ) {
                         guard let error = $0 else { return }
                         log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
+                    }
+
+                    // Jumuah replaces dhuhr prayer
+                    if isJumuah {
+                        userNotification.remove(withIdentifier: identifier)
                     }
 
                     // Update counter

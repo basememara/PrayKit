@@ -143,7 +143,7 @@ public extension PrayerTimer {
 
         let progress = currentDateInterval.progress(at: date).value
         let progressRemaining = 1 - progress
-        let dangerZone = min(1, Double(max(preAdhanMinutes, 60) * 60) / currentDateInterval.duration) // Pre-adhan zone or less than an hour
+        let dangerZone = min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) // Pre-adhan zone or less than an hour
         let isJumuah = date.isJumuah(using: calendar) && prayerTime.type == .dhuhr
         let khutbaTime = date.isJumuah(using: calendar) ? prayerDay.times[.dhuhr].map { iqamaTimes[$0, using: calendar] } ?? nil : nil
 

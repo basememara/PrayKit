@@ -144,6 +144,11 @@ private extension PrayerManager {
             break
         }
 
+        let tomorrowStartOfDay = date.tomorrow(using: calendar).startOfDay
+        if let entry = PrayerTimer(at: tomorrowStartOfDay, using: prayerDay, preferences: preferences) {
+            entries.append(entry)
+        }
+
         let resultSeed = seed + entries
         guard resultSeed.count < limit, let nextDate = prayerDay.tomorrow.first?.dateInterval.start else {
             return resultSeed.prefix(limit).array

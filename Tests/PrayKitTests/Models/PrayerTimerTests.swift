@@ -20,7 +20,7 @@ final class PrayerTimerTests: XCTestCase {
 
 extension PrayerTimerTests {
     func testBeforeIshaAdhanWithIqama() async throws {
-        let date = today(hour: 18, minute: 0)
+        let date = today(hour: 17, minute: 55)
         let prayerTimer = try prayerTimer(at: date)
         XCTAssertEqual(prayerTimer.type, .isha)
         XCTAssertEqual(prayerTimer.countdownDate, today(hour: 18, minute: 15))
@@ -28,7 +28,7 @@ extension PrayerTimerTests {
         XCTAssert(prayerTimer.isDangerZone)
         XCTAssertFalse(prayerTimer.isJumuah)
         XCTAssertNotNil(prayerTimer.localizeAt)
-        assertCalculations(for: prayerTimer, minutes: 15)
+        assertCalculations(for: prayerTimer, minutes: 20)
     }
 
     func testAfterIshaAdhanWithIqama() async throws {
@@ -655,7 +655,7 @@ private extension PrayerTimerTests {
                         Prayer.dhuhr.rawValue: 20,
                         Prayer.asr.rawValue: 20,
                         Prayer.maghrib.rawValue: 20,
-                        Prayer.isha.rawValue: 20
+                        Prayer.isha.rawValue: 25
                     ]
                 ),
                 sunriseAfterIsha: sunriseAfterIsha,

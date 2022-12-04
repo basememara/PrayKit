@@ -76,7 +76,7 @@ public extension PrayerTimer {
             return nil
         }
 
-        let preAdhanMinutes = preAdhanMinutes[currentPrayer.type]
+        let preAdhanMinutes = preAdhanMinutes[nextPrayer.type]
         var calendar = Calendar.current
         calendar.timeZone = timeZone
 

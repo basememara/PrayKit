@@ -157,7 +157,7 @@ public extension PrayerTimer {
             timeRange: min(date, countdownDate)...max(date, countdownDate),
             timeRemaining: countdownDate.timeIntervalSince(date),
             timeDuration: currentDateInterval.duration,
-            progressRemaining: 1 - progress,
+            progressRemaining: progressRemaining,
             dangerZone: dangerZone,
             isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
             isJumuah: isJumuah,

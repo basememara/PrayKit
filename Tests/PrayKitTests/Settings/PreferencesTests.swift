@@ -1,6 +1,6 @@
 //
 //  PreferencesTests.swift
-//  PrayCoreTests
+//  PrayKitTests
 //
 //  Created by Basem Emara on 2021-01-30.
 //  Copyright © 2021 Zamzam Inc. All rights reserved.

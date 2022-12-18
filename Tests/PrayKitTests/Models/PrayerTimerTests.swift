@@ -615,7 +615,6 @@ private extension PrayerTimerTests {
             XCTAssertEqual(prayerTimer.progressRemaining, prayerTimer.timeRemaining / prayerTimer.timeDuration, accuracy: 0.0001)
         }
     }
-    
 }
 
 private extension PrayerTimerTests {
@@ -672,7 +671,6 @@ private extension PrayerTimerTests {
     func friday(hour: Int, minute: Int) -> Date {
         today(day: 25, hour: hour, minute: minute)
     }
-    
 }
 
 extension String {

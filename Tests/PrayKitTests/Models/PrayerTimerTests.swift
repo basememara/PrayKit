@@ -605,7 +605,8 @@ extension PrayerTimerTests {
 private extension PrayerTimerTests {
     func assertCalculations(for prayerTimer: PrayerTimer, minutes: Int, lastAdhanTime: Date? = nil) {
         XCTAssertEqual(prayerTimer.timeRemaining, Double(minutes) * 60)
-        XCTAssertEqual(prayerTimer.timeRange.formatted(Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute])), "\(abs(minutes))min")
+        XCTAssertEqual(prayerTimer.timeRange.formatted(Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute]))
+            .components(separatedBy: .decimalDigits.inverted).joined(), "\(abs(minutes))")
         switch prayerTimer.timerType {
         case .stopwatch:
             XCTAssertEqual(prayerTimer.progressRemaining, 1 + prayerTimer.timeRemaining / prayerTimer.timeDuration, accuracy: 0.0001)

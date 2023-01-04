@@ -604,9 +604,12 @@ extension PrayerTimerTests {
 
 private extension PrayerTimerTests {
     func assertCalculations(for prayerTimer: PrayerTimer, minutes: Int, lastAdhanTime: Date? = nil) {
+        let componentFormatStyle = Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute])
+        let formattedComponent = prayerTimer.timeRange.formatted(componentFormatStyle).components(separatedBy: .decimalDigits.inverted).joined()
+
         XCTAssertEqual(prayerTimer.timeRemaining, Double(minutes) * 60)
-        XCTAssertEqual(prayerTimer.timeRange.formatted(Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute]))
-            .components(separatedBy: .decimalDigits.inverted).joined(), "\(abs(minutes))")
+        XCTAssertEqual(formattedComponent, "\(abs(minutes))")
+
         switch prayerTimer.timerType {
         case .stopwatch:
             XCTAssertEqual(prayerTimer.progressRemaining, 1 + prayerTimer.timeRemaining / prayerTimer.timeDuration, accuracy: 0.0001)

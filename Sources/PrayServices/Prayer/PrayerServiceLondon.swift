@@ -15,7 +15,7 @@ public struct PrayerServiceLondon: PrayerService {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
-    private let lastDate = Date(year: 2024, month: 1, day: 1)
+    private let lastDate = Date(year: 2023, month: 12, day: 31)
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager
@@ -37,8 +37,8 @@ public extension PrayerServiceLondon {
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
         // Validate does not go beyond available dates
-        guard date < lastDate ?? .now.endOfYear(using: calendar) else {
-            log.error("London prayers not available for '\(date.formatted())'")
+        guard date <= lastDate ?? .now.endOfYear(using: calendar) else {
+            log.warning("London prayers not available for '\(date.formatted())'")
             return []
         }
 

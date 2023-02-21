@@ -24,6 +24,7 @@ public extension HijriServiceStatic {
     static let holidays: [Holiday] = [
         Holiday(id: "new_year", month: 1, day: 1),
         Holiday(id: "ashura", month: 1, day: 10),
+        Holiday(id: "isra_miraj", month: 7, day: 27),
         Holiday(id: "ramadan", month: 9, day: 1),
         Holiday(id: "eid_fitr", month: 10, day: 1),
         Holiday(id: "hajj", month: 12, day: 8),

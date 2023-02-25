@@ -20,6 +20,16 @@ public enum NotificationSound: String, Equatable, CaseIterable, Codable {
     case allahuAkbar = "allahu.akbar"
     case allahuYaAllahLong = "allahu.ya.allah-long"
     case allahuYaAllah = "allahu.ya.allah"
+    case announceFajrSoon = "announce.fajr.soon"
+    case announceFajrTime = "announce.fajr.time"
+    case announceDhuhrSoon = "announce.dhuhr.soon"
+    case announceDhuhrTime = "announce.dhuhr.time"
+    case announceAsrSoon = "announce.asr.soon"
+    case announceAsrTime = "announce.asr.time"
+    case announceMaghribSoon = "announce.maghrib.soon"
+    case announceMaghribTime = "announce.maghrib.time"
+    case announceIshaSoon = "announce.isha.soon"
+    case announceIshaTime = "announce.isha.time"
     case beep
     case bismillah1
     case bismillah2
@@ -128,6 +138,26 @@ public extension NotificationSound {
             return "arrow.up.heart"
         case .allahuYaAllah:
             return "arrow.up.heart"
+        case .announceFajrSoon:
+            return "person.wave.2"
+        case .announceFajrTime:
+            return "person.wave.2"
+        case .announceDhuhrSoon:
+            return "person.wave.2"
+        case .announceDhuhrTime:
+            return "person.wave.2"
+        case .announceAsrSoon:
+            return "person.wave.2"
+        case .announceAsrTime:
+            return "person.wave.2"
+        case .announceMaghribSoon:
+            return "person.wave.2"
+        case .announceMaghribTime:
+            return "person.wave.2"
+        case .announceIshaSoon:
+            return "person.wave.2"
+        case .announceIshaTime:
+            return "person.wave.2"
         case .beep:
             return "speaker.wave.1"
         case .bismillah1:

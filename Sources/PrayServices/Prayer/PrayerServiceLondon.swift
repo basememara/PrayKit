@@ -15,7 +15,7 @@ public struct PrayerServiceLondon: PrayerService {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
-    private let lastDate = Date(year: 2023, month: 12, day: 31)
+    private let lastDate = Date(year: 2023, month: 12, day: 30)
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager

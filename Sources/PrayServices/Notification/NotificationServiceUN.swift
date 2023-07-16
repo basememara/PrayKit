@@ -249,6 +249,41 @@ public extension NotificationServiceUN {
                     }
                 }
 
+                // Add duha notifications if applicable
+                if prayerTime.type == .sunrise {
+                    let reminderIdentifier = "\(identifier)-duha-reminder"
+                    let reminderMinutes = preferences.preAdhanMinutes.duha
+
+                    if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
+                        let reminderTime = prayerTime.dateInterval.start + .minutes(reminderMinutes)
+
+                        userNotification.add(
+                            date: reminderTime,
+                            body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
+                            sound: reminderSound.file.map {
+                                #if os(iOS)
+                                return UNNotificationSound(named: UNNotificationSoundName($0))
+                                #else
+                                return .default
+                                #endif
+                            },
+                            interruptionLevel: .timeSensitive,
+                            calendar: calendar,
+                            identifier: reminderIdentifier,
+                            category: NotificationCategory.reminder.rawValue,
+                            userInfo: userInfo
+                        ) {
+                            guard let error = $0 else { return }
+                            log.error("Failed to create a notifications for \"\(reminderIdentifier)\"", error: error)
+                        }
+
+                        // Update counter
+                        counter -= 1
+                    } else if reminderSound == .off {
+                        userNotification.remove(withIdentifier: reminderIdentifier)
+                    }
+                }
+
                 // Add iqama notification if applicable
                 let iqamaIdentifier = "\(identifier)-iqama-reminder"
                 let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
@@ -530,4 +565,5 @@ public protocol NotificationServiceLocalizable {
     func prayerNotificationReminder(for prayerTime: PrayerTime) -> String
     func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int) -> String
     func iqamaNotificationBody(for prayerTime: PrayerTime, minutes: Int, isJumuah: Bool) -> String
+    func duhaNotificationBody(at time: String) -> String
 }

@@ -190,6 +190,14 @@ public final class Preferences {
         }
     }
 
+    @DefaultsOptional
+    public var duhaReminder: DuhaType? {
+        didSet {
+            guard duhaReminder != oldValue else { return }
+            Self.subject.send(\Preferences.duhaReminder)
+        }
+    }
+
     @Defaults
     public var adhanDuaa: AdhanDuaa {
         didSet {
@@ -352,6 +360,7 @@ public final class Preferences {
             from: defaults
         )
 
+        _duhaReminder = DefaultsOptional("duhaReminder", from: defaults)
         _adhanDuaa = Defaults("adhanDuaa", defaultValue: .off, from: defaults)
 
         // Sound
@@ -463,6 +472,8 @@ public extension Preferences {
             return _snoozeMinutes.key
         case \.preAdhanMinutes:
             return _preAdhanMinutes.key
+        case \.duhaReminder:
+            return _duhaReminder.key
         case \.adhanDuaa:
             return _adhanDuaa.key
         case \.notificationAdhan:
@@ -554,6 +565,7 @@ public extension Preferences {
                 return [
                     \.snoozeMinutes,
                      \.preAdhanMinutes,
+                     \.duhaReminder,
                      \.iqamaTimes,
                      \.iqamaReminders,
                      \.notificationAdhan,
@@ -728,6 +740,15 @@ extension Coordinates: UserDefaultsRepresentable {
         }
 
         self = Coordinates(latitude: rawDefaultsValue[0], longitude: rawDefaultsValue[1])
+    }
+}
+
+extension DuhaType: UserDefaultsRepresentable {
+    public var rawDefaultsValue: Data? { try? encode() }
+
+    public init?(rawDefaultsValue: Data?) {
+        guard let value: DuhaType = try? rawDefaultsValue?.decode() else { return nil }
+        self = value
     }
 }
 

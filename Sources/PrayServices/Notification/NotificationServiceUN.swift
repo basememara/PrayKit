@@ -252,11 +252,8 @@ public extension NotificationServiceUN {
                 // Add duha notifications if applicable
                 if prayerTime.type == .sunrise {
                     let reminderIdentifier = "\(identifier)-duha-reminder"
-                    let reminderMinutes = preferences.preAdhanMinutes.duha
 
-                    if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
-                        let reminderTime = prayerTime.dateInterval.start + .minutes(reminderMinutes)
-
+                    if let reminderTime = preferences.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar), reminderSound != .off && counter > 0 {
                         userNotification.add(
                             date: reminderTime,
                             body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),

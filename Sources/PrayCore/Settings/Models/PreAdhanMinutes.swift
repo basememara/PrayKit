@@ -14,11 +14,6 @@ public struct PreAdhanMinutes: RawRepresentable, Equatable, Codable {
         set { rawValue["imsak"] = newValue }
     }
 
-    public var duha: Int {
-        get { rawValue["duha"] ?? 0 }
-        set { rawValue["duha"] = newValue }
-    }
-
     public init(rawValue: [String: Int]) {
         self.rawValue = rawValue
     }

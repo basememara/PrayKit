@@ -232,6 +232,14 @@ public final class Preferences {
         }
     }
 
+    @Defaults
+    public var isPlayOnTapEnabled: Bool {
+        didSet {
+            guard isPlayOnTapEnabled != oldValue else { return }
+            Self.subject.send(\Preferences.isPlayOnTapEnabled)
+        }
+    }
+
     // MARK: - Display
 
     @Defaults
@@ -411,6 +419,8 @@ public final class Preferences {
             from: defaults
         )
 
+        _isPlayOnTapEnabled = Defaults("isPlayOnTapEnabled", defaultValue: true, from: defaults)
+
         // Display
         _isPrayerAbbrEnabled = Defaults("isPrayerAbbrEnabled", defaultValue: false, from: defaults)
         _sunriseAfterIsha = Defaults("sunriseAfterIsha", defaultValue: false, from: defaults)
@@ -482,6 +492,8 @@ public extension Preferences {
             return _notificationSounds.key
         case \.reminderSounds:
             return _reminderSounds.key
+        case \.isPlayOnTapEnabled:
+            return _isPlayOnTapEnabled.key
         case \.isPrayerAbbrEnabled:
             return _isPrayerAbbrEnabled.key
         case \.sunriseAfterIsha:
@@ -593,6 +605,7 @@ public extension Preferences {
                          \.hijriDayOffset,
                          \.autoIncrementHijri,
                          \.stopwatchMinutes,
+                         \.isPlayOnTapEnabled,
                          \.isPrayerAbbrEnabled,
                          \.sunriseAfterIsha,
                          \.appearanceMode,

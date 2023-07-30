@@ -308,16 +308,6 @@ extension PreferencesTests {
     }
 }
 
-// MARK: - Diagnostics
-
-extension PreferencesTests {
-    func testIsDiagnosticsEnabled() throws {
-        let expectedValue = true
-        try testPublisher(for: \.isDiagnosticsEnabled, with: expectedValue)
-        XCTAssert(preferences.isDiagnosticsEnabled)
-    }
-}
-
 // MARK: - Prayer Recalculation Observable
 
 extension PreferencesTests {

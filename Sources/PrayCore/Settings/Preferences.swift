@@ -300,16 +300,6 @@ public final class Preferences {
         }
     }
 
-    // MARK: - Diagnostics
-
-    @Defaults
-    public var isDiagnosticsEnabled: Bool {
-        didSet {
-            guard isDiagnosticsEnabled != oldValue else { return }
-            Self.subject.send(\Preferences.isDiagnosticsEnabled)
-        }
-    }
-
     // MARK: - Configure
 
     // swiftlint:disable:next function_body_length
@@ -431,9 +421,6 @@ public final class Preferences {
         _lastRegionName = DefaultsOptional("lastRegionName", from: defaults)
         _lastCacheDate = DefaultsOptional("lastCacheDate", from: defaults)
         _lastTimeZone = Defaults("lastTimeZoneIdentifier", defaultValue: .current, from: defaults)
-
-        // Diagnostics
-        _isDiagnosticsEnabled = Defaults("isDiagnosticsEnabled", defaultValue: false, from: defaults)
     }
 }
 
@@ -508,8 +495,6 @@ public extension Preferences {
             return _lastCacheDate.key
         case \.lastTimeZone:
             return _lastTimeZone.key
-        case \.isDiagnosticsEnabled:
-            return _isDiagnosticsEnabled.key
         default:
             assertionFailure("No key defined for property")
             return ""
@@ -609,8 +594,7 @@ public extension Preferences {
                          \.isPrayerAbbrEnabled,
                          \.sunriseAfterIsha,
                          \.appearanceMode,
-                         \.theme,
-                         \.isDiagnosticsEnabled
+                         \.theme
                     ]
                 )
                 .filter { $0 != \.prayersCoordinates }

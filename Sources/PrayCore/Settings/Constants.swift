@@ -20,6 +20,7 @@ public struct Constants: Distribution {
     public let privacyURL: URL
     public let disclaimerURL: URL
     public let subscribeURL: URL
+    public let logURL: URL
     public let calculationMethodHelpURL: URL
     public let bgRefreshTaskID: String
     public let bgProcessingTaskID: String
@@ -38,6 +39,7 @@ public struct Constants: Distribution {
         privacyURL: URL,
         disclaimerURL: URL,
         subscribeURL: URL,
+        logURL: URL,
         calculationMethodHelpURL: URL,
         bgRefreshTaskID: String,
         bgProcessingTaskID: String,
@@ -54,6 +56,7 @@ public struct Constants: Distribution {
         self.privacyURL = privacyURL
         self.disclaimerURL = disclaimerURL
         self.subscribeURL = subscribeURL
+        self.logURL = logURL
         self.calculationMethodHelpURL = calculationMethodHelpURL
         self.bgRefreshTaskID = bgRefreshTaskID
         self.bgProcessingTaskID = bgProcessingTaskID

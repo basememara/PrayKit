@@ -609,8 +609,7 @@ public extension Preferences {
                          \.isPrayerAbbrEnabled,
                          \.sunriseAfterIsha,
                          \.appearanceMode,
-                         \.theme,
-                         \.lastDiagnosticsDate
+                         \.theme
                     ]
                 )
                 .filter { $0 != \.prayersCoordinates }

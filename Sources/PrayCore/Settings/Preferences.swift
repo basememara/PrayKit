@@ -340,7 +340,7 @@ public final class Preferences {
 
         _iqamaReminders = Defaults(
             "iqamaReminders",
-            defaultValue: IqamaReminders(sound: .default, minutes: 20, jumuahMinutes: 60, updateInterval: .off),
+            defaultValue: IqamaReminders(sound: .iqama, minutes: 20, jumuahMinutes: 60, updateInterval: .off),
             from: defaults
         )
 

@@ -16,11 +16,13 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case ahmadAlBatal = "ahmad.al.batal"
     case ahmedAlNufais = "ahmed.al.nufais"
     case alAqsa = "al.aqsa"
+    case alDaghreeri = "al.daghreeri"
     case alHosari = "al.hosari"
     case alHossaini = "al.hossaini"
     case alImadiQatar = "al.imadi.qatar"
     case alJazairi = "al.jazairi"
     case alMarooshMorocco = "al.maroosh.morocco"
+    case alSurayhi = "al.surayhi"
     case bakirBash = "bakir.bash"
     case cairo
     case egypt
@@ -37,8 +39,10 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case maroufAlShareef = "marouf.al.shareef"
     case menshawi
     case misharyAlAfasy = "mishary.al.afasy"
+    case misharyAlAfasyFajr = "mishary.al.afasy.fajr"
     case mohammadRefaat = "mohammad.refaat"
     case mohammedAlBanna = "mohammed.al.banna"
+    case morocco = "morocco"
     case mustaphaWaleed = "mustapha.waleed"
     case muzammilHasaballah = "muzammil.hasaballah"
     case naghshbandi
@@ -91,7 +95,8 @@ public extension AdhanSound {
             .madina,
             .makkah,
             .mansourAlZahrani,
-            .misharyAlAfasy
+            .misharyAlAfasy,
+            .misharyAlAfasyFajr
         ].contains(self)
     }
 

@@ -18,6 +18,7 @@ public enum NotificationSound: String, Equatable, CaseIterable, Codable {
     case alert
     case allahsNames = "allahs.names"
     case allahuAkbar = "allahu.akbar"
+    case allahuAkbarAllahuAkbar = "allahu.akbar.allahu.akbar"
     case allahuYaAllahLong = "allahu.ya.allah-long"
     case allahuYaAllah = "allahu.ya.allah"
     case announceFajrSoon = "announce.fajr.soon"
@@ -50,6 +51,9 @@ public enum NotificationSound: String, Equatable, CaseIterable, Codable {
     case hasbiAllah = "hasbi.allah"
     case highLong = "high-long"
     case high
+    case iqama
+    case iqama2
+    case iqama3
     case kalima
     case labbaikAllah = "labbaik-allahuma"
     case march
@@ -134,6 +138,8 @@ public extension NotificationSound {
             return "arrow.up.heart"
         case .allahuAkbar:
             return "arrow.up.heart"
+        case .allahuAkbarAllahuAkbar:
+            return "arrow.clockwise.heart"
         case .allahuYaAllahLong:
             return "arrow.up.heart"
         case .allahuYaAllah:
@@ -198,6 +204,12 @@ public extension NotificationSound {
             return "cloud"
         case .high:
             return "cloud"
+        case .iqama:
+            return "person.3"
+        case .iqama2:
+            return "person.3"
+        case .iqama3:
+            return "person.3"
         case .kalima:
             return "hand.point.up"
         case .labbaikAllah:

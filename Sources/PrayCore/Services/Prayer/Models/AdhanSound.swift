@@ -12,6 +12,7 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case abdulBasit = "abdul.basit"
     case abdulGhaffar = "abdul.ghaffar"
     case abdulHakam = "abdul.hakam"
+    case abdulNasirHarak = "abdul.nasir.harak"
     case abdulrahmanAlHindi = "abdulrahman.al.hindi"
     case ahmadAlBatal = "ahmad.al.batal"
     case ahmedAlNufais = "ahmed.al.nufais"
@@ -23,6 +24,8 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case alJazairi = "al.jazairi"
     case alMarooshMorocco = "al.maroosh.morocco"
     case alSurayhi = "al.surayhi"
+    case aliBarraqTunis = "ali.barraq.tunis"
+    case azzamDweik = "azzam.dweik"
     case bakirBash = "bakir.bash"
     case cairo
     case egypt
@@ -39,9 +42,10 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case maroufAlShareef = "marouf.al.shareef"
     case menshawi
     case misharyAlAfasy = "mishary.al.afasy"
-    case misharyAlAfasyFajr = "mishary.al.afasy.fajr"
+    case misharyAlAfasy2 = "mishary.al.afasy2"
     case mohammadRefaat = "mohammad.refaat"
     case mohammedAlBanna = "mohammed.al.banna"
+    case muhammadQassas = "muhammad.qassas"
     case morocco = "morocco"
     case mustaphaWaleed = "mustapha.waleed"
     case muzammilHasaballah = "muzammil.hasaballah"
@@ -51,6 +55,7 @@ public enum AdhanSound: String, CaseIterable, Codable {
     case saber
     case sharifDoman = "sharif.doman"
     case shuffle
+    case turkiye
     case yusufIslam = "yusuf.islam"
 }
 
@@ -96,7 +101,8 @@ public extension AdhanSound {
             .makkah,
             .mansourAlZahrani,
             .misharyAlAfasy,
-            .misharyAlAfasyFajr
+            .misharyAlAfasy2,
+            .muhammadQassas
         ].contains(self)
     }
 

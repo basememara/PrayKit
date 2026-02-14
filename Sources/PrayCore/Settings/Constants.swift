@@ -25,6 +25,10 @@ public struct Constants: Distribution {
     public let bgRefreshTaskID: String
     public let bgProcessingTaskID: String
     public let iCloudContainerID: String
+    public let stripePublishableKey: String
+    public let stripeApplePayMerchantId: String
+    public let donationApiUrl: URL
+    public let donationPartnerUrl: URL
     public let preferredLocalizations: [String]
     public let language: String
 
@@ -44,6 +48,10 @@ public struct Constants: Distribution {
         bgRefreshTaskID: String,
         bgProcessingTaskID: String,
         iCloudContainerID: String,
+        stripePublishableKey: String,
+        stripeApplePayMerchantId: String,
+        donationApiUrl: URL,
+        donationPartnerUrl: URL,
         preferredLocalizations: [String]
     ) {
         self.isDebug = isDebug
@@ -61,6 +69,10 @@ public struct Constants: Distribution {
         self.bgRefreshTaskID = bgRefreshTaskID
         self.bgProcessingTaskID = bgProcessingTaskID
         self.iCloudContainerID = iCloudContainerID
+        self.stripePublishableKey = stripePublishableKey
+        self.stripeApplePayMerchantId = stripeApplePayMerchantId
+        self.donationApiUrl = donationApiUrl
+        self.donationPartnerUrl = donationPartnerUrl
         self.preferredLocalizations = preferredLocalizations
 
         self.language = (Bundle

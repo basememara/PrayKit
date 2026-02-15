@@ -17,6 +17,7 @@ public struct Constants: Distribution {
     public let twitter: String
     public let instagram: String
     public let websiteURL: URL
+    public let partnerUrl: URL
     public let privacyURL: URL
     public let disclaimerURL: URL
     public let subscribeURL: URL
@@ -28,7 +29,6 @@ public struct Constants: Distribution {
     public let stripePublishableKey: String
     public let stripeApplePayMerchantId: String
     public let donationApiUrl: URL
-    public let donationPartnerUrl: URL
     public let preferredLocalizations: [String]
     public let language: String
 
@@ -40,6 +40,7 @@ public struct Constants: Distribution {
         twitter: String,
         instagram: String,
         websiteURL: URL,
+        partnerUrl: URL,
         privacyURL: URL,
         disclaimerURL: URL,
         subscribeURL: URL,
@@ -51,7 +52,6 @@ public struct Constants: Distribution {
         stripePublishableKey: String,
         stripeApplePayMerchantId: String,
         donationApiUrl: URL,
-        donationPartnerUrl: URL,
         preferredLocalizations: [String]
     ) {
         self.isDebug = isDebug
@@ -61,6 +61,7 @@ public struct Constants: Distribution {
         self.twitter = twitter
         self.instagram = instagram
         self.websiteURL = websiteURL
+        self.partnerUrl = partnerUrl
         self.privacyURL = privacyURL
         self.disclaimerURL = disclaimerURL
         self.subscribeURL = subscribeURL
@@ -72,7 +73,6 @@ public struct Constants: Distribution {
         self.stripePublishableKey = stripePublishableKey
         self.stripeApplePayMerchantId = stripeApplePayMerchantId
         self.donationApiUrl = donationApiUrl
-        self.donationPartnerUrl = donationPartnerUrl
         self.preferredLocalizations = preferredLocalizations
 
         self.language = (Bundle

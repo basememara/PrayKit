@@ -8,7 +8,7 @@
 
 import Foundation.NSDate
 
-public enum Prayer: String, Codable, Equatable, CaseIterable {
+public enum Prayer: String, Codable, Equatable, CaseIterable, Sendable {
     case fajr
     case sunrise
     case dhuhr

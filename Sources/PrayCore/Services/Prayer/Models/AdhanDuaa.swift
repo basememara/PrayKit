@@ -10,6 +10,7 @@ import Foundation.NSURL
 
 public enum AdhanDuaa: String, CaseIterable, Codable {
     case wasilahFadilah = "wasilah.fadilah"
+    case announcement = "announcement"
     case off
 }
 
@@ -26,7 +27,7 @@ public extension AdhanDuaa {
 
     var file: String? {
         switch self {
-        case .off:
+        case .off, .announcement:
             return nil
         default:
             return "\(rawValue).mp3"

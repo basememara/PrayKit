@@ -734,7 +734,7 @@ extension AdhanDuaa: UserDefaultsRepresentable {}
 extension AppearanceMode: UserDefaultsRepresentable {}
 extension AppTheme: UserDefaultsRepresentable {}
 
-extension TimeZone: UserDefaultsRepresentable {
+extension TimeZone: @retroactive UserDefaultsRepresentable {
     public var rawDefaultsValue: String { identifier }
 
     public init(rawDefaultsValue: String) {

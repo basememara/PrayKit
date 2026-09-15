@@ -11,7 +11,7 @@ Pure SPM, `swift-tools-version: 5.7`, platforms macOS 12 / iOS 15 / watchOS 8. F
 - `PrayMocks` — test doubles
 - `PrayKit` — umbrella
 
-Dependencies (both branch-tracked): ZamzamKit (`main`), adhan-swift (`develop`). Honor the committed `Package.resolved`; re-resolve deliberately, in its own commit.
+Dependencies (both branch-tracked): ZamzamKit (`main`), adhan-swift (`develop`). Honor the committed `Package.resolved`; re-resolve deliberately, in its own commit. ZamzamKit is Basem's own foundation package (`/Users/basem/Developer/Zamzam/ZamzamKit`, with its own `AGENTS.md`); utilities that are not prayer-specific belong there.
 
 ## Build & test
 

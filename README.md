@@ -254,6 +254,10 @@ struct ContentView: View {
 }
 ```
 
+## Testing
+
+Tests live flat in `Tests/` and run with `swift test`. In Xcode, the shared `PrayKit-Package` scheme runs `Package.xctestplan` at the package root.
+
 ## Author
 
 * Basem Emara, https://zamzam.io

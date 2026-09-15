@@ -41,7 +41,8 @@ let package = Package(
                 "PrayCore",
                 "PrayMocks",
                 "PrayServices"
-            ]
+            ],
+            path: "Tests"
         ),
         .target(
             name: "PrayCore",

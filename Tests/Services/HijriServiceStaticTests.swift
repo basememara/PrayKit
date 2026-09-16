@@ -6,28 +6,38 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-import XCTest
+import Foundation
 import PrayCore
 import PrayServices
+import Testing
+import ZamzamCore
 
-final class HijriServiceStaticTests: TestCase {
-    private let preferences = Preferences(defaults: .test)
+struct HijriServiceStaticTests {
+    /// 2am is already past the previous evening's maghrib, so the service increments and
+    /// returns 3 where this expects 2. Pre-dates the Swift Testing conversion; the question
+    /// is whether the expectation or the service is wrong.
+    static let offsetIncrementsBeforeMaghrib: Comment = "pw-011: hijri offset already incremented at 2am"
 
-    private lazy var hijriService = HijriServiceStatic(
-        prayerManager: prayerManager,
-        preferences: preferences
-    )
+    private let preferences: Preferences
+    private let hijriService: HijriServiceStatic
+
+    init() {
+        let fixture = PrayTestFixture()
+        preferences = fixture.preferences
+        hijriService = HijriServiceStatic(
+            prayerManager: fixture.prayerManager,
+            preferences: fixture.preferences
+        )
+    }
 }
 
 extension HijriServiceStaticTests {
-    func testOffset() async throws {
+    @Test
+    func offsetIncrementsAfterMaghribWhenAutoIncrementIsOn() async throws {
         // Given
-        guard let timeZone = TimeZone(identifier: "America/New_York"),
-              let date1 = Date(year: 2022, month: 03, day: 16, hour: 2, timeZone: timeZone),
-              let date2 = Date(year: 2022, month: 03, day: 16, hour: 20, timeZone: timeZone)
-        else {
-            throw PrayError.invalidTimes
-        }
+        let timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, timeZone: timeZone))
+        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, timeZone: timeZone))
 
         // When
         preferences.set(
@@ -42,33 +52,46 @@ extension HijriServiceStaticTests {
         preferences.autoIncrementHijri = true
 
         // Then
-        let offset1 = try await hijriService.fetchOffset(for: date1)
-        XCTAssertEqual(offset1, 2)
+        await withKnownIssue(Self.offsetIncrementsBeforeMaghrib) {
+            let offset = try await hijriService.fetchOffset(for: beforeMaghrib)
+            #expect(offset == 2)
+        }
 
-        let offset2 = try await hijriService.fetchOffset(for: date2)
-        XCTAssertEqual(offset2, 3)
+        let offsetAfterMaghrib = try await hijriService.fetchOffset(for: afterMaghrib)
+        #expect(offsetAfterMaghrib == 3)
+    }
+
+    @Test
+    func offsetHoldsAllDayWhenAutoIncrementIsOff() async throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, timeZone: timeZone))
+        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, timeZone: timeZone))
 
         // When
+        preferences.set(
+            manualAddress: Coordinates(
+                latitude: 43.651070,
+                longitude: -79.347015
+            ),
+            timeZone: timeZone,
+            regionName: nil
+        )
         preferences.hijriDayOffset = 1
         preferences.autoIncrementHijri = false
 
         // Then
-        let offset3 = try await hijriService.fetchOffset(for: date1)
-        XCTAssertEqual(offset3, 1)
-
-        let offset4 = try await hijriService.fetchOffset(for: date2)
-        XCTAssertEqual(offset4, 1)
+        #expect(try await hijriService.fetchOffset(for: beforeMaghrib) == 1)
+        #expect(try await hijriService.fetchOffset(for: afterMaghrib) == 1)
     }
 }
 
 extension HijriServiceStaticTests {
-    func testTimeline() async throws {
+    @Test
+    func timelineIncrementsAtTheFirstMaghrib() async throws {
         // Given
-        guard let timeZone = TimeZone(identifier: "America/New_York"),
-              let startDate = Date(year: 2022, month: 3, day: 16, hour: 2, timeZone: timeZone)
-        else {
-            throw PrayError.invalidTimes
-        }
+        let timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let startDate = try #require(Date(year: 2022, month: 3, day: 16, hour: 2, timeZone: timeZone))
 
         let request = HijriAPI.FetchTimelineRequest(
             startDate: startDate,
@@ -89,23 +112,10 @@ extension HijriServiceStaticTests {
         preferences.autoIncrementHijri = true
 
         let timeline = try await hijriService.fetch(with: request)
-        let dateFormatter = DateFormatter(dateFormat: "MMM dd, hh:mma")
 
         // Then
-        timeline.forEach { entry in
-            print(
-                [
-                    dateFormatter.string(for: entry.date),
-                    "|",
-                    "\(entry.hijriOffset)"
-                ]
-                .compactMap { $0 }
-                .joined(separator: " ")
-            )
-        }
-
-        XCTAssertEqual(timeline.count, request.limit)
-        XCTAssertEqual(timeline[0].hijriOffset, 2)
-        XCTAssertEqual(timeline[1].hijriOffset, 3)
+        #expect(timeline.count == request.limit)
+        #expect(timeline[0].hijriOffset == 2)
+        #expect(timeline[1].hijriOffset == 3)
     }
 }

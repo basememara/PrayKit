@@ -32,8 +32,7 @@ let package = Package(
             dependencies: [
                 "PrayCore",
                 "PrayServices",
-                "PrayMocks",
-                .product(name: "ZamzamLocation", package: "ZamzamKit")
+                "PrayMocks"
             ],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
@@ -45,12 +44,15 @@ let package = Package(
                 "PrayServices"
             ],
             path: "Tests",
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(
             name: "PrayCore",
             dependencies: [
-                .product(name: "ZamzamCore", package: "ZamzamKit")
+                .product(name: "ZamzamCore", package: "ZamzamKit"),
+                .product(name: "ZamzamLocation", package: "ZamzamKit"),
+                .product(name: "ZamzamNotification", package: "ZamzamKit"),
+                .product(name: "ZamzamUI", package: "ZamzamKit")
             ],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
@@ -58,8 +60,7 @@ let package = Package(
             name: "PrayServices",
             dependencies: [
                 "PrayCore",
-                .product(name: "Adhan", package: "adhan-swift"),
-                .product(name: "ZamzamNotification", package: "ZamzamKit")
+                .product(name: "Adhan", package: "adhan-swift")
             ],
             resources: [.process("Resources")],
             swiftSettings: [.swiftLanguageMode(.v6)]

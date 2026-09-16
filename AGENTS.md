@@ -4,7 +4,7 @@ Open-source Swift package (github.com/ZamzamInc/PrayKit) powering the closed-sou
 
 ## Layout
 
-Pure SPM, `swift-tools-version: 6.0`, platforms macOS 12 / iOS 15 / watchOS 8. Every library target builds in the **Swift 6 language mode** under strict concurrency; the test target is pinned to `.v5` until it moves to Swift Testing. Models and service protocols are `Sendable`; the service structs that hold `UserDefaults`, `NetworkManager` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
+Pure SPM, `swift-tools-version: 6.0`, platforms macOS 12 / iOS 15 / watchOS 8. Every library target builds in the **Swift 6 language mode** under strict concurrency; Models and service protocols are `Sendable`; the service structs that hold `UserDefaults`, `NetworkManager` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
 
 - `PrayCore` — enums, errors, extensions, service protocols, settings
 - `PrayServices` — service implementations (Hijri, Notification, Prayer, Qibla, Resources)
@@ -22,7 +22,9 @@ swift test
 
 Sandboxed Bash cannot run these (SwiftPM needs `/var/folders` caches the seatbelt blocks) — use Apple's Xcode MCP (`xcode` server): `XcodeOpenWorkspace` on this package directory, then `RunAllTests` (scheme `PrayKit-Package`). Verified on Xcode 27.0.
 
-Tests live flat in `Tests/` (the `PrayKitTests` target has `path: "Tests"`; XCTest; `TestCase.swift` is the shared base). `Package.xctestplan` at the root is the plan the shared `PrayKit-Package` scheme runs (`.swiftpm/xcode/xcshareddata/xcschemes/`). Match the existing XCTest style until the suite is converted. Bug fixes land with a failing test first.
+Tests live flat in `Tests/` (the `PrayKitTests` target has `path: "Tests"`; **Swift Testing**; `PrayTestFixture` in `TestFixture.swift` supplies the log, preferences and prayer manager against a defaults suite private to each test). `Package.xctestplan` at the root is the plan the shared `PrayKit-Package` scheme runs (`.swiftpm/xcode/xcshareddata/xcschemes/`). Suites are structs and tests are `@Test` functions: Swift Testing builds a fresh instance per test and runs them in parallel, so a suite must not share mutable state. Use `try #require` before comparing an optional, never `#expect(optional?.x == y)`, which traps the runner. A known bug is wrapped in `withKnownIssue("pw-NNN: …")`, which does not rethrow, so no `try` on the call itself. `#expect` has no tolerance form: write `#expect(abs(a - (b)) <= tolerance)` and mind the parentheses. Bug fixes land with a failing test first.
+
+Combine publishers are asserted through `firstValue(of:timeout:while:)` in `PreferencesTests`: it subscribes, applies the mutation, and returns the first value or `nil` once the timeout wins, so a publisher that never fires fails instead of hanging.
 
 ## Consumers
 

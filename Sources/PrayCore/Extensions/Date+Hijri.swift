@@ -22,7 +22,8 @@ public extension Date {
             offSet: self.hijriDayOffset(
                 for: prayerDay,
                 hijriDayOffset: hijriDayOffset,
-                autoIncrementHijri: autoIncrementHijri
+                autoIncrementHijri: autoIncrementHijri,
+                timeZone: timeZone
             ),
             timeZone: timeZone
         )
@@ -33,12 +34,16 @@ public extension Date {
     func hijriDayOffset(
         for prayerDay: PrayerDay?,
         hijriDayOffset: Int,
-        autoIncrementHijri: Bool
+        autoIncrementHijri: Bool,
+        timeZone: TimeZone
     ) -> Int {
+        // The day boundary belongs to the prayer location, not the device's current calendar
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+
         guard autoIncrementHijri,
               let prayerTime = prayerDay?.current(at: self),
               [.maghrib, .isha].contains(prayerTime.type),
-              prayerTime.dateInterval.start.inSameDay(as: self)
+              prayerTime.dateInterval.start.inSameDay(as: self, using: calendar)
         else {
             return hijriDayOffset
         }

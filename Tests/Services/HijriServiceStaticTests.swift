@@ -13,11 +13,6 @@ import Testing
 import ZamzamCore
 
 struct HijriServiceStaticTests {
-    /// 2am is already past the previous evening's maghrib, so the service increments and
-    /// returns 3 where this expects 2. Pre-dates the Swift Testing conversion; the question
-    /// is whether the expectation or the service is wrong.
-    static let offsetIncrementsBeforeMaghrib: Comment = "pw-011: hijri offset already incremented at 2am"
-
     private let preferences: Preferences
     private let hijriService: HijriServiceStatic
 
@@ -52,10 +47,8 @@ extension HijriServiceStaticTests {
         preferences.autoIncrementHijri = true
 
         // Then
-        await withKnownIssue(Self.offsetIncrementsBeforeMaghrib) {
-            let offset = try await hijriService.fetchOffset(for: beforeMaghrib)
-            #expect(offset == 2)
-        }
+        let offsetBeforeMaghrib = try await hijriService.fetchOffset(for: beforeMaghrib)
+        #expect(offsetBeforeMaghrib == 2)
 
         let offsetAfterMaghrib = try await hijriService.fetchOffset(for: afterMaghrib)
         #expect(offsetAfterMaghrib == 3)

@@ -45,7 +45,12 @@ public extension HijriServiceStatic {
 
         do {
             let prayerDay = try await prayerManager.fetch(for: time, with: request)
-            return time.hijriDayOffset(for: prayerDay, hijriDayOffset: preferences.hijriDayOffset, autoIncrementHijri: preferences.autoIncrementHijri)
+            return time.hijriDayOffset(
+                for: prayerDay,
+                hijriDayOffset: preferences.hijriDayOffset,
+                autoIncrementHijri: preferences.autoIncrementHijri,
+                timeZone: request.timeZone
+            )
         } catch {
             return preferences.hijriDayOffset
         }

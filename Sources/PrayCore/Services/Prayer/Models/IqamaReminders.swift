@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public struct IqamaReminders: Equatable, Codable {
+public struct IqamaReminders: Equatable, Codable, Sendable {
     public let sound: NotificationSound
     public let minutes: Int
     public let jumuahMinutes: Int
@@ -23,7 +23,7 @@ public struct IqamaReminders: Equatable, Codable {
 // MARK: - Types
 
 public extension IqamaReminders {
-    enum UpdateInterval: String, Identifiable, Equatable, Codable, CaseIterable {
+    enum UpdateInterval: String, Identifiable, Equatable, Codable, CaseIterable, Sendable {
         public var id: Self { self }
         case weekly
         case biweekly

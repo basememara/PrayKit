@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum NotificationCategory: String {
+public enum NotificationCategory: String, Sendable {
     case main = "mainCategory"
     case snooze = "snoozeCategory"
     case reminder = "reminderCategory"

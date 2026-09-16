@@ -9,7 +9,7 @@
 import Foundation.NSDate
 import Foundation.NSTimeZone
 
-public struct PrayerDay: Equatable, Codable {
+public struct PrayerDay: Equatable, Codable, Sendable {
     public let date: Date
     public let times: [PrayerTime]
     public let yesterday: [PrayerTime]

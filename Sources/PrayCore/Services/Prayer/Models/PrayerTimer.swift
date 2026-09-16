@@ -10,7 +10,7 @@ import Foundation.NSCalendar
 import Foundation.NSDateInterval
 import ZamzamCore
 
-public struct PrayerTimer: Equatable, Codable {
+public struct PrayerTimer: Equatable, Codable, Sendable {
     public let date: Date
     public let type: Prayer
     public let timerType: TimerType
@@ -186,7 +186,7 @@ public extension PrayerTimer {
 // MARK: - Types
 
 public extension PrayerTimer {
-    enum TimerType: String, Equatable, Codable {
+    enum TimerType: String, Equatable, Codable, Sendable {
         case countdown
         case stopwatch
         case iqama

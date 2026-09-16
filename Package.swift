@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -32,8 +32,10 @@ let package = Package(
             dependencies: [
                 "PrayCore",
                 "PrayServices",
-                "PrayMocks"
-            ]
+                "PrayMocks",
+                .product(name: "ZamzamLocation", package: "ZamzamKit")
+            ],
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(
             name: "PrayKitTests",
@@ -42,28 +44,30 @@ let package = Package(
                 "PrayMocks",
                 "PrayServices"
             ],
-            path: "Tests"
+            path: "Tests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(
             name: "PrayCore",
             dependencies: [
-                .product(name: "ZamzamCore", package: "ZamzamKit"),
-                .product(name: "ZamzamLocation", package: "ZamzamKit"),
-                .product(name: "ZamzamNotification", package: "ZamzamKit"),
-                .product(name: "ZamzamUI", package: "ZamzamKit")
-            ]
+                .product(name: "ZamzamCore", package: "ZamzamKit")
+            ],
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(
             name: "PrayServices",
             dependencies: [
                 "PrayCore",
-                .product(name: "Adhan", package: "adhan-swift")
+                .product(name: "Adhan", package: "adhan-swift"),
+                .product(name: "ZamzamNotification", package: "ZamzamKit")
             ],
-            resources: [.process("Resources")]
+            resources: [.process("Resources")],
+            swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(
             name: "PrayMocks",
-            dependencies: ["PrayCore"]
+            dependencies: ["PrayCore"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]
 )

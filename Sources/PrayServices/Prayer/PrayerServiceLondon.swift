@@ -10,7 +10,8 @@ import Foundation
 import PrayCore
 import ZamzamCore
 
-public struct PrayerServiceLondon: PrayerService {
+/// `UserDefaults` is documented as thread-safe, hence the unchecked conformance.
+public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let networkManager: NetworkManager
     private let defaults: UserDefaults
     private let apiKey: String
@@ -241,16 +242,28 @@ public extension PrayerServiceLondon {
 
 // MARK: - Helpers
 
-private extension PrayerServiceLondon {
-    static var cachedData = [String: [String: LondonPrayerTimes]]()
-    static let jsonDecoder = JSONDecoder()
-    static let jsonEncoder = JSONEncoder()
+/// Process-wide in-memory cache of the parsed timetable, keyed by year.
+///
+/// `PrayerManager.fetch(between:)` fans out through a task group, so concurrent
+/// fetches share this and it has to be isolated.
+private actor LondonPrayerTimetableCache {
+    static let shared = LondonPrayerTimetableCache()
 
+    private var storage = [String: [String: PrayerServiceLondon.LondonPrayerTimes]]()
+
+    func value(for key: String) -> [String: PrayerServiceLondon.LondonPrayerTimes]? { storage[key] }
+
+    func set(_ value: [String: PrayerServiceLondon.LondonPrayerTimes], for key: String) {
+        storage[key] = value
+    }
+}
+
+private extension PrayerServiceLondon {
     func fetch(for year: Int) async throws -> [String: LondonPrayerTimes] {
         let key = String(year)
 
         // Retrieve from memory if available
-        if let cache = Self.cachedData[key] {
+        if let cache = await LondonPrayerTimetableCache.shared.value(for: key) {
             return cache
         }
 
@@ -278,21 +291,21 @@ private extension PrayerServiceLondon {
         }
 
         // Parse and save to cache
-        return try save(data: data, for: year)
+        return try await save(data: data, for: year)
     }
 
-    func save(data: Data, for year: Int) throws -> [String: PrayerServiceLondon.LondonPrayerTimes] {
+    func save(data: Data, for year: Int) async throws -> [String: PrayerServiceLondon.LondonPrayerTimes] {
         let key = String(year)
         let decoded: PrayerServiceLondon.ServerResponse
 
         do {
-            decoded = try Self.jsonDecoder.decode(ServerResponse.self, from: data)
+            decoded = try JSONDecoder().decode(ServerResponse.self, from: data)
         } catch {
             log.error("An error occured while storing Unified London Prayer Timetable for '\(key)' into cache", error: error)
             throw error
         }
 
-        Self.cachedData[key] = decoded.times // Store in-memory
+        await LondonPrayerTimetableCache.shared.set(decoded.times, for: key) // Store in-memory
 
         // Persist in user preferences
         if defaults.object(forKey: key) == nil {

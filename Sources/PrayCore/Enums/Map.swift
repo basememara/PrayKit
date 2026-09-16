@@ -8,7 +8,7 @@
 
 import CoreLocation
 
-public enum Map: Int, Equatable, CaseIterable {
+public enum Map: Int, Equatable, CaseIterable, Sendable {
     case apple
     case google
 }

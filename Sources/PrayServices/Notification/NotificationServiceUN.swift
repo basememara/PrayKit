@@ -6,7 +6,6 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-import Combine
 import CoreLocation
 import Foundation
 import Intents
@@ -19,7 +18,8 @@ import CoreSpotlight
 import BackgroundTasks
 #endif
 
-public struct NotificationServiceUN: NotificationService {
+/// `UNUserNotificationCenter` is documented as thread-safe, hence the unchecked conformance.
+public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
     private let prayerManager: PrayerManager
     private let userNotification: UNUserNotificationCenter
     private let preferences: Preferences
@@ -101,21 +101,6 @@ public extension NotificationServiceUN {
         #if !os(macOS)
         var siriShortcuts = [INRelevantShortcut]()
         #endif
-
-        defer {
-            log.info("Scheduled \(58 - counter) notifications successfully")
-            scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
-            #if !os(macOS)
-            Task { [siriShortcuts] in
-                do {
-                    try await INRelevantShortcutStore.default.setRelevantShortcuts(siriShortcuts)
-                    log.debug("Donated \(siriShortcuts.count) Siri shortcuts successfully")
-                } catch {
-                    log.error("Siri shortcuts could not be stored", error: error)
-                }
-            }
-            #endif
-        }
 
         // Schedule available notifications
         prayerDays.forEach { prayerDay in
@@ -406,6 +391,20 @@ public extension NotificationServiceUN {
             await userNotification.remove(withCategory: NotificationCategory.beacon.rawValue)
         }
         #endif
+
+        log.info("Scheduled \(58 - counter) notifications successfully")
+        scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
+
+        #if !os(macOS)
+        // Awaited here rather than donated from a `Task`, which would have sent
+        // the non-Sendable shortcuts across an isolation boundary.
+        do {
+            try await INRelevantShortcutStore.default.setRelevantShortcuts(siriShortcuts)
+            log.debug("Donated \(siriShortcuts.count) Siri shortcuts successfully")
+        } catch {
+            log.error("Siri shortcuts could not be stored", error: error)
+        }
+        #endif
     }
 }
 
@@ -553,7 +552,7 @@ private extension INRelevantShortcut {
 
 // MARK: - Localization
 
-public protocol NotificationServiceLocalizable {
+public protocol NotificationServiceLocalizable: Sendable {
     var beaconNotificationBody: String { get }
     var beaconNotificationTitle: String { get }
     var calibrateNotificationBody: String { get }

@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum NotificationAction: String {
+public enum NotificationAction: String, Sendable {
     case snooze = "snoozeAction"
     case calibrate = "calibrateAction"
 }

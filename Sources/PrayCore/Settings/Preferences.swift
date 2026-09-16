@@ -12,8 +12,14 @@ import Foundation
 import ZamzamCore
 
 // swiftlint:disable:next type_body_length
-public final class Preferences {
+public final class Preferences: @unchecked Sendable {
     public let defaults: UserDefaults
+
+    /// Emits the key path of every changed preference.
+    ///
+    /// Scoped to the instance: a static subject made two `Preferences` over different
+    /// suites notify each other's subscribers.
+    private let subject = PassthroughSubject<PartialKeyPath<Preferences>, Never>()
 
     // MARK: - Calculation
 
@@ -21,7 +27,7 @@ public final class Preferences {
     public var calculationMethod: CalculationMethod {
         didSet {
             guard calculationMethod != oldValue else { return }
-            Self.subject.send(\Preferences.calculationMethod)
+            subject.send(\Preferences.calculationMethod)
         }
     }
 
@@ -29,7 +35,7 @@ public final class Preferences {
     public var juristicMethod: Madhab {
         didSet {
             guard juristicMethod != oldValue else { return }
-            Self.subject.send(\Preferences.juristicMethod)
+            subject.send(\Preferences.juristicMethod)
         }
     }
 
@@ -37,7 +43,7 @@ public final class Preferences {
     public var fajrDegrees: Double {
         didSet {
             guard fajrDegrees != oldValue else { return }
-            Self.subject.send(\Preferences.fajrDegrees)
+            subject.send(\Preferences.fajrDegrees)
         }
     }
 
@@ -45,7 +51,7 @@ public final class Preferences {
     public var maghribDegrees: Double {
         didSet {
             guard maghribDegrees != oldValue else { return }
-            Self.subject.send(\Preferences.maghribDegrees)
+            subject.send(\Preferences.maghribDegrees)
         }
     }
 
@@ -53,7 +59,7 @@ public final class Preferences {
     public var ishaDegrees: Double {
         didSet {
             guard ishaDegrees != oldValue else { return }
-            Self.subject.send(\Preferences.ishaDegrees)
+            subject.send(\Preferences.ishaDegrees)
         }
     }
 
@@ -61,7 +67,7 @@ public final class Preferences {
     public var elevationRule: ElevationRule? {
         didSet {
             guard elevationRule != oldValue else { return }
-            Self.subject.send(\Preferences.elevationRule)
+            subject.send(\Preferences.elevationRule)
         }
     }
 
@@ -71,7 +77,7 @@ public final class Preferences {
     public var adjustmentMinutes: AdjustmentMinutes? {
         didSet {
             guard adjustmentMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.adjustmentMinutes)
+            subject.send(\Preferences.adjustmentMinutes)
         }
     }
 
@@ -79,7 +85,7 @@ public final class Preferences {
     public var adjustmentElevation: ElevationRule? {
         didSet {
             guard adjustmentElevation != oldValue else { return }
-            Self.subject.send(\Preferences.adjustmentElevation)
+            subject.send(\Preferences.adjustmentElevation)
         }
     }
 
@@ -89,7 +95,7 @@ public final class Preferences {
     public var isGPSEnabled: Bool {
         didSet {
             guard isGPSEnabled != oldValue else { return }
-            Self.subject.send(\Preferences.isGPSEnabled)
+            subject.send(\Preferences.isGPSEnabled)
         }
     }
 
@@ -100,7 +106,7 @@ public final class Preferences {
     public var geofenceRadius: Double {
         didSet {
             guard geofenceRadius != oldValue else { return }
-            Self.subject.send(\Preferences.geofenceRadius)
+            subject.send(\Preferences.geofenceRadius)
         }
     }
 
@@ -110,7 +116,7 @@ public final class Preferences {
     public var iqamaTimes: IqamaTimes {
         didSet {
             guard iqamaTimes != oldValue else { return }
-            Self.subject.send(\Preferences.iqamaTimes)
+            subject.send(\Preferences.iqamaTimes)
         }
     }
 
@@ -118,7 +124,7 @@ public final class Preferences {
     public var iqamaReminders: IqamaReminders {
         didSet {
             guard iqamaReminders != oldValue else { return }
-            Self.subject.send(\Preferences.iqamaReminders)
+            subject.send(\Preferences.iqamaReminders)
         }
     }
 
@@ -126,7 +132,7 @@ public final class Preferences {
     public var isIqamaTimerEnabled: Bool {
         didSet {
             guard isIqamaTimerEnabled != oldValue else { return }
-            Self.subject.send(\Preferences.isIqamaTimerEnabled)
+            subject.send(\Preferences.isIqamaTimerEnabled)
         }
     }
 
@@ -134,7 +140,7 @@ public final class Preferences {
     public var isIqamaHidden: Bool {
         didSet {
             guard isIqamaHidden != oldValue else { return }
-            Self.subject.send(\Preferences.isIqamaHidden)
+            subject.send(\Preferences.isIqamaHidden)
         }
     }
 
@@ -144,7 +150,7 @@ public final class Preferences {
     public var enable24hTimeFormat: Bool {
         didSet {
             guard enable24hTimeFormat != oldValue else { return }
-            Self.subject.send(\Preferences.enable24hTimeFormat)
+            subject.send(\Preferences.enable24hTimeFormat)
         }
     }
 
@@ -152,7 +158,7 @@ public final class Preferences {
     public var hijriDayOffset: Int {
         didSet {
             guard hijriDayOffset != oldValue else { return }
-            Self.subject.send(\Preferences.hijriDayOffset)
+            subject.send(\Preferences.hijriDayOffset)
         }
     }
 
@@ -160,7 +166,7 @@ public final class Preferences {
     public var autoIncrementHijri: Bool {
         didSet {
             guard autoIncrementHijri != oldValue else { return }
-            Self.subject.send(\Preferences.autoIncrementHijri)
+            subject.send(\Preferences.autoIncrementHijri)
         }
     }
 
@@ -168,7 +174,7 @@ public final class Preferences {
     public var stopwatchMinutes: Int {
         didSet {
             guard stopwatchMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.stopwatchMinutes)
+            subject.send(\Preferences.stopwatchMinutes)
         }
     }
 
@@ -178,7 +184,7 @@ public final class Preferences {
     public var snoozeMinutes: Int {
         didSet {
             guard snoozeMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.snoozeMinutes)
+            subject.send(\Preferences.snoozeMinutes)
         }
     }
 
@@ -186,7 +192,7 @@ public final class Preferences {
     public var preAdhanMinutes: PreAdhanMinutes {
         didSet {
             guard preAdhanMinutes != oldValue else { return }
-            Self.subject.send(\Preferences.preAdhanMinutes)
+            subject.send(\Preferences.preAdhanMinutes)
         }
     }
 
@@ -194,7 +200,7 @@ public final class Preferences {
     public var duhaReminder: DuhaType? {
         didSet {
             guard duhaReminder != oldValue else { return }
-            Self.subject.send(\Preferences.duhaReminder)
+            subject.send(\Preferences.duhaReminder)
         }
     }
 
@@ -202,7 +208,7 @@ public final class Preferences {
     public var adhanDuaa: AdhanDuaa {
         didSet {
             guard adhanDuaa != oldValue else { return }
-            Self.subject.send(\Preferences.adhanDuaa)
+            subject.send(\Preferences.adhanDuaa)
         }
     }
 
@@ -212,7 +218,7 @@ public final class Preferences {
     public var notificationAdhan: NotificationAdhan {
         didSet {
             guard notificationAdhan != oldValue else { return }
-            Self.subject.send(\Preferences.notificationAdhan)
+            subject.send(\Preferences.notificationAdhan)
         }
     }
 
@@ -220,7 +226,7 @@ public final class Preferences {
     public var notificationSounds: NotificationSounds {
         didSet {
             guard notificationSounds != oldValue else { return }
-            Self.subject.send(\Preferences.notificationSounds)
+            subject.send(\Preferences.notificationSounds)
         }
     }
 
@@ -228,7 +234,7 @@ public final class Preferences {
     public var reminderSounds: ReminderSounds {
         didSet {
             guard reminderSounds != oldValue else { return }
-            Self.subject.send(\Preferences.reminderSounds)
+            subject.send(\Preferences.reminderSounds)
         }
     }
 
@@ -236,7 +242,7 @@ public final class Preferences {
     public var isPlayOnTapEnabled: Bool {
         didSet {
             guard isPlayOnTapEnabled != oldValue else { return }
-            Self.subject.send(\Preferences.isPlayOnTapEnabled)
+            subject.send(\Preferences.isPlayOnTapEnabled)
         }
     }
 
@@ -246,7 +252,7 @@ public final class Preferences {
     public var isPrayerAbbrEnabled: Bool {
         didSet {
             guard isPrayerAbbrEnabled != oldValue else { return }
-            Self.subject.send(\Preferences.isPrayerAbbrEnabled)
+            subject.send(\Preferences.isPrayerAbbrEnabled)
         }
     }
 
@@ -254,7 +260,7 @@ public final class Preferences {
     public var sunriseAfterIsha: Bool {
         didSet {
             guard sunriseAfterIsha != oldValue else { return }
-            Self.subject.send(\Preferences.sunriseAfterIsha)
+            subject.send(\Preferences.sunriseAfterIsha)
         }
     }
 
@@ -262,7 +268,7 @@ public final class Preferences {
     public var appearanceMode: AppearanceMode {
         didSet {
             guard appearanceMode != oldValue else { return }
-            Self.subject.send(\Preferences.appearanceMode)
+            subject.send(\Preferences.appearanceMode)
         }
     }
 
@@ -270,7 +276,7 @@ public final class Preferences {
     public var theme: AppTheme {
         didSet {
             guard theme != oldValue else { return }
-            Self.subject.send(\Preferences.theme)
+            subject.send(\Preferences.theme)
         }
     }
 
@@ -280,7 +286,7 @@ public final class Preferences {
     public var lastCacheDate: Date? {
         didSet {
             guard lastCacheDate != oldValue else { return }
-            Self.subject.send(\Preferences.lastCacheDate)
+            subject.send(\Preferences.lastCacheDate)
         }
     }
 
@@ -288,7 +294,7 @@ public final class Preferences {
     public var lastTimeZone: TimeZone {
         didSet {
             guard lastTimeZone != oldValue else { return }
-            Self.subject.send(\Preferences.lastTimeZone)
+            subject.send(\Preferences.lastTimeZone)
         }
     }
 
@@ -296,7 +302,7 @@ public final class Preferences {
     public var lastRegionName: String? {
         didSet {
             guard lastRegionName != oldValue else { return }
-            Self.subject.send(\Preferences.lastRegionName)
+            subject.send(\Preferences.lastRegionName)
         }
     }
 
@@ -306,7 +312,7 @@ public final class Preferences {
     public var lastDiagnosticsDate: Date? {
         didSet {
             guard lastDiagnosticsDate != oldValue else { return }
-            Self.subject.send(\Preferences.lastDiagnosticsDate)
+            subject.send(\Preferences.lastDiagnosticsDate)
         }
     }
 
@@ -520,10 +526,8 @@ public extension Preferences {
 // MARK: - Observers
 
 public extension Preferences {
-    private static let subject = PassthroughSubject<PartialKeyPath<Preferences>, Never>()
-
     func publisher() -> AnyPublisher<PartialKeyPath<Preferences>, Never> {
-        Self.subject
+        subject
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
@@ -551,7 +555,7 @@ public extension Preferences {
 }
 
 public extension Preferences {
-    enum KeyPathGroup {
+    enum KeyPathGroup: Sendable {
         case prayerRecalculation
         case notificationReschedule
         case locationUpdate
@@ -647,8 +651,15 @@ public extension Preferences {
 
         lastTimeZone = .current
         lastCacheDate = .now
-        location.geocoder { region, _ in self.lastRegionName ?= region }
-        Self.subject.send(\Preferences.prayersCoordinates)
+        subject.send(\Preferences.prayersCoordinates)
+
+        // Reverse geocoding is network-bound, so the region name lands after the
+        // coordinates rather than holding up prayer recalculation.
+        Task { [weak self] in
+            let (region, _) = await location.geocoder()
+            guard let self, let region else { return }
+            lastRegionName = region
+        }
     }
 
     func set(manualAddress coordinates: Coordinates, timeZone: TimeZone, regionName: String?) {
@@ -657,7 +668,7 @@ public extension Preferences {
         lastRegionName = regionName
         lastCacheDate = .now
         calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee
-        Self.subject.send(\Preferences.prayersCoordinates)
+        subject.send(\Preferences.prayersCoordinates)
     }
 
     func set(gpsOrManualCoordinates coordinates: Coordinates, timeZone: TimeZone, regionName: String?) {
@@ -665,7 +676,7 @@ public extension Preferences {
         prayersCoordinates = coordinates
         lastTimeZone = timeZone
         lastRegionName = regionName
-        Self.subject.send(\Preferences.prayersCoordinates)
+        subject.send(\Preferences.prayersCoordinates)
     }
 }
 

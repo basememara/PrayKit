@@ -12,36 +12,25 @@ import ZamzamCore
 public extension CLLocation {
     /// Retrieves region details for coordinates.
     ///
-    /// - Parameters:
-    ///   - completion: Async callback with retrived location details.
-    func geocoder(completion: @escaping (String?, TimeZone?) -> Void) {
-        geocoder { (meta: LocationMeta?) in
-            let region: String?
+    /// - Parameter timeout: A timeout after which the lookup gives up. Default is 10 seconds.
+    /// - Returns: The display name of the region and its time zone, either of which may be `nil`.
+    func geocoder(timeout: TimeInterval = 10) async -> (String?, TimeZone?) {
+        let meta: LocationMeta? = await geocoder(timeout: timeout)
+        let region: String?
 
-            switch (meta?.locality, meta?.administrativeArea, meta?.country) {
-            case let (.some(city), .some(state), _):
-                region = 1...3 ~= state.count ? "\(city), \(state)" : city
-            case let (.some(city), _, .some(country)) where city != country:
-                region = "\(city), \(country)"
-            case let (.some(city), _, _):
-                region = city
-            case let (_, _, .some(country)):
-                region = country
-            default:
-                region = nil
-            }
-
-            completion(region, meta?.timeZone)
+        switch (meta?.locality, meta?.administrativeArea, meta?.country) {
+        case let (.some(city), .some(state), _):
+            region = 1...3 ~= state.count ? "\(city), \(state)" : city
+        case let (.some(city), _, .some(country)) where city != country:
+            region = "\(city), \(country)"
+        case let (.some(city), _, _):
+            region = city
+        case let (_, _, .some(country)):
+            region = country
+        default:
+            region = nil
         }
-    }
 
-    /// Retrieves region details for coordinates.
-    ///
-    /// - Parameters:
-    ///   - completion: Async callback with retrived location details.
-    func geocoder() async -> (String?, TimeZone?) {
-        await withCheckedContinuation { continuation in
-            geocoder { continuation.resume(returning: ($0, $1)) }
-        }
+        return (region, meta?.timeZone)
     }
 }

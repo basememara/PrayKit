@@ -10,7 +10,7 @@ import Foundation.NSCalendar
 import Foundation.NSDate
 import ZamzamCore
 
-public enum DuhaType: Equatable, Codable {
+public enum DuhaType: Equatable, Codable, Sendable {
     case time(hour: Int, minutes: Int)
     case minutes(Int)
 }

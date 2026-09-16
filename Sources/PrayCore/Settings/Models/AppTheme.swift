@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum AppTheme: String, Equatable, CaseIterable, Codable {
+public enum AppTheme: String, Equatable, CaseIterable, Codable, Sendable {
     case `default`
     case web3
     case aqua

@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public struct NotificationAdhan: RawRepresentable, Equatable, Codable {
+public struct NotificationAdhan: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: AdhanSound]
 
     public init(rawValue: [String: AdhanSound]) {

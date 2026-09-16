@@ -9,7 +9,7 @@
 import Foundation.NSURL
 import ZamzamCore
 
-public struct Constants: Distribution {
+public struct Constants: Distribution, Sendable {
     public let isDebug: Bool
     public let itunesName: String
     public let itunesID: String

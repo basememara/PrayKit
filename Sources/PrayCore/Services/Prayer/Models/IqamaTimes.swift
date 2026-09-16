@@ -10,7 +10,7 @@ import Foundation.NSCalendar
 import Foundation.NSDate
 import ZamzamCore
 
-public struct IqamaTimes: Equatable, Codable {
+public struct IqamaTimes: Equatable, Codable, Sendable {
     public let fajr: IqamaType?
     public let dhuhr: IqamaType?
     public let asr: IqamaType?
@@ -47,7 +47,7 @@ public struct IqamaTimes: Equatable, Codable {
 }
 
 public extension IqamaTimes {
-    enum IqamaType: Equatable, Codable {
+    enum IqamaType: Equatable, Codable, Sendable {
         case time(hour: Int, minutes: Int)
         case minutes(Int)
     }

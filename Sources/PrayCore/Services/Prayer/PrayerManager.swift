@@ -9,7 +9,7 @@
 import Foundation
 import ZamzamCore
 
-public struct PrayerManager {
+public struct PrayerManager: Sendable {
     private let service: PrayerService
     private let londonService: PrayerService
     private let preferences: Preferences
@@ -32,7 +32,7 @@ public extension PrayerManager {
 }
 
 public extension PrayerManager {
-    enum Expanded {
+    enum Expanded: Sendable {
         case finalHour
         case hourly
         case intervals(TimeInterval)

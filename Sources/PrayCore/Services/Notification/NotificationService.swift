@@ -8,7 +8,7 @@
 
 import Foundation.NSDateInterval
 
-public protocol NotificationService {
+public protocol NotificationService: Sendable {
     func schedulePrayers() async
 
     @discardableResult

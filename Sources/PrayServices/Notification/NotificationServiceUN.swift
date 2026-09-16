@@ -392,7 +392,9 @@ public extension NotificationServiceUN {
         }
         #endif
 
-        log.info("Scheduled \(58 - counter) notifications successfully")
+        // The add completions are asynchronous, so ask the store what actually landed
+        let pendingCount = await userNotification.pendingNotificationRequests().count
+        log.info("Requested \(58 - counter) notifications, \(pendingCount) pending in the notification center")
         scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
 
         #if !os(macOS)

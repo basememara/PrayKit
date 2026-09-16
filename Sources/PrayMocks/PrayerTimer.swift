@@ -52,7 +52,8 @@ public extension PrayerTimer {
             stopwatchMinutes: 0,
             preAdhanMinutes: PreAdhanMinutes(rawValue: [:]),
             sunriseAfterIsha: false,
-            timeZone: .current
+            timeZone: .current,
+            isPlaceholder: true
         ) else {
             let countdownDate = Date.now + .hours(1)
             return PrayerTimer(
@@ -69,7 +70,8 @@ public extension PrayerTimer {
                 dangerZone: 0.25,
                 isDangerZone: false,
                 isJumuah: false,
-                localizeAt: nil
+                localizeAt: nil,
+                isPlaceholder: true
             )
         }
 

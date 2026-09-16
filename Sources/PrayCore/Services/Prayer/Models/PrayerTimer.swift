@@ -25,6 +25,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let isDangerZone: Bool
     public let isJumuah: Bool
     public let localizeAt: Date?
+    /// Sample or fallback data that widget views must render redacted, never as real times
+    public let isPlaceholder: Bool
 
     public init(
         date: Date,
@@ -40,7 +42,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         dangerZone: Double,
         isDangerZone: Bool,
         isJumuah: Bool,
-        localizeAt: Date? = nil
+        localizeAt: Date? = nil,
+        isPlaceholder: Bool = false
     ) {
         self.date = date
         self.type = type
@@ -56,6 +59,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.isDangerZone = isDangerZone
         self.isJumuah = isJumuah
         self.localizeAt = localizeAt
+        self.isPlaceholder = isPlaceholder
     }
 }
 
@@ -68,7 +72,8 @@ public extension PrayerTimer {
         stopwatchMinutes: Int,
         preAdhanMinutes: PreAdhanMinutes,
         sunriseAfterIsha: Bool,
-        timeZone: TimeZone
+        timeZone: TimeZone,
+        isPlaceholder: Bool = false
     ) {
         guard let currentPrayer = prayerDay.current(at: date),
               let nextPrayer = prayerDay.next(at: date, sunriseAfterIsha: sunriseAfterIsha)
@@ -161,7 +166,8 @@ public extension PrayerTimer {
             dangerZone: dangerZone,
             isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
             isJumuah: isJumuah,
-            localizeAt: countdownLocalizeAt
+            localizeAt: countdownLocalizeAt,
+            isPlaceholder: isPlaceholder
         )
     }
 }

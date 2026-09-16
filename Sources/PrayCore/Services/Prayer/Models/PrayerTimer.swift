@@ -214,5 +214,17 @@ private extension Date {
 #if canImport(WidgetKit)
 import WidgetKit
 
-extension PrayerTimer: TimelineEntry {}
+extension PrayerTimer: TimelineEntry {
+    /// Smart Stack relevance: obligatory prayers surface from 15 minutes before until 45 minutes
+    /// after they start, sunrise for the 20 minutes before it as the Fajr deadline.
+    public var relevance: TimelineEntryRelevance? {
+        guard type.isObligation || type == .sunrise else { return nil }
+
+        let windowStart = type == .sunrise ? countdownDate - .minutes(20) : countdownDate - .minutes(15)
+        let windowEnd = type == .sunrise ? countdownDate : countdownDate + .minutes(45)
+        guard date >= windowStart, date <= windowEnd else { return nil }
+
+        return TimelineEntryRelevance(score: 100, duration: max(0, windowEnd.timeIntervalSince(date)))
+    }
+}
 #endif

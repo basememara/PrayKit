@@ -639,10 +639,18 @@ public extension Preferences {
 // MARK: - Helpers
 
 public extension Preferences {
+    /// A GPS fix closer than this to the saved coordinates is jitter, not a move. Every accepted
+    /// update re-runs notification scheduling, iCloud sync and one of the watch's 50 daily
+    /// complication transfers, and prayer times do not shift meaningfully under a kilometre.
+    static let significantDistance: CLLocationDistance = 1_000
+
     func set(gpsLocation location: CLLocation) {
-        let coordinates = Coordinates(from: location.coordinate)
-        guard coordinates != prayersCoordinates || lastRegionName == nil || lastCacheDate == nil else { return }
-        prayersCoordinates = coordinates
+        let hasMoved = prayersCoordinates.map {
+            location.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) >= Self.significantDistance
+        } ?? true
+
+        guard hasMoved || lastRegionName == nil || lastCacheDate == nil else { return }
+        prayersCoordinates = Coordinates(from: location.coordinate)
 
         // Update calculation method if significant change if applicable
         if lastTimeZone.identifier != TimeZone.current.identifier && ![.moonsightingCommittee, .muslimWorldLeague].contains(calculationMethod) {

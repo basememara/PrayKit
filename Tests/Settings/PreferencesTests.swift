@@ -122,6 +122,28 @@ extension PreferencesTests {
         #expect(published == expectedValue)
         #expect(preferences.prayersCoordinates == expectedValue)
     }
+
+    @Test
+    func gpsJitterUnderAKilometreIsIgnored() {
+        // Given
+        preferences.set(gpsLocation: CLLocation(latitude: 43.6510, longitude: -79.3470))
+        preferences.lastRegionName = "Toronto"
+        let saved = preferences.prayersCoordinates
+        let cachedAt = preferences.lastCacheDate
+
+        // When: about 220 m north
+        preferences.set(gpsLocation: CLLocation(latitude: 43.6530, longitude: -79.3470))
+
+        // Then
+        #expect(preferences.prayersCoordinates == saved)
+        #expect(preferences.lastCacheDate == cachedAt)
+
+        // When: about 2 km north
+        preferences.set(gpsLocation: CLLocation(latitude: 43.6700, longitude: -79.3470))
+
+        // Then
+        #expect(preferences.prayersCoordinates != saved)
+    }
 }
 
 // MARK: - Time

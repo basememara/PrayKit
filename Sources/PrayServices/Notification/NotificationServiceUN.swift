@@ -160,6 +160,37 @@ public extension NotificationServiceUN {
                     userNotification.remove(withIdentifier: identifier)
                 }
 
+                // Add iqama notification if applicable; it goes before the optional reminders so the Jumuah
+                // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
+                let iqamaIdentifier = "\(identifier)-iqama-reminder"
+
+                if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
+                    userNotification.add(
+                        date: iqamaReminderDate,
+                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
+                        sound: iqamaSound.file.map {
+                            #if os(iOS)
+                            return UNNotificationSound(named: UNNotificationSoundName($0))
+                            #else
+                            return .default
+                            #endif
+                        },
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: iqamaIdentifier,
+                        category: NotificationCategory.reminder.rawValue,
+                        userInfo: userInfo
+                    ) {
+                        guard let error = $0 else { return }
+                        log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
+                    }
+
+                    // Update counter
+                    counter -= 1
+                } else if iqamaSound == .off {
+                    userNotification.remove(withIdentifier: iqamaIdentifier)
+                }
+
                 #if !os(macOS)
                 // Add Siri shortcut
                 siriShortcuts.append(
@@ -273,36 +304,6 @@ public extension NotificationServiceUN {
                     } else if reminderSound == .off {
                         userNotification.remove(withIdentifier: reminderIdentifier)
                     }
-                }
-
-                // Add iqama notification if applicable
-                let iqamaIdentifier = "\(identifier)-iqama-reminder"
-
-                if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
-                    userNotification.add(
-                        date: iqamaReminderDate,
-                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
-                        sound: iqamaSound.file.map {
-                            #if os(iOS)
-                            return UNNotificationSound(named: UNNotificationSoundName($0))
-                            #else
-                            return .default
-                            #endif
-                        },
-                        interruptionLevel: .timeSensitive,
-                        calendar: calendar,
-                        identifier: iqamaIdentifier,
-                        category: NotificationCategory.reminder.rawValue,
-                        userInfo: userInfo
-                    ) {
-                        guard let error = $0 else { return }
-                        log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
-                    }
-
-                    // Update counter
-                    counter -= 1
-                } else if iqamaSound == .off {
-                    userNotification.remove(withIdentifier: iqamaIdentifier)
                 }
             }
         }

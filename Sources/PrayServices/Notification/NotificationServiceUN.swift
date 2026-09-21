@@ -96,6 +96,7 @@ public extension NotificationServiceUN {
 
         let calendar = Calendar(identifier: .gregorian, timeZone: preferences.lastTimeZone)
         let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: preferences.lastTimeZone)
+        var firstScheduledDate: Date?
         var lastScheduledDate = dateInterval.end
         var counter = 58 // Unofficial limit for scheduling local notifications
         let now = dateInterval.start
@@ -151,7 +152,8 @@ public extension NotificationServiceUN {
                         log.error("Failed to create a notifications for \"\(identifier)\"", error: error)
                     }
 
-                    // Update last date and counter
+                    // Update scheduled range and counter
+                    firstScheduledDate = firstScheduledDate ?? prayerTime.dateInterval.start
                     lastScheduledDate = prayerTime.dateInterval.start
                     counter -= 1
                 } else if sound == .off {
@@ -394,7 +396,8 @@ public extension NotificationServiceUN {
 
         // The add completions are asynchronous, so ask the store what actually landed
         let pendingCount = await userNotification.pendingNotificationRequests().count
-        log.info("Requested \(58 - counter) notifications, \(pendingCount) pending in the notification center")
+        let scheduledRange = "\(firstScheduledDate?.formatted() ?? "none") to \(lastScheduledDate.formatted())"
+        log.info("Requested \(58 - counter) notifications for prayers from \(scheduledRange), \(pendingCount) pending in the notification center")
         scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
 
         #if !os(macOS)

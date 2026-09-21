@@ -144,6 +144,22 @@ extension PreferencesTests {
         // Then
         #expect(preferences.prayersCoordinates != saved)
     }
+
+    @Test
+    func gpsJitterAcrossATimeZoneBoundaryStillUpdates() throws {
+        // Given
+        preferences.set(gpsLocation: CLLocation(latitude: 43.6510, longitude: -79.3470))
+        preferences.lastRegionName = "Toronto"
+        preferences.lastTimeZone = try #require(TimeZone(identifier: "Pacific/Chatham"))
+        let saved = preferences.prayersCoordinates
+
+        // When: about 220 m north, but the device now reports another zone
+        preferences.set(gpsLocation: CLLocation(latitude: 43.6530, longitude: -79.3470))
+
+        // Then
+        #expect(preferences.prayersCoordinates != saved)
+        #expect(preferences.lastTimeZone.identifier == TimeZone.current.identifier)
+    }
 }
 
 // MARK: - Time

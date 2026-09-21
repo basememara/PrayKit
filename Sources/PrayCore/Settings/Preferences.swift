@@ -649,11 +649,12 @@ public extension Preferences {
             location.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) >= Self.significantDistance
         } ?? true
 
-        guard hasMoved || lastRegionName == nil || lastCacheDate == nil else { return }
+        let hasChangedTimeZone = lastTimeZone.identifier != TimeZone.current.identifier
+        guard hasMoved || hasChangedTimeZone || lastRegionName == nil || lastCacheDate == nil else { return }
         prayersCoordinates = Coordinates(from: location.coordinate)
 
         // Update calculation method if significant change if applicable
-        if lastTimeZone.identifier != TimeZone.current.identifier && ![.moonsightingCommittee, .muslimWorldLeague].contains(calculationMethod) {
+        if hasChangedTimeZone && ![.moonsightingCommittee, .muslimWorldLeague].contains(calculationMethod) {
             calculationMethod = .recommended() ?? .moonsightingCommittee
         }
 

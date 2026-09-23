@@ -10,7 +10,7 @@ import Foundation.NSCalendar
 import Foundation.NSDateInterval
 import ZamzamCore
 
-public struct PrayerTimer: Equatable, Codable {
+public struct PrayerTimer: Equatable, Codable, Sendable {
     public let date: Date
     public let type: Prayer
     public let timerType: TimerType
@@ -25,6 +25,8 @@ public struct PrayerTimer: Equatable, Codable {
     public let isDangerZone: Bool
     public let isJumuah: Bool
     public let localizeAt: Date?
+    /// Sample or fallback data that widget views must render redacted, never as real times
+    public let isPlaceholder: Bool
 
     public init(
         date: Date,
@@ -40,7 +42,8 @@ public struct PrayerTimer: Equatable, Codable {
         dangerZone: Double,
         isDangerZone: Bool,
         isJumuah: Bool,
-        localizeAt: Date? = nil
+        localizeAt: Date? = nil,
+        isPlaceholder: Bool = false
     ) {
         self.date = date
         self.type = type
@@ -56,6 +59,7 @@ public struct PrayerTimer: Equatable, Codable {
         self.isDangerZone = isDangerZone
         self.isJumuah = isJumuah
         self.localizeAt = localizeAt
+        self.isPlaceholder = isPlaceholder
     }
 }
 
@@ -68,7 +72,8 @@ public extension PrayerTimer {
         stopwatchMinutes: Int,
         preAdhanMinutes: PreAdhanMinutes,
         sunriseAfterIsha: Bool,
-        timeZone: TimeZone
+        timeZone: TimeZone,
+        isPlaceholder: Bool = false
     ) {
         guard let currentPrayer = prayerDay.current(at: date),
               let nextPrayer = prayerDay.next(at: date, sunriseAfterIsha: sunriseAfterIsha)
@@ -161,7 +166,8 @@ public extension PrayerTimer {
             dangerZone: dangerZone,
             isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
             isJumuah: isJumuah,
-            localizeAt: countdownLocalizeAt
+            localizeAt: countdownLocalizeAt,
+            isPlaceholder: isPlaceholder
         )
     }
 }
@@ -186,7 +192,7 @@ public extension PrayerTimer {
 // MARK: - Types
 
 public extension PrayerTimer {
-    enum TimerType: String, Equatable, Codable {
+    enum TimerType: String, Equatable, Codable, Sendable {
         case countdown
         case stopwatch
         case iqama
@@ -214,5 +220,17 @@ private extension Date {
 #if canImport(WidgetKit)
 import WidgetKit
 
-extension PrayerTimer: TimelineEntry {}
+extension PrayerTimer: TimelineEntry {
+    /// Smart Stack relevance: obligatory prayers surface from 15 minutes before until 45 minutes
+    /// after they start, sunrise for the 20 minutes before it as the Fajr deadline.
+    public var relevance: TimelineEntryRelevance? {
+        guard type.isObligation || type == .sunrise else { return nil }
+
+        let windowStart = type == .sunrise ? countdownDate - .minutes(20) : countdownDate - .minutes(15)
+        let windowEnd = type == .sunrise ? countdownDate : countdownDate + .minutes(45)
+        guard date >= windowStart, date <= windowEnd else { return nil }
+
+        return TimelineEntryRelevance(score: 100, duration: max(0, windowEnd.timeIntervalSince(date)))
+    }
+}
 #endif

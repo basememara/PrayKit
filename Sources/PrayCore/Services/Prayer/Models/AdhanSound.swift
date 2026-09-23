@@ -8,7 +8,7 @@
 
 import Foundation.NSURL
 
-public enum AdhanSound: String, CaseIterable, Codable {
+public enum AdhanSound: String, CaseIterable, Codable, Sendable {
     case abdulBasit = "abdul.basit"
     case abdulGhaffar = "abdul.ghaffar"
     case abdulHakam = "abdul.hakam"
@@ -68,7 +68,7 @@ extension AdhanSound: Identifiable {
 // MARK: - Types
 
 public extension AdhanSound {
-    enum Length: CaseIterable {
+    enum Length: CaseIterable, Sendable {
         case short
         case long
         case fajr

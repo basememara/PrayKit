@@ -1,8 +1,8 @@
 {
   "configurations" : [
     {
-      "id" : "526318E2-01BC-4328-A16B-E887B2F79D79",
-      "name" : "Configuration 1",
+      "id" : "9C2E7B41-3D5A-4F86-A1E2-6B0D4C8F7A15",
+      "name" : "Default",
       "options" : {
 
       }
@@ -14,7 +14,7 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:Packages\/PrayKit",
+        "containerPath" : "container:",
         "identifier" : "PrayKitTests",
         "name" : "PrayKitTests"
       }

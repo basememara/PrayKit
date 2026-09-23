@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public struct ReminderSounds: RawRepresentable, Equatable, Codable {
+public struct ReminderSounds: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: NotificationSound]
 
     public init(rawValue: [String: NotificationSound]) {

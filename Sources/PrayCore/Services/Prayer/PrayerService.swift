@@ -10,7 +10,7 @@ import Foundation.NSDate
 import Foundation.NSDateInterval
 import Foundation.NSTimeZone
 
-public protocol PrayerService {
+public protocol PrayerService: Sendable {
     func calculate(for date: Date, using calendar: Calendar, with request: PrayerAPI.Request) async throws -> [PrayerTime]
 }
 
@@ -19,7 +19,7 @@ public protocol PrayerService {
 public enum PrayerAPI {}
 
 public extension PrayerAPI {
-    struct Request: Equatable, Codable {
+    struct Request: Equatable, Codable, Sendable {
         public let coordinates: Coordinates
         public let timeZone: TimeZone
         public let method: CalculationMethod

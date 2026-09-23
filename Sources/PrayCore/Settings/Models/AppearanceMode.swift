@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum AppearanceMode: String, Equatable, CaseIterable, Codable {
+public enum AppearanceMode: String, Equatable, CaseIterable, Codable, Sendable {
     case system
     case light
     case dark

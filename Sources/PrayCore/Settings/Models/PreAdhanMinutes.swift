@@ -6,7 +6,7 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-public struct PreAdhanMinutes: RawRepresentable, Equatable, Codable {
+public struct PreAdhanMinutes: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: Int]
 
     public var imsak: Int {

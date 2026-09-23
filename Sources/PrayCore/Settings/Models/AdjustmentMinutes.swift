@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable {
+public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: Int]
 
     public var isFajrSunriseRelative: Bool {

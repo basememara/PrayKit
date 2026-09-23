@@ -8,7 +8,7 @@
 
 import Foundation.NSURL
 
-public enum AdhanDuaa: String, CaseIterable, Codable {
+public enum AdhanDuaa: String, CaseIterable, Codable, Sendable {
     case wasilahFadilah = "wasilah.fadilah"
     case off
 }

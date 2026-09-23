@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum ElevationRule: String, CaseIterable, Equatable, Codable {
+public enum ElevationRule: String, CaseIterable, Equatable, Codable, Sendable {
     case middleOfTheNight = "NightMiddle"
     case seventhOfTheNight = "OneSeventh"
     case twilightAngle = "AngleBased"

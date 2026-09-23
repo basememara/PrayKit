@@ -8,7 +8,7 @@
 
 import Foundation.NSURL
 
-public enum NotificationSound: String, Equatable, CaseIterable, Codable {
+public enum NotificationSound: String, Equatable, CaseIterable, Codable, Sendable {
     case adhan
     case adventureLong = "adventure-long"
     case adventure

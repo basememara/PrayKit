@@ -9,7 +9,7 @@
 import CoreLocation.CLLocation
 import ZamzamCore
 
-public protocol QiblaService {
+public protocol QiblaService: Sendable {
     func fetch(with request: QiblaAPI.DirectionRequest) -> Qibla
 }
 
@@ -18,7 +18,7 @@ public protocol QiblaService {
 public enum QiblaAPI {}
 
 public extension QiblaAPI {
-    struct DirectionRequest {
+    struct DirectionRequest: Sendable {
         public let coordinate: CLLocationCoordinate2D
 
         public init(coordinate: CLLocationCoordinate2D) {

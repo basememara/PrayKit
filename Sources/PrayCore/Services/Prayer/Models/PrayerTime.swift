@@ -8,7 +8,7 @@
 
 import Foundation.NSDateInterval
 
-public struct PrayerTime: Equatable, Codable {
+public struct PrayerTime: Equatable, Codable, Sendable {
     public let type: Prayer
     public let dateInterval: DateInterval
 

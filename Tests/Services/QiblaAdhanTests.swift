@@ -5,17 +5,17 @@
 //  Created by Basem Emara on 2022-04-29.
 //
 
-import XCTest
 import CoreLocation
 import PrayCore
 import PrayServices
+import Foundation
+import Testing
 
-final class QiblaAdhanTests: TestCase {
+struct QiblaAdhanTests {
     private let qiblaService = QiblaServiceAdhan()
-}
 
-extension QiblaAdhanTests {
-    func testLocation() async throws {
+    @Test
+    func directionForAntwerp() {
         // Given
         let coordinate = CLLocationCoordinate2D(
             latitude: 51.2901,
@@ -27,6 +27,6 @@ extension QiblaAdhanTests {
         let qibla = qiblaService.fetch(with: request)
 
         // Then
-        XCTAssertEqual(qibla.direction, 124, accuracy: 1)
+        #expect(abs(qibla.direction - 124) <= 1)
     }
 }

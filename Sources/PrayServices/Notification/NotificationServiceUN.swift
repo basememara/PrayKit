@@ -6,7 +6,6 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-import Combine
 import CoreLocation
 import Foundation
 import Intents
@@ -19,7 +18,8 @@ import CoreSpotlight
 import BackgroundTasks
 #endif
 
-public struct NotificationServiceUN: NotificationService {
+/// `UNUserNotificationCenter` is documented as thread-safe, hence the unchecked conformance.
+public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
     private let prayerManager: PrayerManager
     private let userNotification: UNUserNotificationCenter
     private let preferences: Preferences
@@ -96,26 +96,13 @@ public extension NotificationServiceUN {
 
         let calendar = Calendar(identifier: .gregorian, timeZone: preferences.lastTimeZone)
         let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: preferences.lastTimeZone)
+        var firstScheduledDate: Date?
         var lastScheduledDate = dateInterval.end
         var counter = 58 // Unofficial limit for scheduling local notifications
+        let now = dateInterval.start
         #if !os(macOS)
         var siriShortcuts = [INRelevantShortcut]()
         #endif
-
-        defer {
-            log.info("Scheduled \(58 - counter) notifications successfully")
-            scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
-            #if !os(macOS)
-            Task { [siriShortcuts] in
-                do {
-                    try await INRelevantShortcutStore.default.setRelevantShortcuts(siriShortcuts)
-                    log.debug("Donated \(siriShortcuts.count) Siri shortcuts successfully")
-                } catch {
-                    log.error("Siri shortcuts could not be stored", error: error)
-                }
-            }
-            #endif
-        }
 
         // Schedule available notifications
         prayerDays.forEach { prayerDay in
@@ -126,6 +113,11 @@ public extension NotificationServiceUN {
                 let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
                 let prefixIdentifier = prayerTime.dateInterval.start
                     .shortString(timeZone: preferences.lastTimeZone, calendar: calendar, locale: .posix)
+                let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar]
+                let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
+                let iqamaSound = preferences.iqamaReminders.sound
+                let iqamaReminderDate = iqamaTime.map { $0 - .minutes(iqamaMinutes) }
+                let hasIqamaReminder = iqamaReminderDate.map { iqamaSound != .off && iqamaMinutes > 0 && $0 > now } ?? false
 
                 // Schedule local notification for each prayer
                 let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
@@ -140,8 +132,9 @@ public extension NotificationServiceUN {
                     log.error("Failed to encode prayer time for notification", error: error)
                 }
 
-                // Add prayer notifications
-                if sound != .off && counter > 0 {
+                // Add prayer notifications; the system silently drops calendar triggers already in the past,
+                // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
+                if sound != .off && counter > 0 && prayerTime.dateInterval.start > now && !(isJumuah && hasIqamaReminder) {
                     userNotification.add(
                         date: prayerTime.dateInterval.start,
                         body: localized.prayerNotificationBody(
@@ -159,11 +152,43 @@ public extension NotificationServiceUN {
                         log.error("Failed to create a notifications for \"\(identifier)\"", error: error)
                     }
 
-                    // Update last date and counter
+                    // Update scheduled range and counter
+                    firstScheduledDate = firstScheduledDate ?? prayerTime.dateInterval.start
                     lastScheduledDate = prayerTime.dateInterval.start
                     counter -= 1
                 } else if sound == .off {
                     userNotification.remove(withIdentifier: identifier)
+                }
+
+                // Add iqama notification if applicable; it goes before the optional reminders so the Jumuah
+                // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
+                let iqamaIdentifier = "\(identifier)-iqama-reminder"
+
+                if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
+                    userNotification.add(
+                        date: iqamaReminderDate,
+                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
+                        sound: iqamaSound.file.map {
+                            #if os(iOS)
+                            return UNNotificationSound(named: UNNotificationSoundName($0))
+                            #else
+                            return .default
+                            #endif
+                        },
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: iqamaIdentifier,
+                        category: NotificationCategory.reminder.rawValue,
+                        userInfo: userInfo
+                    ) {
+                        guard let error = $0 else { return }
+                        log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
+                    }
+
+                    // Update counter
+                    counter -= 1
+                } else if iqamaSound == .off {
+                    userNotification.remove(withIdentifier: iqamaIdentifier)
                 }
 
                 #if !os(macOS)
@@ -184,14 +209,12 @@ public extension NotificationServiceUN {
                 let reminderSound = preferences.reminderSounds[prayerTime.type] ?? .off
                 let reminderMinutes = preferences.preAdhanMinutes[prayerTime.type]
 
-                if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
-                    // Jumuah replaces dhuhr prayer
-                    let date = isJumuah
-                        ? preferences.iqamaTimes[prayerTime, using: calendar] ?? prayerTime.dateInterval.start
-                        : prayerTime.dateInterval.start
+                let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
+                    - .minutes(reminderMinutes)
 
+                if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
                     userNotification.add(
-                        date: date - .minutes(reminderMinutes),
+                        date: reminderDate,
                         body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
                         sound: reminderSound.file.map {
                             #if os(iOS)
@@ -220,10 +243,11 @@ public extension NotificationServiceUN {
                 if prayerTime.type == .fajr {
                     let reminderIdentifier = "\(identifier)-imsak-reminder"
                     let reminderMinutes = preferences.preAdhanMinutes.imsak
+                    let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
 
-                    if reminderSound != .off && reminderMinutes > 0 && counter > 0 {
+                    if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
                         userNotification.add(
-                            date: prayerTime.dateInterval.start - .minutes(reminderMinutes),
+                            date: reminderDate,
                             body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
                             sound: reminderSound.file.map {
                                 #if os(iOS)
@@ -252,8 +276,9 @@ public extension NotificationServiceUN {
                 // Add duha notifications if applicable
                 if prayerTime.type == .sunrise {
                     let reminderIdentifier = "\(identifier)-duha-reminder"
+                    let reminderTime = preferences.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
-                    if let reminderTime = preferences.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar), reminderSound != .off && counter > 0 {
+                    if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
                         userNotification.add(
                             date: reminderTime,
                             body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
@@ -279,43 +304,6 @@ public extension NotificationServiceUN {
                     } else if reminderSound == .off {
                         userNotification.remove(withIdentifier: reminderIdentifier)
                     }
-                }
-
-                // Add iqama notification if applicable
-                let iqamaIdentifier = "\(identifier)-iqama-reminder"
-                let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
-                let iqamaSound = preferences.iqamaReminders.sound
-
-                if let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar], iqamaSound != .off && iqamaMinutes > 0 && counter > 0 {
-                    userNotification.add(
-                        date: iqamaTime - .minutes(iqamaMinutes),
-                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
-                        sound: iqamaSound.file.map {
-                            #if os(iOS)
-                            return UNNotificationSound(named: UNNotificationSoundName($0))
-                            #else
-                            return .default
-                            #endif
-                        },
-                        interruptionLevel: .timeSensitive,
-                        calendar: calendar,
-                        identifier: iqamaIdentifier,
-                        category: NotificationCategory.reminder.rawValue,
-                        userInfo: userInfo
-                    ) {
-                        guard let error = $0 else { return }
-                        log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
-                    }
-
-                    // Jumuah replaces dhuhr prayer
-                    if isJumuah {
-                        userNotification.remove(withIdentifier: identifier)
-                    }
-
-                    // Update counter
-                    counter -= 1
-                } else if iqamaSound == .off {
-                    userNotification.remove(withIdentifier: iqamaIdentifier)
                 }
             }
         }
@@ -404,6 +392,23 @@ public extension NotificationServiceUN {
             }
         } else {
             await userNotification.remove(withCategory: NotificationCategory.beacon.rawValue)
+        }
+        #endif
+
+        // The add completions are asynchronous, so ask the store what actually landed
+        let pendingCount = await userNotification.pendingNotificationRequests().count
+        let scheduledRange = "\(firstScheduledDate?.formatted() ?? "none") to \(lastScheduledDate.formatted())"
+        log.info("Requested \(58 - counter) notifications for prayers from \(scheduledRange), \(pendingCount) pending in the notification center")
+        scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
+
+        #if !os(macOS)
+        // Awaited here rather than donated from a `Task`, which would have sent
+        // the non-Sendable shortcuts across an isolation boundary.
+        do {
+            try await INRelevantShortcutStore.default.setRelevantShortcuts(siriShortcuts)
+            log.debug("Donated \(siriShortcuts.count) Siri shortcuts successfully")
+        } catch {
+            log.error("Siri shortcuts could not be stored", error: error)
         }
         #endif
     }
@@ -553,7 +558,7 @@ private extension INRelevantShortcut {
 
 // MARK: - Localization
 
-public protocol NotificationServiceLocalizable {
+public protocol NotificationServiceLocalizable: Sendable {
     var beaconNotificationBody: String { get }
     var beaconNotificationTitle: String { get }
     var calibrateNotificationBody: String { get }

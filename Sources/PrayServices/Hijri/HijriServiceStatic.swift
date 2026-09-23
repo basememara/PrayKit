@@ -45,7 +45,12 @@ public extension HijriServiceStatic {
 
         do {
             let prayerDay = try await prayerManager.fetch(for: time, with: request)
-            return time.hijriDayOffset(for: prayerDay, hijriDayOffset: preferences.hijriDayOffset, autoIncrementHijri: preferences.autoIncrementHijri)
+            return time.hijriDayOffset(
+                for: prayerDay,
+                hijriDayOffset: preferences.hijriDayOffset,
+                autoIncrementHijri: preferences.autoIncrementHijri,
+                timeZone: request.timeZone
+            )
         } catch {
             return preferences.hijriDayOffset
         }
@@ -88,18 +93,20 @@ private extension HijriServiceStatic {
         let startAfterDate = request.startDate.startOfDay(using: calendar) - .days(1, calendar)
         let dateComponent = calendar.dateComponents([.hour, .minute, .second], from: startAfterDate)
 
-        return await withCheckedContinuation { continuation in
-            var elements = [Date]()
+        // `enumerateDates` runs its block synchronously, so no continuation is needed.
+        // The previous one resumed only from the guard branch and would strand the
+        // caller forever if enumeration ended on its own.
+        var elements = [Date]()
 
-            calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { (date, _, stop) in
-                guard let date, elements.count < request.limit else {
-                    stop = true
-                    continuation.resume(returning: elements)
-                    return
-                }
-
-                elements.append(date)
+        calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { date, _, stop in
+            guard let date, elements.count < request.limit else {
+                stop = true
+                return
             }
+
+            elements.append(date)
         }
+
+        return elements
     }
 }

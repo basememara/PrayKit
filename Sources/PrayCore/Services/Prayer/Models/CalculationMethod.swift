@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum CalculationMethod: String, Equatable, CaseIterable, Codable {
+public enum CalculationMethod: String, Equatable, CaseIterable, Codable, Sendable {
     case muslimWorldLeague = "MWL"
     case northAmerica = "ISNA"
     case moonsightingCommittee = "Moon"

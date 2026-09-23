@@ -2,13 +2,15 @@
 
 [![Platform](https://img.shields.io/badge/platform-macos%20%7C%20ios%20%7C%20watchos%20%7C%20ipados-lightgrey)](https://github.com/ZamzamInc/PrayKit)
 [![Swift](https://img.shields.io/badge/Swift-5-orange.svg)](https://swift.org)
-[![Xcode](https://img.shields.io/badge/Xcode-14-blue.svg)](https://developer.apple.com/xcode)
+[![Xcode](https://img.shields.io/badge/Xcode-27-blue.svg)](https://developer.apple.com/xcode)
 [![SPM](https://img.shields.io/badge/SPM-Compatible-blue)](https://swift.org/package-manager)
 [![MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
 
 PrayKit is a Swift package that powers the [Pray Watch](https://apps.apple.com/app/appname/id989923828) app and used for rapid development of Apple platform prayer apps and services. It is a collection of micro utilities and extensions around the [Adhan](https://github.com/batoulapps/adhan-swift) prayer library.
 
 *Note: This library is highly volatile and changes often to stay ahead of cutting-edge technologies. It is recommended to copy over code that you want into your own libraries or fork it.*
+
+Agent-driven maintenance (build and test loop, conventions, consumer contract) is documented in [AGENTS.md](AGENTS.md).
 
 ## Installation
 
@@ -251,6 +253,10 @@ struct ContentView: View {
     }
 }
 ```
+
+## Testing
+
+Tests live flat in `Tests/` and run with `swift test`. In Xcode, the shared `PrayKit-Package` scheme runs `Package.xctestplan` at the package root.
 
 ## Author
 

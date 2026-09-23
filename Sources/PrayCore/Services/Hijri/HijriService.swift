@@ -8,7 +8,7 @@
 
 import Foundation.NSDateInterval
 
-public protocol HijriService {
+public protocol HijriService: Sendable {
     func fetchOffset(for time: Date) async throws -> Int
     func fetch(with request: HijriAPI.FetchHolidaysRequest) -> [Holiday]
     func fetch(with request: HijriAPI.FetchTimelineRequest) async throws -> [HijriAPI.TimelineEntry]
@@ -19,13 +19,13 @@ public protocol HijriService {
 public enum HijriAPI {}
 
 public extension HijriAPI {
-    struct FetchHolidaysRequest {
+    struct FetchHolidaysRequest: Sendable {
         public init() {}
     }
 }
 
 public extension HijriAPI {
-    struct FetchTimelineRequest {
+    struct FetchTimelineRequest: Sendable {
         public let startDate: Date
         public let timeZone: TimeZone
         public let limit: Int
@@ -37,7 +37,7 @@ public extension HijriAPI {
         }
     }
 
-    struct TimelineEntry: Equatable, Codable {
+    struct TimelineEntry: Equatable, Codable, Sendable {
         public let date: Date
         public let timeZone: TimeZone
         public let hijriOffset: Int

@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public struct PrayerAdjustments: Equatable, Codable {
+public struct PrayerAdjustments: Equatable, Codable, Sendable {
     public let fajr: Int
     public let sunrise: Int
     public let dhuhr: Int

@@ -32,8 +32,9 @@ public protocol PrayKitDependency {
     func hijriService() -> HijriService
     func notificationService() -> NotificationService
 
-    func locationManager() -> LocationManager
-    func locationService() -> LocationService
+    // Location services drive UI and run on the main actor
+    @MainActor func locationManager() -> LocationManager
+    @MainActor func locationService() -> LocationService
 
     // Diagnostics
     func log() -> LogManager

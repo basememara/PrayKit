@@ -6,7 +6,7 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-public struct Holiday: Identifiable, Equatable {
+public struct Holiday: Identifiable, Equatable, Sendable {
     public let id: String
     public let month: Int
     public let day: Int

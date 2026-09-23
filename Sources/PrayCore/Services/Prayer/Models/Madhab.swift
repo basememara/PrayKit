@@ -6,7 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-public enum Madhab: String, CaseIterable, Equatable, Codable {
+public enum Madhab: String, CaseIterable, Equatable, Codable, Sendable {
     case standard = "Standard"
     case hanafi = "Hanafi"
 }

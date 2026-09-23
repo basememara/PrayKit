@@ -10,7 +10,7 @@ import CoreLocation.CLLocation
 import Foundation.NSMeasurement
 import ZamzamCore
 
-public struct Coordinates: Equatable, Codable {
+public struct Coordinates: Equatable, Codable, Sendable {
     public let latitude: Double
     public let longitude: Double
 

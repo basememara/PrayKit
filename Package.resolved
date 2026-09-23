@@ -1,5 +1,5 @@
 {
-  "originHash" : "ea41389f63a96cebdfe56e85bef80092685bb472bc20bea6c80ce94bbc58b80d",
+  "originHash" : "f346215cd705cb39ba715325a89a0745b68765274222b0315a6903c3198896d6",
   "pins" : [
     {
       "identity" : "adhan-swift",
@@ -11,30 +11,12 @@
       }
     },
     {
-      "identity" : "puppy",
+      "identity" : "zamzamkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sushichop/Puppy.git",
+      "location" : "https://github.com/ZamzamInc/ZamzamKit.git",
       "state" : {
-        "revision" : "c095c2abf314d84ed43bcfe0e7e8fe1e0c9007f0",
-        "version" : "0.11.0"
-      }
-    },
-    {
-      "identity" : "stripe-ios-spm",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stripe/stripe-ios-spm",
-      "state" : {
-        "revision" : "d91001846fb3e2fa751abbaaa9339950426b381c",
-        "version" : "25.17.0"
-      }
-    },
-    {
-      "identity" : "swift-log",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-log.git",
-      "state" : {
-        "revision" : "9c6fb14227f55d8f711ce3847dc2f419fb0ecacb",
-        "version" : "1.15.1"
+        "branch" : "main",
+        "revision" : "2e9becdf54fca900471dfc0e06c853407732a3ab"
       }
     }
   ],

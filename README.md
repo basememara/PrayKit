@@ -25,232 +25,42 @@ The `PrayKit` package is divided into four different targets:
 * _PrayCore_: Utilities, extensions, service protocols
 * _PrayServices_: Concrete services that conform to the core protocols
 * _PrayMocks_: Resources for creating test instances
-* _PrayKit_: Dependency injection container
+* _PrayKit_: Umbrella that imports the core and the services
 
-### Dependency Injection
+### Composing the services
 
-In `PrayKit`, there is the `PrayKitDependency` protocol that represents the dependency container that wraps all services:
-
-```swift
-public protocol PrayKitDependency {
-    // Settings
-    func constants() -> Constants
-    func settingsStorage() -> SettingsStorage
-    func localStorage() -> UserDefaults
-
-    // Network
-    func networkManager() -> NetworkManager
-    func networkService() -> NetworkService
-    func networkAdapter() -> URLRequestAdapter?
-
-    // Services
-    func prayerManager() -> PrayerManager
-    func prayerService() -> PrayerService
-    func prayerServiceLondon() -> PrayerService
-
-    func qiblaService() -> QiblaService
-    func hijriService() -> HijriService
-    func notificationService() -> NotificationService
-
-    func locationManager() -> LocationManager
-    func locationService() -> LocationService
-
-    // Diagnostics
-    func log() -> LogManager
-    func logServices() -> [LogService]
-}
-```
-
-A Swift property wrapper can be created to conform to the `PrayKitDependency` protocol and supply the concrete instances:
+The services are plain values; build each one once at your composition root and pass it where it's needed. The settings live in `SettingsStorage`, which every process of an app (its widgets and extensions included) opens over the same App Group suite:
 
 ```swift
-@propertyWrapper
-struct PrayDependency: PrayKitDependency {
-    private static let shared = PrayDependency()
+let storage = SettingsStorage(defaults: UserDefaults(suiteName: "{{your suite name}}") ?? .standard)
+let log = LogManager(services: [LogServiceConsole(minLevel: .verbose, subsystem: "{{your app}}")])
 
-    var wrappedValue: PrayKitDependency? { Self.shared }
-}
+let prayerManager = PrayerManager(
+    service: PrayerServiceAdhan(log: log),
+    londonService: PrayerServiceLondon(networkManager: NetworkManager(service: NetworkServiceFoundation()), apiKey: "{{key}}", log: log),
+    log: log
+)
 ```
 
-The property wrapper can be extended from here to satisfy the dependency container requirements:
+A day's prayers for the device's settings and place:
 
 ```swift
-extension PrayDependency {
-    // One store shared by the app, its widgets and extensions through an App Group suite
-    private static let settingsStorage = SettingsStorage(
-        defaults: UserDefaults(suiteName: "{{your suite name}}") ?? .standard
-    )
-
-    public func settingsStorage() -> SettingsStorage {
-        Self.settingsStorage
-    }
-}
-
-extension PrayDependency {
-    private static let localStorage: UserDefaults = .standard
-
-    public func localStorage() -> UserDefaults {
-        Self.localStorage
-    }
-}
-
-// MARK: Network
-
-extension PrayDependency {
-    private static let networkManager = NetworkManager(
-        service: networkService,
-        adapter: networkAdapter
-    )
-
-    public func networkManager() -> NetworkManager {
-        Self.networkManager
-    }
-}
-
-extension PrayDependency {
-    private static let networkService = NetworkServiceFoundation()
-
-    public func networkService() -> NetworkService {
-        Self.networkService
-    }
-
-    public func networkAdapter() -> URLRequestAdapter? { nil }
-}
-
-// MARK: Services
-
-extension PrayDependency {
-    private static let notificationService = NotificationServiceUN(
-        prayerManager: prayerManager,
-        userNotification: .current(),
-        storage: settingsStorage,
-        constants: constants,
-        localized: NotificationServiceLocalize(),
-        log: log
-    )
-
-    public func notificationService() -> NotificationService {
-        Self.notificationService
-    }
-}
-
-extension PrayDependency {
-    private static let prayerManager = PrayerManager(
-        service: prayerService,
-        londonService: prayerServiceLondon,
-        log: log
-    )
-
-    public func prayerManager() -> PrayerManager {
-        Self.prayerManager
-    }
-}
-
-extension PrayDependency {
-    private static let prayerService = PrayerServiceAdhan(log: log)
-
-    public func prayerService() -> PrayerService {
-        Self.prayerService
-    }
-}
-
-extension PrayDependency {
-    private static let prayerServiceLondon = PrayerServiceLondon(
-        networkManager: networkManager,
-        apiKey: "{{your api key}}",
-        log: log
-    )
-
-    public func prayerServiceLondon() -> PrayerService {
-        Self.prayerServiceLondon
-    }
-}
-
-extension PrayDependency {
-    private static let qiblaService = QiblaServiceAdhan()
-
-    public func qiblaService() -> QiblaService {
-        Self.qiblaService
-    }
-}
-
-extension PrayDependency {
-    private static let hijriService = HijriServiceStatic(
-        prayerManager: prayerManager,
-        storage: settingsStorage
-    )
-
-    public func hijriService() -> HijriService {
-        Self.hijriService
-    }
-}
-
-extension PrayDependency {
-    private static let locationManager = LocationManager(service: locationService)
-
-    public func locationManager() -> LocationManager {
-        Self.locationManager
-    }
-}
-
-extension PrayDependency {
-    private static let locationService = LocationServiceCore(
-        desiredAccuracy: kCLLocationAccuracyThreeKilometers,
-        distanceFilter: 1000
-    )
-
-    public func locationService() -> LocationService {
-        Self.locationService
-    }
-}
-
-// MARK: Diagnostics
-
-extension PrayDependency {
-    private static let log = LogManager(services: logServices)
-
-    public func log() -> LogManager {
-        Self.log
-    }
-}
-
-extension PrayDependency {
-    private static let logServices: [LogService] = [
-        LogServiceConsole(
-            minLevel: constants.isDebug || constants.isRunningOnSimulator ? .verbose : .none,
-            subsystem: "{{your app}}"
-        )
-    ]
-
-    public func logServices() -> [LogService] {
-        Self.logServices
-    }
-}
+let prayerDay = try await prayerManager.fetch(for: .now, state: storage.load())
+let current = prayerDay.lastObligatory(at: .now)
+let next = prayerDay.nextObligatory(at: .now)
 ```
 
-Lazy thread-safety was provided for free by using the static properties, but this is not necessary if new instances every time is actually intended. More importantly though, `PrayDependency` now conforms to the dependency container and any component can grab it using:
-
-```swift
-@PrayDependency var dependency
-
-let prayerManager = dependency?.prayerManager()
-```
-
-Now in SwiftUI, you can add the following property wrapper to access the dependency injection container:
+In SwiftUI, load in `.task(id:)`, so a change to the settings reloads the view:
 
 ```swift
 struct ContentView: View {
-    @PrayDependency var dependency
+    let prayerManager: PrayerManager
+    let state: DeviceState
+    @State private var prayerDay: PrayerDay?
 
     var body: some View {
-        Text("Salam, world!")
-            .task {
-                guard let state = dependency?.settingsStorage().load(),
-                      let request = PrayerAPI.Request(settings: state.document.settings, place: state.place)
-                else { return }
-
-                let prayerDay = try? await dependency?.prayerManager().fetch(for: .now, with: request)
-            }
+        Text(prayerDay?.nextObligatory(at: .now)?.type.rawValue ?? "")
+            .task(id: state) { prayerDay = try? await prayerManager.fetch(for: .now, state: state) }
     }
 }
 ```

@@ -162,3 +162,30 @@ private extension SettingsDocument {
         return SettingsDocument(settings: settings, revisions: revisions)
     }
 }
+
+extension SettingsDocumentTests {
+    @Test
+    func takingOnlyNewerEditsLeavesAnUnrevisedTieAlone() {
+        var mine = Settings()
+        mine.notificationAdhan[.fajr] = .abdulBasit
+        var theirs = Settings()
+        theirs.notificationAdhan[.fajr] = .alAqsa
+
+        let merged = SettingsDocument(settings: mine).adoptingNewer(SettingsDocument(settings: theirs))
+
+        #expect(merged.settings.notificationAdhan[.fajr] == .abdulBasit)
+    }
+
+    @Test
+    func takingOnlyNewerEditsTakesARevisedOne() {
+        let edited = SettingsDocument().editing(at: Date(timeIntervalSince1970: 1_800_000_000)) {
+            $0.notificationAdhan[.fajr] = .alAqsa
+        }
+
+        let merged = SettingsDocument().adoptingNewer(edited)
+
+        #expect(merged.settings.notificationAdhan[.fajr] == .alAqsa)
+        #expect(merged.revision(of: .notificationAdhan) == edited.revision(of: .notificationAdhan))
+    }
+}
+

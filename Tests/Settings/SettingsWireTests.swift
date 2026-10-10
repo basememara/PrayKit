@@ -140,7 +140,7 @@ extension SettingsWireTests {
     }
 
     @Test
-    func anUndecodableFieldKeepsThisDevicesValue() {
+    func anUndecodableFieldKeepsThisDevicesValueUnderTheCopysRevision() {
         var base = Settings()
         base.iqamaTimes = Settings.everyFieldChanged.iqamaTimes
         var incoming = Self.revised.wireFields
@@ -149,7 +149,20 @@ extension SettingsWireTests {
         let document = SettingsDocument(wireFields: incoming, base: base, modifiedAt: saved, previous: nil)
 
         #expect(document.settings.iqamaTimes == base.iqamaTimes)
-        #expect(document.revision(of: .iqamaTimes) == .legacy)
+        #expect(document.revision(of: .iqamaTimes) == Self.revised.revision(of: .iqamaTimes))
+    }
+
+    @Test
+    func aValueOnlyANewerVersionCanReadLeavesNeitherDeviceBehind() {
+        var incoming = Self.revised.wireFields
+        incoming["iqamaTimes"] = .data(Data("a newer version's value".utf8))
+
+        let older = SettingsDocument(settings: Settings(), revisions: [:])
+        let server = SettingsDocument(wireFields: incoming, base: older.settings, modifiedAt: saved, previous: nil)
+        let merged = older.merging(server)
+        let serverAgain = SettingsDocument(wireFields: incoming, base: merged.settings, modifiedAt: saved, previous: incoming)
+
+        #expect(!merged.hasNewerRevisions(than: serverAgain))
     }
 
     @Test

@@ -87,10 +87,18 @@ public extension SettingsDocument {
             .filter(\.key.isSynced)
             .forEach { field in
                 let value = fields[field.key.rawValue]
-                guard field.readWire(value, into: &settings) else { return }
-
                 let revisionField = fields[field.key.revisionKey]
                 let stamped = revisionField?.integer.map(Revision.init(milliseconds:))
+
+                guard field.readWire(value, into: &settings) else {
+                    // A value from a newer app version keeps this device's value under the copy's revision, so
+                    // neither device counts as behind and they don't take turns overwriting each other
+                    if value != nil, let stamped {
+                        revisions[field.key] = stamped
+                    }
+
+                    return
+                }
 
                 let isUnrevisedChange = previous.map { previous in
                     var seen = settings
@@ -112,6 +120,18 @@ public extension SettingsDocument {
             .reduce(into: merging(other)) { result, field in
                 field.copy(from: other.settings, into: &result.settings)
             }
+    }
+
+    /// Takes only the settings `other` revised after this copy did, leaving every tie alone: for a copy
+    /// that carries values it may never have edited, such as the watch's whole document.
+    func adoptingNewer(_ other: SettingsDocument) -> SettingsDocument {
+        Settings.fields.reduce(into: self) { result, field in
+            let theirs = other.revision(of: field.key)
+            guard theirs > revision(of: field.key) else { return }
+
+            field.copy(from: other.settings, into: &result.settings)
+            result.revisions[field.key] = theirs
+        }
     }
 
     /// Whether any synced setting here is newer than in `other`, so `other` is behind.

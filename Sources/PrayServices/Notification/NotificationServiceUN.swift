@@ -22,7 +22,7 @@ import BackgroundTasks
 public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
     private let prayerManager: PrayerManager
     private let userNotification: UNUserNotificationCenter
-    private let preferences: Preferences
+    private let storage: SettingsStorage
     private let constants: Constants
     private let localized: NotificationServiceLocalizable
     private let log: LogManager
@@ -31,14 +31,14 @@ public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
     public init(
         prayerManager: PrayerManager,
         userNotification: UNUserNotificationCenter,
-        preferences: Preferences,
+        storage: SettingsStorage,
         constants: Constants,
         localized: NotificationServiceLocalizable,
         log: LogManager
     ) {
         self.prayerManager = prayerManager
         self.userNotification = userNotification
-        self.preferences = preferences
+        self.storage = storage
         self.constants = constants
         self.localized = localized
         self.log = log
@@ -56,13 +56,17 @@ public extension NotificationServiceUN {
 private extension NotificationServiceUN {
     func scheduleOnce() async {
         // swiftlint:disable:previous function_body_length cyclomatic_complexity
-        guard let request = PrayerAPI.Request(from: preferences) else {
+        let state = storage.load()
+        let settings = state.document.settings
+        let timeZone = state.place?.timeZone ?? .current
+
+        guard let request = PrayerAPI.Request(settings: settings, place: state.place) else {
             log.error("Could not schedule prayer notifications due to missing settings")
             return
         }
 
         let dateInterval = DateInterval(start: .now, end: .now + .weeks(1))
-        let prayerRequestHash = PrayerRequestHash(request: request, dateInterval: dateInterval, preferences: preferences)
+        let prayerRequestHash = PrayerRequestHash(request: request, dateInterval: dateInterval, settings: settings)
         let iqamaUpdateIntervalIdentifier = "update-interval-iqama-reminder"
         let iqamaUpdateIntervalOriginAt = (await userNotification.get(withIdentifier: iqamaUpdateIntervalIdentifier)?
             .content.userInfo["origin_at"] as? TimeInterval)
@@ -90,8 +94,8 @@ private extension NotificationServiceUN {
 
         log.info("Fetched \(prayerDays.count) days of prayers, begin scheduling notifications")
 
-        let calendar = Calendar(identifier: .gregorian, timeZone: preferences.lastTimeZone)
-        let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: preferences.lastTimeZone)
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: timeZone)
         var firstScheduledDate: Date?
         var lastScheduledDate = dateInterval.end
         var counter = 58 // Unofficial limit for scheduling local notifications
@@ -109,16 +113,16 @@ private extension NotificationServiceUN {
                 let isObligation = prayerTime.type.isObligation
                 let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
                 let prefixIdentifier = prayerTime.dateInterval.start
-                    .shortString(timeZone: preferences.lastTimeZone, calendar: calendar, locale: .posix)
-                let iqamaTime = preferences.iqamaTimes[prayerTime, using: calendar]
-                let iqamaMinutes = isJumuah ? preferences.iqamaReminders.jumuahMinutes : preferences.iqamaReminders.minutes
-                let iqamaSound = preferences.iqamaReminders.sound
+                    .shortString(timeZone: timeZone, calendar: calendar, locale: .posix)
+                let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
+                let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
+                let iqamaSound = settings.iqamaReminders.sound
                 let iqamaReminderDate = iqamaTime.map { $0 - .minutes(iqamaMinutes) }
                 let hasIqamaReminder = iqamaReminderDate.map { iqamaSound != .off && iqamaMinutes > 0 && $0 > now } ?? false
 
                 // Schedule local notification for each prayer
                 let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
-                let sound = sound(for: prayerTime.type)
+                let sound = sound(for: prayerTime.type, in: settings)
                 var userInfo: [String: Any] = [:]
 
                 // Encode prayer time for later retrieval
@@ -139,7 +143,7 @@ private extension NotificationServiceUN {
                                 for: prayerTime,
                                 at: prayerTime.dateInterval.start.formatted(timeFormatStyle)
                             ),
-                            sound: notificationSound(for: prayerTime.type),
+                            sound: notificationSound(for: prayerTime.type, in: settings),
                             interruptionLevel: .timeSensitive,
                             calendar: calendar,
                             identifier: identifier,
@@ -198,7 +202,7 @@ private extension NotificationServiceUN {
                     INRelevantShortcut(
                         for: prayerTime,
                         formatStyle: timeFormatStyle,
-                        region: preferences.lastRegionName,
+                        region: state.place?.regionName,
                         localized: localized,
                         userInfo: userInfo
                     )
@@ -207,8 +211,8 @@ private extension NotificationServiceUN {
 
                 // Add reminder notifications
                 let reminderIdentifier = "\(identifier)-reminder"
-                let reminderSound = preferences.reminderSounds[prayerTime.type] ?? .off
-                let reminderMinutes = preferences.preAdhanMinutes[prayerTime.type]
+                let reminderSound = settings.reminderSounds[prayerTime.type] ?? .off
+                let reminderMinutes = settings.preAdhanMinutes[prayerTime.type]
 
                 let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
                     - .minutes(reminderMinutes)
@@ -245,7 +249,7 @@ private extension NotificationServiceUN {
                 // Add imsak notifications if applicable
                 if prayerTime.type == .fajr {
                     let reminderIdentifier = "\(identifier)-imsak-reminder"
-                    let reminderMinutes = preferences.preAdhanMinutes.imsak
+                    let reminderMinutes = settings.preAdhanMinutes.imsak
                     let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
 
                     if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
@@ -281,7 +285,7 @@ private extension NotificationServiceUN {
                 // Add duha notifications if applicable
                 if prayerTime.type == .sunrise {
                     let reminderIdentifier = "\(identifier)-duha-reminder"
-                    let reminderTime = preferences.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
+                    let reminderTime = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
                     if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
                         pendingAdds.append((reminderIdentifier, {
@@ -317,7 +321,7 @@ private extension NotificationServiceUN {
 
         // Add iqama update interval if applicable
         var iqamaUpdateInterval: TimeInterval?
-        switch (preferences.iqamaReminders.updateInterval, preferences.iqamaTimes.isEmpty) {
+        switch (settings.iqamaReminders.updateInterval, settings.iqamaTimes.isEmpty) {
         case (.weekly, false):
             iqamaUpdateInterval = 7 * 24 * 3600
         case (.biweekly, false):
@@ -379,10 +383,10 @@ private extension NotificationServiceUN {
         }))
 
         #if os(iOS)
-        if preferences.isGPSEnabled && preferences.geofenceRadius > 0 {
+        if settings.isGPSEnabled && settings.geofenceRadius > 0 {
             let region = CLCircularRegion(
                 center: request.coordinates.location,
-                radius: preferences.geofenceRadius,
+                radius: settings.geofenceRadius,
                 identifier: "Home"
             ).apply {
                 $0.notifyOnEntry = false
@@ -458,10 +462,11 @@ public extension NotificationServiceUN {
     }
 
     func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) -> Date {
-        let timeInterval = timeInterval ?? TimeInterval(preferences.snoozeMinutes * 60)
+        let state = storage.load()
+        let timeInterval = timeInterval ?? TimeInterval(state.document.settings.snoozeMinutes * 60)
         let date = Date(timeIntervalSinceNow: timeInterval)
-        let identifier = "\(date.shortString(timeZone: preferences.lastTimeZone, locale: .posix))-\(prayerTime.type)-snooze"
-        let sound = preferences.reminderSounds[prayerTime.type] ?? .off
+        let identifier = "\(date.shortString(timeZone: state.place?.timeZone ?? .current, locale: .posix))-\(prayerTime.type)-snooze"
+        let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
 
         userNotification.add(
             timeInterval: timeInterval,
@@ -499,20 +504,20 @@ public extension NotificationServiceUN {
 // MARK: - Helpers
 
 private extension NotificationServiceUN {
-    func sound(for prayer: Prayer) -> NotificationSound {
-        preferences.notificationSounds[prayer] ?? .off
+    func sound(for prayer: Prayer, in settings: Settings) -> NotificationSound {
+        settings.notificationSounds[prayer] ?? .off
     }
 
-    func soundFile(for prayer: Prayer) -> String? {
-        let sound = sound(for: prayer)
+    func soundFile(for prayer: Prayer, in settings: Settings) -> String? {
+        let sound = sound(for: prayer, in: settings)
 
         guard case .adhan = sound else { return sound.file }
-        return (preferences.notificationAdhan[prayer] ?? .alAqsa).file(for: .short)
+        return (settings.notificationAdhan[prayer] ?? .alAqsa).file(for: .short)
     }
 
-    func notificationSound(for prayer: Prayer) -> UNNotificationSound? {
+    func notificationSound(for prayer: Prayer, in settings: Settings) -> UNNotificationSound? {
         #if os(iOS)
-        guard let file = soundFile(for: prayer) else { return nil }
+        guard let file = soundFile(for: prayer, in: settings) else { return nil }
         return UNNotificationSound(named: UNNotificationSoundName(file))
         #else
         return .default

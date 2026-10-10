@@ -17,6 +17,7 @@ import ZamzamCore
 struct PrayTestFixture {
     let log: LogManager
     let preferences: Preferences
+    let storage: SettingsStorage
     let prayerManager: PrayerManager
 
     init() {
@@ -25,6 +26,7 @@ struct PrayTestFixture {
 
         self.log = log
         self.preferences = preferences
+        storage = SettingsStorage(defaults: preferences.defaults)
 
         prayerManager = PrayerManager(
             service: PrayerServiceAdhan(log: log),

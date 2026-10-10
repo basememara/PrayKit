@@ -21,7 +21,7 @@ struct HijriServiceStaticTests {
         preferences = fixture.preferences
         hijriService = HijriServiceStatic(
             prayerManager: fixture.prayerManager,
-            preferences: fixture.preferences
+            storage: fixture.storage
         )
     }
 }

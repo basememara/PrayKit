@@ -1,0 +1,130 @@
+//
+//  SettingsWire.swift
+//  PrayCore
+//
+//  Created by Basem Emara on 2026-10-10.
+//  Copyright © 2026 Zamzam Inc. All rights reserved.
+//
+
+import Foundation
+
+/// A field value both a CloudKit record and a property list can carry.
+public enum WireValue: Hashable, Codable, Sendable {
+    case int(Int64)
+    case double(Double)
+    case string(String)
+    case data(Data)
+}
+
+public extension WireValue {
+    /// The value as the Foundation object a CloudKit record field or a property list holds.
+    var object: NSObject {
+        switch self {
+        case let .int(value):
+            return NSNumber(value: value)
+        case let .double(value):
+            return NSNumber(value: value)
+        case let .string(value):
+            return value as NSString
+        case let .data(value):
+            return value as NSData
+        }
+    }
+
+    /// Reads a CloudKit record field or a property-list value; flags arrive as integers.
+    init?(object: Any) {
+        switch object {
+        case let value as String:
+            self = .string(value)
+        case let value as Data:
+            self = .data(value)
+        case let value as NSNumber:
+            self = CFNumberIsFloatType(value) ? .double(value.doubleValue) : .int(value.int64Value)
+        default:
+            return nil
+        }
+    }
+}
+
+extension WireValue {
+    var integer: Int64? {
+        guard case let .int(value) = self else { return nil }
+        return value
+    }
+}
+
+public extension SettingsDocument {
+    /// The synced settings and their revisions, as the fields of the iCloud record and of the watch payload.
+    ///
+    /// Each setting is a field under its key, encoded the way older app versions read it, and a revised
+    /// setting adds `"<key>_at"`. A `nil` setting has no field.
+    var wireFields: [String: WireValue] {
+        Settings.fields
+            .filter(\.key.isSynced)
+            .reduce(into: [:]) { fields, field in
+                fields[field.key.rawValue] = field.wire(of: settings)
+
+                let revision = revision(of: field.key)
+                guard revision != .legacy else { return }
+                fields[field.key.revisionKey] = .int(revision.milliseconds)
+            }
+    }
+
+    /// Reads a copy that arrived over the wire.
+    ///
+    /// - Parameters:
+    ///   - fields: The copy's fields.
+    ///   - base: This device's settings, kept for any setting the copy doesn't carry or can't decode.
+    ///   - modifiedAt: When the copy was saved. A setting with no revision of its own, or one an older app
+    ///     version changed without updating its revision, takes this time.
+    ///   - previous: The fields of the last copy from the same place, so a setting that hasn't changed since
+    ///     isn't mistaken for a new change. `nil` on first sight.
+    init(wireFields fields: [String: WireValue], base: Settings, modifiedAt: Date, previous: [String: WireValue]?) {
+        var settings = base
+        var revisions = [SettingKey: Revision]()
+
+        Settings.fields
+            .filter(\.key.isSynced)
+            .forEach { field in
+                let value = fields[field.key.rawValue]
+                guard field.readWire(value, into: &settings) else { return }
+
+                let revisionField = fields[field.key.revisionKey]
+                let stamped = revisionField?.integer.map(Revision.init(milliseconds:))
+
+                let isUnrevisedChange = previous.map { previous in
+                    var seen = settings
+                    let isChanged = !field.readWire(previous[field.key.rawValue], into: &seen) || !field.isEqual(seen, settings)
+                    return isChanged && previous[field.key.revisionKey] == revisionField
+                } ?? (stamped == nil)
+
+                revisions[field.key] = isUnrevisedChange ? Revision(modifiedAt) : stamped
+            }
+
+        self.init(settings: settings, revisions: revisions)
+    }
+
+    /// Merges a copy from a device this one follows, such as the watch's iPhone: where neither side has
+    /// revised a setting, the copy's value wins instead of the tie-break.
+    func adopting(_ other: SettingsDocument) -> SettingsDocument {
+        Settings.fields
+            .filter { revision(of: $0.key) == .legacy && other.revision(of: $0.key) == .legacy }
+            .reduce(into: merging(other)) { result, field in
+                field.copy(from: other.settings, into: &result.settings)
+            }
+    }
+
+    /// Whether any synced setting here is newer than in `other`, so `other` is behind.
+    func hasNewerRevisions(than other: SettingsDocument) -> Bool {
+        SettingKey.allCases
+            .filter(\.isSynced)
+            .contains { revision(of: $0) > other.revision(of: $0) }
+    }
+
+    /// Stamps `keys` as edited at `date` without changing their values, so they win over older copies.
+    func restamping(_ keys: [SettingKey], at date: Date) -> SettingsDocument {
+        guard !keys.isEmpty else { return self }
+        let stamp = Revision.stamp(at: date, after: revisions.values.max() ?? .legacy)
+        return SettingsDocument(settings: settings, revisions: keys.reduce(into: revisions) { $0[$1] = stamp })
+    }
+}

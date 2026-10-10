@@ -9,36 +9,36 @@
 import Foundation
 
 extension Settings {
-    /// The only list of settings: storage, diffing and merging all walk it.
+    /// The only list of settings: storage, diffing, merging and the wire all walk it.
     static let fields: [any AnySettingField] = [
         SettingField(.calculationMethod, \.calculationMethod, .string),
         SettingField(.juristicMethod, \.juristicMethod, .string),
-        SettingField(.fajrDegrees, \.fajrDegrees, .plain),
-        SettingField(.maghribDegrees, \.maghribDegrees, .plain),
-        SettingField(.ishaDegrees, \.ishaDegrees, .plain),
+        SettingField(.fajrDegrees, \.fajrDegrees, .double),
+        SettingField(.maghribDegrees, \.maghribDegrees, .double),
+        SettingField(.ishaDegrees, \.ishaDegrees, .double),
         SettingField(.elevationRule, optional: \.elevationRule, .string),
-        SettingField(.adjustmentMinutes, optional: \.adjustmentMinutes, .map(.plain)),
+        SettingField(.adjustmentMinutes, optional: \.adjustmentMinutes, .map(.int)),
         SettingField(.adjustmentElevation, optional: \.adjustmentElevation, .string),
-        SettingField(.isGPSEnabled, \.isGPSEnabled, .plain),
-        SettingField(.geofenceRadius, \.geofenceRadius, .plain),
+        SettingField(.isGPSEnabled, \.isGPSEnabled, .bool),
+        SettingField(.geofenceRadius, \.geofenceRadius, .double),
         SettingField(.iqamaTimes, \.iqamaTimes, .json),
         SettingField(.iqamaReminders, \.iqamaReminders, .json),
-        SettingField(.isIqamaTimerEnabled, \.isIqamaTimerEnabled, .plain),
-        SettingField(.isIqamaHidden, \.isIqamaHidden, .plain),
-        SettingField(.enable24hTimeFormat, \.enable24hTimeFormat, .plain),
-        SettingField(.hijriDayOffset, \.hijriDayOffset, .plain),
-        SettingField(.autoIncrementHijri, \.autoIncrementHijri, .plain),
-        SettingField(.stopwatchMinutes, \.stopwatchMinutes, .plain),
-        SettingField(.snoozeMinutes, \.snoozeMinutes, .plain),
-        SettingField(.preAdhanMinutes, \.preAdhanMinutes, .map(.plain)),
+        SettingField(.isIqamaTimerEnabled, \.isIqamaTimerEnabled, .bool),
+        SettingField(.isIqamaHidden, \.isIqamaHidden, .bool),
+        SettingField(.enable24hTimeFormat, \.enable24hTimeFormat, .bool),
+        SettingField(.hijriDayOffset, \.hijriDayOffset, .int),
+        SettingField(.autoIncrementHijri, \.autoIncrementHijri, .bool),
+        SettingField(.stopwatchMinutes, \.stopwatchMinutes, .int),
+        SettingField(.snoozeMinutes, \.snoozeMinutes, .int),
+        SettingField(.preAdhanMinutes, \.preAdhanMinutes, .map(.int)),
         SettingField(.duhaReminder, optional: \.duhaReminder, .json),
         SettingField(.adhanDuaa, \.adhanDuaa, .string),
         SettingField(.notificationAdhan, \.notificationAdhan, .map(.string)),
         SettingField(.notificationSounds, \.notificationSounds, .map(.string)),
         SettingField(.reminderSounds, \.reminderSounds, .map(.string)),
-        SettingField(.isPlayOnTapEnabled, \.isPlayOnTapEnabled, .plain),
-        SettingField(.isPrayerAbbrEnabled, \.isPrayerAbbrEnabled, .plain),
-        SettingField(.sunriseAfterIsha, \.sunriseAfterIsha, .plain),
+        SettingField(.isPlayOnTapEnabled, \.isPlayOnTapEnabled, .bool),
+        SettingField(.isPrayerAbbrEnabled, \.isPrayerAbbrEnabled, .bool),
+        SettingField(.sunriseAfterIsha, \.sunriseAfterIsha, .bool),
         SettingField(.appearanceMode, \.appearanceMode, .string),
         SettingField(.theme, \.theme, .string)
     ]
@@ -63,6 +63,12 @@ protocol AnySettingField: Sendable {
     /// The value to store, or `nil` to remove the key.
     func raw(of settings: Settings) -> Any?
 
+    /// The value on the wire, or `nil` for no field.
+    func wire(of settings: Settings) -> WireValue?
+
+    /// Applies a field from the wire, returning `false` when it can't be used and the setting keeps its value.
+    func readWire(_ value: WireValue?, into settings: inout Settings) -> Bool
+
     func isEqual(_ lhs: Settings, _ rhs: Settings) -> Bool
     func copy(from source: Settings, into target: inout Settings)
 
@@ -75,24 +81,33 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
     private let keyPath: WritableKeyPath<Settings, Value> & Sendable
     private let decode: @Sendable (Any) -> Decoded<Value>
     private let encode: @Sendable (Value) -> Any?
+    private let decodeWire: @Sendable (WireValue?) -> Value?
+    private let encodeWire: @Sendable (Value) -> WireValue?
 
-    init(_ key: SettingKey, _ keyPath: WritableKeyPath<Settings, Value> & Sendable, _ codec: DefaultsCodec<Value>) {
+    init(_ key: SettingKey, _ keyPath: WritableKeyPath<Settings, Value> & Sendable, _ codec: FieldCodec<Value>) {
         self.key = key
         self.keyPath = keyPath
         decode = codec.decode
         encode = codec.encode
+        decodeWire = { $0.flatMap(codec.decodeWire) }
+        encodeWire = codec.encodeWire
     }
 
-    /// An optional setting, where `nil` removes the key.
+    /// An optional setting, where `nil` removes the key and has no field on the wire.
     init<Wrapped>(
         _ key: SettingKey,
         optional keyPath: WritableKeyPath<Settings, Wrapped?> & Sendable,
-        _ codec: DefaultsCodec<Wrapped>
+        _ codec: FieldCodec<Wrapped>
     ) where Value == Wrapped? {
         self.key = key
         self.keyPath = keyPath
         decode = { codec.decode($0).map { Optional($0) } }
         encode = { $0.flatMap(codec.encode) }
+        decodeWire = { field in
+            guard let field else { return .some(nil) }
+            return codec.decodeWire(field).map { .some($0) }
+        }
+        encodeWire = { $0.flatMap(codec.encodeWire) }
     }
 
     func read(_ raw: Any?, into settings: inout Settings) -> FieldRead {
@@ -112,6 +127,16 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
 
     func raw(of settings: Settings) -> Any? {
         encode(settings[keyPath: keyPath])
+    }
+
+    func wire(of settings: Settings) -> WireValue? {
+        encodeWire(settings[keyPath: keyPath])
+    }
+
+    func readWire(_ value: WireValue?, into settings: inout Settings) -> Bool {
+        guard let decoded = decodeWire(value) else { return false }
+        settings[keyPath: keyPath] = decoded
+        return true
     }
 
     func isEqual(_ lhs: Settings, _ rhs: Settings) -> Bool {
@@ -154,33 +179,80 @@ enum Decoded<Value> {
     }
 }
 
-/// How a value is stored in a defaults suite, matching the encodings `Preferences` has always written.
-struct DefaultsCodec<Value: Sendable>: Sendable {
+/// How a value is stored in a defaults suite and sent over the wire, matching the encodings `Preferences`
+/// and the iCloud record have always used.
+struct FieldCodec<Value: Sendable>: Sendable {
     let decode: @Sendable (Any) -> Decoded<Value>
     let encode: @Sendable (Value) -> Any?
+    let decodeWire: @Sendable (WireValue) -> Value?
+    let encodeWire: @Sendable (Value) -> WireValue?
 }
 
-extension DefaultsCodec {
-    /// A value the defaults suite stores natively: `Bool`, `Int`, `Double` or `String`.
-    static var plain: Self {
+extension FieldCodec where Value == Double {
+    static var double: Self {
         Self(
-            decode: { ($0 as? Value).map { .value($0) } ?? .unreadable },
-            encode: { $0 }
+            decode: { ($0 as? Double).map { .value($0) } ?? .unreadable },
+            encode: { $0 },
+            decodeWire: { wire in
+                switch wire {
+                case let .double(value):
+                    return value
+                case let .int(value):
+                    return Double(value)
+                default:
+                    return nil
+                }
+            },
+            encodeWire: { .double($0) }
         )
     }
 }
 
-extension DefaultsCodec where Value: RawRepresentable, Value.RawValue == String {
+extension FieldCodec where Value == Int {
+    static var int: Self {
+        Self(
+            decode: { ($0 as? Int).map { .value($0) } ?? .unreadable },
+            encode: { $0 },
+            decodeWire: { wire in
+                guard case let .int(value) = wire else { return nil }
+                return Int(exactly: value)
+            },
+            encodeWire: { .int(Int64($0)) }
+        )
+    }
+}
+
+extension FieldCodec where Value == Bool {
+    /// A flag, which the iCloud record stores as a number and reads back as "greater than zero".
+    static var bool: Self {
+        Self(
+            decode: { ($0 as? Bool).map { .value($0) } ?? .unreadable },
+            encode: { $0 },
+            decodeWire: { wire in
+                guard case let .int(value) = wire else { return nil }
+                return value > 0
+            },
+            encodeWire: { .int($0 ? 1 : 0) }
+        )
+    }
+}
+
+extension FieldCodec where Value: RawRepresentable, Value.RawValue == String {
     static var string: Self {
         Self(
             decode: { ($0 as? String).flatMap(Value.init(rawValue:)).map { .value($0) } ?? .unreadable },
-            encode: { $0.rawValue }
+            encode: { $0.rawValue },
+            decodeWire: { wire in
+                guard case let .string(value) = wire else { return nil }
+                return Value(rawValue: value)
+            },
+            encodeWire: { .string($0.rawValue) }
         )
     }
 }
 
-extension DefaultsCodec where Value: Codable {
-    /// A value stored as JSON `Data`.
+extension FieldCodec where Value: Codable {
+    /// A value stored, and sent, as JSON `Data`.
     static var json: Self {
         Self(
             decode: { raw in
@@ -190,14 +262,14 @@ extension DefaultsCodec where Value: Codable {
 
                 return .value(value)
             },
-            encode: { try? JSONEncoder().encode($0) }
+            encode: { try? JSONEncoder().encode($0) },
+            decodeWire: Self.decodeJSON,
+            encodeWire: Self.encodeJSON
         )
     }
-}
 
-extension DefaultsCodec {
-    /// A per-prayer map stored as a dictionary, whose entries decode one by one.
-    static func map<Element: Sendable>(_ element: DefaultsCodec<Element>) -> Self
+    /// A per-prayer map, stored as a dictionary whose entries decode one by one, and sent as JSON `Data`.
+    static func map<Element: Sendable>(_ element: FieldCodec<Element>) -> Self
     where Value: RawRepresentable, Value.RawValue == [String: Element] {
         Self(
             decode: { raw in
@@ -211,7 +283,21 @@ extension DefaultsCodec {
                 guard let value = Value(rawValue: entries) else { return .unreadable }
                 return entries.count == dictionary.count ? .value(value) : .lossy(value)
             },
-            encode: { $0.rawValue.compactMapValues(element.encode) }
+            encode: { $0.rawValue.compactMapValues(element.encode) },
+            decodeWire: Self.decodeJSON,
+            encodeWire: Self.encodeJSON
         )
+    }
+
+    private static func decodeJSON(_ wire: WireValue) -> Value? {
+        guard case let .data(data) = wire else { return nil }
+        return try? JSONDecoder().decode(Value.self, from: data)
+    }
+
+    /// Sorted keys keep a re-save of an unchanged map byte for byte the same.
+    private static func encodeJSON(_ value: Value) -> WireValue? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return (try? encoder.encode(value)).map { .data($0) }
     }
 }

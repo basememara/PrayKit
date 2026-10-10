@@ -33,6 +33,20 @@ extension SettingsDocumentTests {
 
 extension SettingsDocumentTests {
     @Test
+    func writingBackAStaleCopyKeepsAnEditMadeSince() {
+        let original = Settings()
+        var edited = original
+        edited.snoozeMinutes = 5
+
+        var current = original
+        current.theme = .web3
+        current.apply(changesFrom: original, to: edited)
+
+        #expect(current.snoozeMinutes == 5)
+        #expect(current.theme == .web3)
+    }
+
+    @Test
     func anEditStampsOnlyChangedSettings() {
         let edited = SettingsDocument().editing(at: Date(timeIntervalSince1970: 10)) {
             $0.snoozeMinutes = 5

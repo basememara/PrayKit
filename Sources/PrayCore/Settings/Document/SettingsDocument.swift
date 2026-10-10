@@ -68,6 +68,16 @@ public extension SettingsDocument {
     }
 }
 
+public extension Settings {
+    /// Takes only the settings `edited` changed from `original`, so writing back a whole copy can't undo an
+    /// edit that reached these settings after the copy was taken.
+    mutating func apply(changesFrom original: Settings, to edited: Settings) {
+        Settings.fields
+            .filter { !$0.isEqual(original, edited) }
+            .forEach { $0.copy(from: edited, into: &self) }
+    }
+}
+
 /// Where prayer times are calculated for: one device's location, which never syncs through iCloud.
 public struct Place: Codable, Equatable, Sendable {
     public var coordinates: Coordinates

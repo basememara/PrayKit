@@ -189,6 +189,24 @@ public extension PrayerTimer {
     }
 }
 
+public extension PrayerTimer {
+    /// A timer from the settings, counting in the place's time zone.
+    init?(at date: Date, using prayerDay: PrayerDay?, settings: Settings, timeZone: TimeZone) {
+        guard let prayerDay else { return nil }
+
+        self.init(
+            at: date,
+            using: prayerDay,
+            iqamaTimes: settings.iqamaTimes,
+            isIqamaTimerEnabled: settings.isIqamaTimerEnabled,
+            stopwatchMinutes: settings.stopwatchMinutes,
+            preAdhanMinutes: settings.preAdhanMinutes,
+            sunriseAfterIsha: settings.sunriseAfterIsha,
+            timeZone: timeZone
+        )
+    }
+}
+
 // MARK: - Types
 
 public extension PrayerTimer {

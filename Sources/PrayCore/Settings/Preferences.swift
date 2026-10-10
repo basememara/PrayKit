@@ -650,6 +650,11 @@ private extension Preferences {
 }
 
 public extension Preferences {
+    /// The settings and location as values, read from the suite in one pass.
+    var deviceState: DeviceState {
+        storage.load()
+    }
+
     /// Tells subscribers about settings another writer changed in the suite, such as a merge from iCloud,
     /// without stamping them as edits made here.
     func didChangeElsewhere(_ keys: [SettingKey], placeChanged: Bool = false) {
@@ -804,26 +809,14 @@ public extension Preferences {
             return current
         }()
 
-        var dates = [prayerTime.dateInterval.start]
-
-        let reminderMinutes = preAdhanMinutes[prayerTime.type]
-        if reminderMinutes > 0 && prayerTime.dateInterval.duration > Double(reminderMinutes) * 60 {
-            dates.append(prayerTime.dateInterval.start - .minutes(reminderMinutes))
-        }
-
-        // Add iqama countdown
-        if isIqamaTimerEnabled, let iqamaTime = iqamaTimes[prayerTime, using: calendar] {
-            dates.append(iqamaTime)
-        }
-
-        // Add since prayer adhan
-        if stopwatchMinutes > 0 && prayerTime.dateInterval.duration > Double(stopwatchMinutes) * 60 {
-            dates.append(prayerTime.dateInterval.start + .minutes(stopwatchMinutes))
-        }
-
-        return dates
-            .removeDuplicates()
-            .sorted()
+        return Settings.expandedTimeline(
+            for: prayerTime,
+            preAdhanMinutes: preAdhanMinutes,
+            iqamaTimes: iqamaTimes,
+            isIqamaTimerEnabled: isIqamaTimerEnabled,
+            stopwatchMinutes: stopwatchMinutes,
+            using: calendar
+        )
     }
 }
 

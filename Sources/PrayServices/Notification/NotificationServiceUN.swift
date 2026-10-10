@@ -26,6 +26,7 @@ public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
     private let constants: Constants
     private let localized: NotificationServiceLocalizable
     private let log: LogManager
+    private let flight = SingleFlight()
 
     public init(
         prayerManager: PrayerManager,
@@ -45,8 +46,15 @@ public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
 }
 
 public extension NotificationServiceUN {
-    /// Schedules local notifications for prayers
+    /// Schedules local notifications for prayers, one run at a time: a call during a run waits for it and
+    /// one more run, so the last call always schedules from the latest settings.
     func schedulePrayers() async {
+        await flight.run { await scheduleOnce() }
+    }
+}
+
+private extension NotificationServiceUN {
+    func scheduleOnce() async {
         // swiftlint:disable:previous function_body_length cyclomatic_complexity
         guard let request = PrayerAPI.Request(from: preferences) else {
             log.error("Could not schedule prayer notifications due to missing settings")

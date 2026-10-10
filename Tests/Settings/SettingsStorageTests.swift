@@ -33,7 +33,7 @@ extension SettingsStorageTests {
 
         let state = storage.load()
         #expect(state.document.settings == .everyFieldChanged)
-        #expect(state.document.revisions.isEmpty)
+        #expect(Set(state.document.revisions.keys) == Set(SettingKey.allCases))
         #expect(storage.unreadableKeys().isEmpty)
     }
 

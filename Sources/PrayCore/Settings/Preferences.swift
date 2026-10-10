@@ -21,13 +21,16 @@ public final class Preferences: @unchecked Sendable {
     /// suites notify each other's subscribers.
     private let subject = PassthroughSubject<PartialKeyPath<Preferences>, Never>()
 
+    /// Stamps each setting changed here, so it outranks older copies when devices merge.
+    private let storage: SettingsStorage
+
     // MARK: - Calculation
 
     @Defaults
     public var calculationMethod: CalculationMethod {
         didSet {
             guard calculationMethod != oldValue else { return }
-            subject.send(\Preferences.calculationMethod)
+            didChange(\Preferences.calculationMethod)
         }
     }
 
@@ -35,7 +38,7 @@ public final class Preferences: @unchecked Sendable {
     public var juristicMethod: Madhab {
         didSet {
             guard juristicMethod != oldValue else { return }
-            subject.send(\Preferences.juristicMethod)
+            didChange(\Preferences.juristicMethod)
         }
     }
 
@@ -43,7 +46,7 @@ public final class Preferences: @unchecked Sendable {
     public var fajrDegrees: Double {
         didSet {
             guard fajrDegrees != oldValue else { return }
-            subject.send(\Preferences.fajrDegrees)
+            didChange(\Preferences.fajrDegrees)
         }
     }
 
@@ -51,7 +54,7 @@ public final class Preferences: @unchecked Sendable {
     public var maghribDegrees: Double {
         didSet {
             guard maghribDegrees != oldValue else { return }
-            subject.send(\Preferences.maghribDegrees)
+            didChange(\Preferences.maghribDegrees)
         }
     }
 
@@ -59,7 +62,7 @@ public final class Preferences: @unchecked Sendable {
     public var ishaDegrees: Double {
         didSet {
             guard ishaDegrees != oldValue else { return }
-            subject.send(\Preferences.ishaDegrees)
+            didChange(\Preferences.ishaDegrees)
         }
     }
 
@@ -67,7 +70,7 @@ public final class Preferences: @unchecked Sendable {
     public var elevationRule: ElevationRule? {
         didSet {
             guard elevationRule != oldValue else { return }
-            subject.send(\Preferences.elevationRule)
+            didChange(\Preferences.elevationRule)
         }
     }
 
@@ -77,7 +80,7 @@ public final class Preferences: @unchecked Sendable {
     public var adjustmentMinutes: AdjustmentMinutes? {
         didSet {
             guard adjustmentMinutes != oldValue else { return }
-            subject.send(\Preferences.adjustmentMinutes)
+            didChange(\Preferences.adjustmentMinutes)
         }
     }
 
@@ -85,7 +88,7 @@ public final class Preferences: @unchecked Sendable {
     public var adjustmentElevation: ElevationRule? {
         didSet {
             guard adjustmentElevation != oldValue else { return }
-            subject.send(\Preferences.adjustmentElevation)
+            didChange(\Preferences.adjustmentElevation)
         }
     }
 
@@ -95,7 +98,7 @@ public final class Preferences: @unchecked Sendable {
     public var isGPSEnabled: Bool {
         didSet {
             guard isGPSEnabled != oldValue else { return }
-            subject.send(\Preferences.isGPSEnabled)
+            didChange(\Preferences.isGPSEnabled)
         }
     }
 
@@ -106,7 +109,7 @@ public final class Preferences: @unchecked Sendable {
     public var geofenceRadius: Double {
         didSet {
             guard geofenceRadius != oldValue else { return }
-            subject.send(\Preferences.geofenceRadius)
+            didChange(\Preferences.geofenceRadius)
         }
     }
 
@@ -116,7 +119,7 @@ public final class Preferences: @unchecked Sendable {
     public var iqamaTimes: IqamaTimes {
         didSet {
             guard iqamaTimes != oldValue else { return }
-            subject.send(\Preferences.iqamaTimes)
+            didChange(\Preferences.iqamaTimes)
         }
     }
 
@@ -124,7 +127,7 @@ public final class Preferences: @unchecked Sendable {
     public var iqamaReminders: IqamaReminders {
         didSet {
             guard iqamaReminders != oldValue else { return }
-            subject.send(\Preferences.iqamaReminders)
+            didChange(\Preferences.iqamaReminders)
         }
     }
 
@@ -132,7 +135,7 @@ public final class Preferences: @unchecked Sendable {
     public var isIqamaTimerEnabled: Bool {
         didSet {
             guard isIqamaTimerEnabled != oldValue else { return }
-            subject.send(\Preferences.isIqamaTimerEnabled)
+            didChange(\Preferences.isIqamaTimerEnabled)
         }
     }
 
@@ -140,7 +143,7 @@ public final class Preferences: @unchecked Sendable {
     public var isIqamaHidden: Bool {
         didSet {
             guard isIqamaHidden != oldValue else { return }
-            subject.send(\Preferences.isIqamaHidden)
+            didChange(\Preferences.isIqamaHidden)
         }
     }
 
@@ -150,7 +153,7 @@ public final class Preferences: @unchecked Sendable {
     public var enable24hTimeFormat: Bool {
         didSet {
             guard enable24hTimeFormat != oldValue else { return }
-            subject.send(\Preferences.enable24hTimeFormat)
+            didChange(\Preferences.enable24hTimeFormat)
         }
     }
 
@@ -158,7 +161,7 @@ public final class Preferences: @unchecked Sendable {
     public var hijriDayOffset: Int {
         didSet {
             guard hijriDayOffset != oldValue else { return }
-            subject.send(\Preferences.hijriDayOffset)
+            didChange(\Preferences.hijriDayOffset)
         }
     }
 
@@ -166,7 +169,7 @@ public final class Preferences: @unchecked Sendable {
     public var autoIncrementHijri: Bool {
         didSet {
             guard autoIncrementHijri != oldValue else { return }
-            subject.send(\Preferences.autoIncrementHijri)
+            didChange(\Preferences.autoIncrementHijri)
         }
     }
 
@@ -174,7 +177,7 @@ public final class Preferences: @unchecked Sendable {
     public var stopwatchMinutes: Int {
         didSet {
             guard stopwatchMinutes != oldValue else { return }
-            subject.send(\Preferences.stopwatchMinutes)
+            didChange(\Preferences.stopwatchMinutes)
         }
     }
 
@@ -184,7 +187,7 @@ public final class Preferences: @unchecked Sendable {
     public var snoozeMinutes: Int {
         didSet {
             guard snoozeMinutes != oldValue else { return }
-            subject.send(\Preferences.snoozeMinutes)
+            didChange(\Preferences.snoozeMinutes)
         }
     }
 
@@ -192,7 +195,7 @@ public final class Preferences: @unchecked Sendable {
     public var preAdhanMinutes: PreAdhanMinutes {
         didSet {
             guard preAdhanMinutes != oldValue else { return }
-            subject.send(\Preferences.preAdhanMinutes)
+            didChange(\Preferences.preAdhanMinutes)
         }
     }
 
@@ -200,7 +203,7 @@ public final class Preferences: @unchecked Sendable {
     public var duhaReminder: DuhaType? {
         didSet {
             guard duhaReminder != oldValue else { return }
-            subject.send(\Preferences.duhaReminder)
+            didChange(\Preferences.duhaReminder)
         }
     }
 
@@ -208,7 +211,7 @@ public final class Preferences: @unchecked Sendable {
     public var adhanDuaa: AdhanDuaa {
         didSet {
             guard adhanDuaa != oldValue else { return }
-            subject.send(\Preferences.adhanDuaa)
+            didChange(\Preferences.adhanDuaa)
         }
     }
 
@@ -218,7 +221,7 @@ public final class Preferences: @unchecked Sendable {
     public var notificationAdhan: NotificationAdhan {
         didSet {
             guard notificationAdhan != oldValue else { return }
-            subject.send(\Preferences.notificationAdhan)
+            didChange(\Preferences.notificationAdhan)
         }
     }
 
@@ -226,7 +229,7 @@ public final class Preferences: @unchecked Sendable {
     public var notificationSounds: NotificationSounds {
         didSet {
             guard notificationSounds != oldValue else { return }
-            subject.send(\Preferences.notificationSounds)
+            didChange(\Preferences.notificationSounds)
         }
     }
 
@@ -234,7 +237,7 @@ public final class Preferences: @unchecked Sendable {
     public var reminderSounds: ReminderSounds {
         didSet {
             guard reminderSounds != oldValue else { return }
-            subject.send(\Preferences.reminderSounds)
+            didChange(\Preferences.reminderSounds)
         }
     }
 
@@ -242,7 +245,7 @@ public final class Preferences: @unchecked Sendable {
     public var isPlayOnTapEnabled: Bool {
         didSet {
             guard isPlayOnTapEnabled != oldValue else { return }
-            subject.send(\Preferences.isPlayOnTapEnabled)
+            didChange(\Preferences.isPlayOnTapEnabled)
         }
     }
 
@@ -252,7 +255,7 @@ public final class Preferences: @unchecked Sendable {
     public var isPrayerAbbrEnabled: Bool {
         didSet {
             guard isPrayerAbbrEnabled != oldValue else { return }
-            subject.send(\Preferences.isPrayerAbbrEnabled)
+            didChange(\Preferences.isPrayerAbbrEnabled)
         }
     }
 
@@ -260,7 +263,7 @@ public final class Preferences: @unchecked Sendable {
     public var sunriseAfterIsha: Bool {
         didSet {
             guard sunriseAfterIsha != oldValue else { return }
-            subject.send(\Preferences.sunriseAfterIsha)
+            didChange(\Preferences.sunriseAfterIsha)
         }
     }
 
@@ -268,7 +271,7 @@ public final class Preferences: @unchecked Sendable {
     public var appearanceMode: AppearanceMode {
         didSet {
             guard appearanceMode != oldValue else { return }
-            subject.send(\Preferences.appearanceMode)
+            didChange(\Preferences.appearanceMode)
         }
     }
 
@@ -276,7 +279,7 @@ public final class Preferences: @unchecked Sendable {
     public var theme: AppTheme {
         didSet {
             guard theme != oldValue else { return }
-            subject.send(\Preferences.theme)
+            didChange(\Preferences.theme)
         }
     }
 
@@ -286,7 +289,7 @@ public final class Preferences: @unchecked Sendable {
     public var lastCacheDate: Date? {
         didSet {
             guard lastCacheDate != oldValue else { return }
-            subject.send(\Preferences.lastCacheDate)
+            didChange(\Preferences.lastCacheDate)
         }
     }
 
@@ -294,7 +297,7 @@ public final class Preferences: @unchecked Sendable {
     public var lastTimeZone: TimeZone {
         didSet {
             guard lastTimeZone != oldValue else { return }
-            subject.send(\Preferences.lastTimeZone)
+            didChange(\Preferences.lastTimeZone)
         }
     }
 
@@ -302,7 +305,7 @@ public final class Preferences: @unchecked Sendable {
     public var lastRegionName: String? {
         didSet {
             guard lastRegionName != oldValue else { return }
-            subject.send(\Preferences.lastRegionName)
+            didChange(\Preferences.lastRegionName)
         }
     }
 
@@ -312,7 +315,7 @@ public final class Preferences: @unchecked Sendable {
     public var lastDiagnosticsDate: Date? {
         didSet {
             guard lastDiagnosticsDate != oldValue else { return }
-            subject.send(\Preferences.lastDiagnosticsDate)
+            didChange(\Preferences.lastDiagnosticsDate)
         }
     }
 
@@ -321,6 +324,7 @@ public final class Preferences: @unchecked Sendable {
     // swiftlint:disable:next function_body_length
     public init(defaults: UserDefaults) {
         self.defaults = defaults
+        storage = SettingsStorage(defaults: defaults)
 
         // Calculation
         _calculationMethod = Defaults("calculationMethod", defaultValue: .moonsightingCommittee, from: defaults)
@@ -633,6 +637,92 @@ public extension Preferences {
 
     func publisher(for keyPathGroup: KeyPathGroup) -> AnyPublisher<Void, Never> {
         publisher(for: [keyPathGroup])
+    }
+}
+
+// MARK: - Revisions
+
+private extension Preferences {
+    func didChange(_ keyPath: PartialKeyPath<Preferences>) {
+        SettingKey(rawValue: key(keyPath)).map { storage.stamp($0) }
+        subject.send(keyPath)
+    }
+}
+
+public extension Preferences {
+    /// Tells subscribers about settings another writer changed in the suite, such as a merge from iCloud,
+    /// without stamping them as edits made here.
+    func didChangeElsewhere(_ keys: [SettingKey], placeChanged: Bool = false) {
+        keys.map(keyPath(for:)).forEach(subject.send)
+
+        guard placeChanged else { return }
+        [\Preferences.prayersCoordinates, \.lastTimeZone, \.lastRegionName, \.lastCacheDate].forEach(subject.send)
+    }
+
+    // swiftlint:disable:next cyclomatic_complexity
+    func keyPath(for key: SettingKey) -> PartialKeyPath<Preferences> {
+        switch key {
+        case .calculationMethod:
+            return \.calculationMethod
+        case .juristicMethod:
+            return \.juristicMethod
+        case .fajrDegrees:
+            return \.fajrDegrees
+        case .maghribDegrees:
+            return \.maghribDegrees
+        case .ishaDegrees:
+            return \.ishaDegrees
+        case .elevationRule:
+            return \.elevationRule
+        case .adjustmentMinutes:
+            return \.adjustmentMinutes
+        case .adjustmentElevation:
+            return \.adjustmentElevation
+        case .isGPSEnabled:
+            return \.isGPSEnabled
+        case .geofenceRadius:
+            return \.geofenceRadius
+        case .iqamaTimes:
+            return \.iqamaTimes
+        case .iqamaReminders:
+            return \.iqamaReminders
+        case .isIqamaTimerEnabled:
+            return \.isIqamaTimerEnabled
+        case .isIqamaHidden:
+            return \.isIqamaHidden
+        case .enable24hTimeFormat:
+            return \.enable24hTimeFormat
+        case .hijriDayOffset:
+            return \.hijriDayOffset
+        case .autoIncrementHijri:
+            return \.autoIncrementHijri
+        case .stopwatchMinutes:
+            return \.stopwatchMinutes
+        case .snoozeMinutes:
+            return \.snoozeMinutes
+        case .preAdhanMinutes:
+            return \.preAdhanMinutes
+        case .duhaReminder:
+            return \.duhaReminder
+        case .adhanDuaa:
+            return \.adhanDuaa
+        case .notificationAdhan:
+            return \.notificationAdhan
+        case .notificationSounds:
+            return \.notificationSounds
+        case .reminderSounds:
+            return \.reminderSounds
+        case .isPlayOnTapEnabled:
+            return \.isPlayOnTapEnabled
+        case .isPrayerAbbrEnabled:
+            return \.isPrayerAbbrEnabled
+        case .sunriseAfterIsha:
+            return \.sunriseAfterIsha
+        case .appearanceMode:
+            return \.appearanceMode
+        case .theme:
+            return \.theme
+        }
     }
 }
 

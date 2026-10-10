@@ -587,6 +587,54 @@ extension PreferencesTests {
     }
 }
 
+// MARK: - Revisions
+
+extension PreferencesTests {
+    @Test
+    func aSetterStampsItsSetting() {
+        preferences.snoozeMinutes = 5
+
+        let document = SettingsStorage(defaults: preferences.defaults).load().document
+        #expect(document.revision(of: .snoozeMinutes) > .legacy)
+        #expect(Set(document.revisions.keys) == [.snoozeMinutes])
+    }
+
+    @Test
+    func writingTheSameValueDoesNotStamp() {
+        preferences.snoozeMinutes = preferences.snoozeMinutes
+
+        #expect(preferences.defaults.object(forKey: SettingKey.snoozeMinutes.revisionKey) == nil)
+    }
+
+    @Test
+    func locationIsNotASetting() throws {
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        preferences.calculationMethod = .muslimWorldLeague
+        let stamped = SettingsStorage(defaults: preferences.defaults).load().document.revisions
+
+        preferences.set(manualAddress: Coordinates(latitude: 3, longitude: 101), timeZone: timeZone, regionName: nil)
+
+        let revisions = SettingsStorage(defaults: preferences.defaults).load().document.revisions
+        #expect(Set(revisions.keys) == [.calculationMethod])
+        #expect(revisions[.calculationMethod, default: .legacy] > stamped[.calculationMethod, default: .legacy])
+        #expect(preferences.defaults.object(forKey: "prayersCoordinates_at") == nil)
+    }
+
+    @Test
+    func aChangeMadeElsewhereIsPublishedWithItsOwnRevision() async {
+        let storage = SettingsStorage(defaults: preferences.defaults)
+        let remote = SettingsDocument().editing(at: Date(timeIntervalSince1970: 42)) { $0.theme = .aqua }
+
+        let published = await firstValue(of: preferences.publisher(for: \.theme)) {
+            storage.update { DeviceState(document: $0.document.merging(remote), place: $0.place) }
+            preferences.didChangeElsewhere([.theme])
+        }
+
+        #expect(published == .aqua)
+        #expect(storage.load().document.revision(of: .theme) == Revision(milliseconds: 42_000))
+    }
+}
+
 // MARK: - Helpers
 
 private extension PreferencesTests {

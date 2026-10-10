@@ -47,6 +47,16 @@ public extension SettingsStorage {
             DeviceState(document: state.document.editing(at: date, edit), place: state.place)
         }
     }
+
+    /// Stamps a setting whose value was just written another way, as `Preferences` does.
+    func stamp(_ key: SettingKey, at date: Date = .now) {
+        let newest = SettingKey.allCases
+            .compactMap { (defaults.object(forKey: $0.revisionKey) as? NSNumber)?.int64Value }
+            .max()
+            .map(Revision.init(milliseconds:)) ?? .legacy
+
+        defaults.set(NSNumber(value: Revision.stamp(at: date, after: newest).milliseconds), forKey: key.revisionKey)
+    }
 }
 
 // MARK: - Reading

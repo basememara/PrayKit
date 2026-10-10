@@ -57,4 +57,13 @@ extension PrayerDayTests {
         #expect(prayer.type == .fajr)
         #expect(prayer.dateInterval.start > start + 24 * 3600)
     }
+
+    @Test
+    func aSnoozeMustLandBeforeThePrayerEnds() throws {
+        let dhuhr = try #require(day.times[.dhuhr])
+        let halfway = dhuhr.dateInterval.start + 1800
+
+        #expect(dhuhr.acceptsSnooze(of: 1700, at: halfway))
+        #expect(!dhuhr.acceptsSnooze(of: 1800, at: halfway))
+    }
 }

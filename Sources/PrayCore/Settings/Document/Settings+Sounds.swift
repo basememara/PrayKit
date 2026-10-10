@@ -25,6 +25,16 @@ public extension Settings {
         iqamaTimes = IqamaTimes()
     }
 
+    /// Whether a prayer's notification makes no sound: silent, off, or never set.
+    func isMuted(_ prayer: Prayer) -> Bool {
+        notificationSounds[prayer].map { [.silent, .off].contains($0) } ?? true
+    }
+
+    /// Mutes a prayer to silent, or unmutes it to the adhan for an obligatory prayer and a tone for the rest.
+    mutating func setMuted(_ isMuted: Bool, for prayer: Prayer) {
+        notificationSounds[prayer] = isMuted ? .silent : prayer.isObligation ? .adhan : .tone
+    }
+
     /// The adhan the user chose for a prayer, in the length that prayer uses; Al-Aqsa when none is chosen.
     func adhanURL(for prayer: Prayer) -> URL? {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)

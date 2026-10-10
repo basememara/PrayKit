@@ -54,3 +54,10 @@ public extension PrayerDay {
             .min { $0.dateInterval.start < $1.dateInterval.start }
     }
 }
+
+public extension PrayerTime {
+    /// Whether a reminder `interval` from `date` still lands inside this prayer's time.
+    func acceptsSnooze(of interval: TimeInterval, at date: Date) -> Bool {
+        date + interval < dateInterval.end
+    }
+}

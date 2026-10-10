@@ -47,4 +47,19 @@ struct SettingsSoundsTests {
         #expect(settings.adhanURL(for: .fajr)?.lastPathComponent == "makkah-fajr.mp3")
         #expect(settings.adhanURL(for: .dhuhr)?.lastPathComponent == "makkah.mp3")
     }
+
+    @Test
+    func mutingSilencesAndUnmutingRestoresTheDefaultSound() {
+        var settings = Settings()
+
+        settings.setMuted(true, for: .dhuhr)
+        #expect(settings.isMuted(.dhuhr))
+        #expect(settings.notificationSounds[.dhuhr] == .silent)
+
+        settings.setMuted(false, for: .dhuhr)
+        settings.setMuted(false, for: .sunrise)
+        #expect(settings.notificationSounds[.dhuhr] == .adhan)
+        #expect(settings.notificationSounds[.sunrise] == .tone)
+        #expect(!settings.isMuted(.sunrise))
+    }
 }

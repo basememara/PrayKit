@@ -162,7 +162,7 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
 enum Decoded<Value> {
     case value(Value)
 
-    /// Decoded with some entries dropped, the way `Preferences` reads a map holding a value it doesn't know.
+    /// Decoded with some entries dropped, as when a map holds a value this version doesn't know.
     case lossy(Value)
 
     case unreadable
@@ -179,8 +179,8 @@ enum Decoded<Value> {
     }
 }
 
-/// How a value is stored in a defaults suite and sent over the wire, matching the encodings `Preferences`
-/// and the iCloud record have always used.
+/// How a value is stored in a defaults suite and sent over the wire, matching the encodings the defaults
+/// suite and the iCloud record have always used.
 struct FieldCodec<Value: Sendable>: Sendable {
     let decode: @Sendable (Any) -> Decoded<Value>
     let encode: @Sendable (Value) -> Any?

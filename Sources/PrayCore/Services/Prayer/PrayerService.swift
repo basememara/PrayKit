@@ -81,31 +81,5 @@ public extension PrayerAPI {
                 filter: filter
             )
         }
-
-        public init?(
-            from preferences: Preferences,
-            coordinates: Coordinates? = nil,
-            timeZone: TimeZone? = nil,
-            method: CalculationMethod? = nil,
-            filter: PrayerFilter = .all
-        ) {
-            guard let coordinates = coordinates ?? preferences.prayersCoordinates else {
-                return nil
-            }
-
-            self.coordinates = coordinates
-            self.timeZone = timeZone ?? preferences.lastTimeZone
-            self.method = method ?? preferences.calculationMethod
-            self.jurisprudence = preferences.juristicMethod
-            self.elevation = preferences.elevationRule
-            self.fajrDegrees = preferences.fajrDegrees
-            self.maghribDegrees = preferences.maghribDegrees
-            self.ishaDegrees = preferences.ishaDegrees
-            self.adjustments = PrayerAdjustments(
-                adjustmentMinutes: preferences.adjustmentMinutes,
-                adjustmentElevation: preferences.adjustmentElevation
-            )
-            self.filter = filter
-        }
     }
 }

@@ -14,14 +14,7 @@ import PrayServices
 import ZamzamCore
 
 struct PrayerTimelineAdhanTests {
-    private let preferences: Preferences
-    private let prayerManager: PrayerManager
-
-    init() {
-        let fixture = PrayTestFixture()
-        preferences = fixture.preferences
-        prayerManager = fixture.prayerManager
-    }
+    private let prayerManager = PrayTestFixture().prayerManager
 }
 
 extension PrayerTimelineAdhanTests {
@@ -30,8 +23,9 @@ extension PrayerTimelineAdhanTests {
     func toronto() async throws {
         // Given
         let expanded = PrayerManager.Expanded.intervals(0)
+        var settings = Settings()
 
-        preferences.preAdhanMinutes = PreAdhanMinutes(
+        settings.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
                 Prayer.sunrise.rawValue: 27,
@@ -42,7 +36,7 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.iqamaTimes = IqamaTimes(
+        settings.iqamaTimes = IqamaTimes(
             fajr: .time(hour: 6, minutes: 31),
             dhuhr: .minutes(12),
             asr: .time(hour: 16, minutes: 38),
@@ -51,11 +45,12 @@ extension PrayerTimelineAdhanTests {
             jumuah: .time(hour: 13, minutes: 30)
         )
 
-        preferences.isIqamaTimerEnabled = true
-        preferences.stopwatchMinutes = 18
+        settings.isIqamaTimerEnabled = true
+        settings.stopwatchMinutes = 18
 
         // When
         let (timeline, timeZone, date) = try await fetchPrayerDay(
+            settings: settings,
             date: "2022/02/22 06:00",
             expanded: expanded,
             limit: 111,
@@ -102,17 +97,17 @@ extension PrayerTimelineAdhanTests {
         try Prayer.allCases.filter(\.isEssential).forEach {
             let prayer = try #require(timeline[0, $0])
 
-            let stopwatchTime = prayer.dateInterval.start + .minutes(preferences.stopwatchMinutes)
+            let stopwatchTime = prayer.dateInterval.start + .minutes(settings.stopwatchMinutes)
             if stopwatchTime > date {
                 #expect(timeline.contains { $0.date == stopwatchTime })
             }
 
-            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            let preAdhanTime = prayer.dateInterval.start - .minutes(settings.preAdhanMinutes[$0])
             if preAdhanTime > date {
                 #expect(timeline.contains { $0.date == preAdhanTime })
             }
 
-            let iqamaTime = preferences.iqamaTimes[prayer, using: calendar]
+            let iqamaTime = settings.iqamaTimes[prayer, using: calendar]
             if let iqamaTime, iqamaTime > date {
                 #expect(timeline.contains { $0.date == iqamaTime })
             }
@@ -126,8 +121,9 @@ extension PrayerTimelineAdhanTests {
     func london() async throws {
         // Given
         let expanded = PrayerManager.Expanded.intervals(0)
+        var settings = Settings()
 
-        preferences.preAdhanMinutes = PreAdhanMinutes(
+        settings.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
                 Prayer.sunrise.rawValue: 27,
@@ -138,7 +134,7 @@ extension PrayerTimelineAdhanTests {
             ]
         )
 
-        preferences.iqamaTimes = IqamaTimes(
+        settings.iqamaTimes = IqamaTimes(
             fajr: .time(hour: 6, minutes: 1),
             dhuhr: .minutes(12),
             asr: .time(hour: 16, minutes: 38),
@@ -147,11 +143,12 @@ extension PrayerTimelineAdhanTests {
             jumuah: .time(hour: 13, minutes: 30)
         )
 
-        preferences.isIqamaTimerEnabled = false
-        preferences.stopwatchMinutes = 18
+        settings.isIqamaTimerEnabled = false
+        settings.stopwatchMinutes = 18
 
         // When
         let (timeline, timeZone, date) = try await fetchPrayerDay(
+            settings: settings,
             date: "2022/02/22 06:00",
             expanded: expanded,
             limit: 111,
@@ -197,12 +194,12 @@ extension PrayerTimelineAdhanTests {
         try Prayer.allCases.filter(\.isEssential).forEach {
             let prayer = try #require(timeline[0, $0])
 
-            let stopwatchTime = prayer.dateInterval.start + .minutes(preferences.stopwatchMinutes)
+            let stopwatchTime = prayer.dateInterval.start + .minutes(settings.stopwatchMinutes)
             if stopwatchTime > date {
                 #expect(timeline.contains { $0.date == stopwatchTime })
             }
 
-            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            let preAdhanTime = prayer.dateInterval.start - .minutes(settings.preAdhanMinutes[$0])
             if preAdhanTime > date {
                 #expect(timeline.contains { $0.date == preAdhanTime })
             }
@@ -216,8 +213,9 @@ extension PrayerTimelineAdhanTests {
     func finalHour() async throws {
         // Given
         let expanded = PrayerManager.Expanded.finalHour
+        var settings = Settings()
 
-        preferences.preAdhanMinutes = PreAdhanMinutes(
+        settings.preAdhanMinutes = PreAdhanMinutes(
             rawValue: [
                 Prayer.fajr.rawValue: 34,
                 Prayer.sunrise.rawValue: 27,
@@ -230,6 +228,7 @@ extension PrayerTimelineAdhanTests {
 
         // When
         let (timeline, timeZone, date) = try await fetchPrayerDay(
+            settings: settings,
             date: "2022/04/01 06:00",
             expanded: expanded,
             limit: 30,
@@ -280,7 +279,7 @@ extension PrayerTimelineAdhanTests {
                 #expect(timeline.contains { $0.date == finalHour })
             }
 
-            let preAdhanTime = prayer.dateInterval.start - .minutes(preferences.preAdhanMinutes[$0])
+            let preAdhanTime = prayer.dateInterval.start - .minutes(settings.preAdhanMinutes[$0])
             if preAdhanTime > date {
                 #expect(timeline.contains { $0.date == preAdhanTime })
             }
@@ -292,6 +291,7 @@ extension PrayerTimelineAdhanTests {
 
 private extension PrayerTimelineAdhanTests {
     func fetchPrayerDay(
+        settings: Settings,
         date dateString: String,
         expanded: PrayerManager.Expanded,
         limit: Int,
@@ -325,7 +325,16 @@ private extension PrayerTimelineAdhanTests {
             filter: filter
         )
 
-        return (try await prayerManager.fetch(from: date, expanded: expanded, limit: limit, with: request), timeZone, date)
+        let timeline = try await prayerManager.fetch(
+            from: date,
+            expanded: expanded,
+            limit: limit,
+            with: request,
+            settings: settings,
+            timeZone: timeZone
+        )
+
+        return (timeline, timeZone, date)
     }
 }
 

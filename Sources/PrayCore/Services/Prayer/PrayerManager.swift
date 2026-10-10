@@ -12,13 +12,11 @@ import ZamzamCore
 public struct PrayerManager: Sendable {
     private let service: PrayerService
     private let londonService: PrayerService
-    private let preferences: Preferences
     private let log: LogManager
 
-    public init(service: PrayerService, londonService: PrayerService, preferences: Preferences, log: LogManager) {
+    public init(service: PrayerService, londonService: PrayerService, log: LogManager) {
         self.service = service
         self.londonService = londonService
-        self.preferences = preferences
         self.log = log
     }
 }
@@ -37,10 +35,6 @@ public extension PrayerManager {
         case hourly
         case intervals(TimeInterval)
         case none
-    }
-
-    func fetch(from date: Date, expanded: Expanded = .none, limit: Int, with request: PrayerAPI.Request) async throws -> [PrayerTimer] {
-        try await fetch(from: date, expanded: expanded, limit: limit, with: request, context: TimerContext(preferences: preferences))
     }
 
     /// The timeline built from settings, with timers counting in the place's time zone.
@@ -88,15 +82,10 @@ public extension PrayerManager {
 
 // MARK: - Helpers
 
-/// How a timeline builds its timers, from `Preferences` or from a `Settings` value.
+/// How a timeline builds its timers from the settings.
 private struct TimerContext: Sendable {
     let timer: @Sendable (Date, PrayerDay) -> PrayerTimer?
     let expandedTimeline: @Sendable (PrayerTime, Calendar) -> [Date]
-
-    init(preferences: Preferences) {
-        timer = { PrayerTimer(at: $0, using: $1, preferences: preferences) }
-        expandedTimeline = { preferences.expandedTimeline(for: $0, using: $1) }
-    }
 
     init(settings: Settings, timeZone: TimeZone) {
         timer = { PrayerTimer(at: $0, using: $1, settings: settings, timeZone: timeZone) }

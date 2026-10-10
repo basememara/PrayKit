@@ -15,33 +15,38 @@ struct SettingsStorageTests {
     private var storage: SettingsStorage { SettingsStorage(defaults: defaults) }
 }
 
-// MARK: - Compatibility with Preferences
+// MARK: - On-disk format
 
 extension SettingsStorageTests {
     @Test
-    func freshSuiteReadsThePreferencesDefaults() {
-        let preferences = Preferences(defaults: defaults)
+    func freshSuiteReadsTheDefaults() {
+        let state = storage.load()
 
-        #expect(storage.load().document.settings == Settings(preferences: preferences))
-        #expect(storage.load().document.settings == Settings())
+        #expect(state.document.settings == Settings())
+        #expect(state.place == nil)
         #expect(storage.unreadableKeys().isEmpty)
     }
 
     @Test
-    func readsWhatPreferencesWrote() {
-        Settings.everyFieldChanged.write(to: Preferences(defaults: defaults))
+    func readsWhatEarlierVersionsWrote() throws {
+        let expectedPlace = try Self.goldenPlace()
+        Self.golden.forEach { defaults.set($0.value, forKey: $0.key) }
 
         let state = storage.load()
         #expect(state.document.settings == .everyFieldChanged)
-        #expect(Set(state.document.revisions.keys) == Set(SettingKey.allCases))
+        #expect(state.document.revisions.isEmpty)
+        #expect(state.place == expectedPlace)
         #expect(storage.unreadableKeys().isEmpty)
     }
 
     @Test
-    func preferencesReadsWhatStorageWrote() {
-        storage.edit { $0 = .everyFieldChanged }
+    func writesWhatEarlierVersionsRead() throws {
+        let place = try Self.goldenPlace()
+        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = .everyFieldChanged }, place: place) }
 
-        #expect(Settings(preferences: Preferences(defaults: defaults)) == .everyFieldChanged)
+        for (key, expected) in Self.golden {
+            try expectStored(key, equals: expected)
+        }
     }
 
     @Test
@@ -61,7 +66,6 @@ extension SettingsStorageTests {
         #expect(defaults.object(forKey: "duhaReminder") == nil)
         #expect(cleared.document.settings.duhaReminder == nil)
         #expect(cleared.document.revision(of: .duhaReminder) > added.document.revision(of: .duhaReminder))
-        #expect(Preferences(defaults: defaults).duhaReminder == nil)
     }
 }
 
@@ -79,7 +83,6 @@ extension SettingsStorageTests {
         #expect(settings.iqamaTimes == Settings().iqamaTimes)
         #expect(settings.calculationMethod == Settings().calculationMethod)
         #expect(settings.notificationSounds == NotificationSounds(rawValue: ["fajr": .adhan]))
-        #expect(settings.notificationSounds == Preferences(defaults: defaults).notificationSounds)
     }
 
     @Test
@@ -125,7 +128,8 @@ extension SettingsStorageTests {
 
         storage.update { DeviceState(document: $0.document.merging(remote), place: $0.place) }
 
-        #expect(Preferences(defaults: defaults).calculationMethod == .karachi)
+        #expect(storage.load().document.settings.calculationMethod == .karachi)
+        #expect(defaults.string(forKey: "calculationMethod") == CalculationMethod.karachi.rawValue)
         #expect(storage.load().document.revision(of: .calculationMethod) == remote.revision(of: .calculationMethod))
     }
 }
@@ -134,21 +138,23 @@ extension SettingsStorageTests {
 
 extension SettingsStorageTests {
     @Test
-    func readsThePlacePreferencesWrote() throws {
-        let preferences = Preferences(defaults: defaults)
-        let coordinates = Coordinates(latitude: 2.9, longitude: 101.6)
+    func readsThePlaceFromItsKeys() throws {
         let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
-        preferences.set(manualAddress: coordinates, timeZone: timeZone, regionName: "Somewhere")
+        let fixedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        defaults.set([2.9, 101.6], forKey: "prayersCoordinates")
+        defaults.set("Asia/Kuala_Lumpur", forKey: "lastTimeZoneIdentifier")
+        defaults.set("Somewhere", forKey: "lastRegionName")
+        defaults.set(fixedAt, forKey: "lastCacheDate")
 
         let place = try #require(storage.load().place)
-        #expect(place.coordinates == coordinates)
+        #expect(place.coordinates == Coordinates(latitude: 2.9, longitude: 101.6))
         #expect(place.timeZone == timeZone)
         #expect(place.regionName == "Somewhere")
-        #expect(place.fixedAt == preferences.lastCacheDate)
+        #expect(place.fixedAt == fixedAt)
     }
 
     @Test
-    func preferencesReadsThePlaceStorageWrote() throws {
+    func writesThePlaceToItsKeys() throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/London"))
         let place = Place(
             coordinates: Coordinates(latitude: 51.5, longitude: -0.1),
@@ -159,15 +165,88 @@ extension SettingsStorageTests {
 
         storage.update { DeviceState(document: $0.document, place: place) }
 
-        let preferences = Preferences(defaults: defaults)
-        #expect(preferences.prayersCoordinates == place.coordinates)
-        #expect(preferences.lastTimeZone == timeZone)
-        #expect(preferences.lastRegionName == "Elsewhere")
-        #expect(preferences.lastCacheDate == place.fixedAt)
+        #expect(defaults.array(forKey: "prayersCoordinates") as? [Double] == [51.5, -0.1])
+        #expect(defaults.string(forKey: "lastTimeZoneIdentifier") == "Europe/London")
+        #expect(defaults.string(forKey: "lastRegionName") == "Elsewhere")
+        #expect(defaults.object(forKey: "lastCacheDate") as? Date == place.fixedAt)
     }
 
     @Test
     func noCoordinatesMeansNoPlace() {
         #expect(storage.load().place == nil)
+    }
+}
+
+// MARK: - Helpers
+
+private extension SettingsStorageTests {
+    func expectStored(_ key: String, equals expected: Any) throws {
+        let stored: Any? = defaults.object(forKey: key)
+        let matches = try Self.isEqual(stored, expected)
+        #expect(matches, "\(key) is \(String(describing: stored))")
+    }
+
+    /// Compares JSON by its decoded objects, since the order of keys in encoded JSON is not stable.
+    static func isEqual(_ stored: Any?, _ expected: Any) throws -> Bool {
+        guard let stored else { return false }
+
+        guard let expectedData = expected as? Data else {
+            return (stored as AnyObject).isEqual(expected)
+        }
+
+        guard let storedData = stored as? Data else { return false }
+        let storedJSON = try JSONSerialization.jsonObject(with: storedData) as AnyObject
+        let expectedJSON = try JSONSerialization.jsonObject(with: expectedData) as AnyObject
+        return storedJSON.isEqual(expectedJSON)
+    }
+
+    static var golden: [String: Any] {
+        [
+            "adhanDuaa": "wasilah.fadilah",
+            "adjustmentElevation": "AngleBased",
+            "adjustmentMinutes": ["fajr": 2, "is_fajr_sunrise_relative": 1, "isha": -3],
+            "appearanceMode": "light",
+            "autoIncrementHijri": false,
+            "calculationMethod": "Turkey",
+            "duhaReminder": Data(#"{"time":{"hour":8,"minutes":15}}"#.utf8),
+            "elavationMethod": "OneSeventh",
+            "enable24hTimeFormat": true,
+            "fajrDegrees": 18.5,
+            "geofenceRadius": 20_000.0,
+            "hijriDayOffset": -1,
+            "iqamaReminders": Data(#"{"minutes":10,"sound":"chime","jumuahMinutes":30,"updateInterval":"weekly"}"#.utf8),
+            "iqamaTimes": Data(
+                #"{"jumuah":{"time":{"minutes":0,"hour":13}},"maghrib":{"minutes":{"_0":5}},"fajr":{"minutes":{"_0":20}},"dhuhr":{"time":{"minutes":30,"hour":13}}}"#.utf8
+            ),
+            "isGPSEnabled": false,
+            "isIqamaHidden": true,
+            "isIqamaTimerEnabled": false,
+            "isPlayOnTapEnabled": false,
+            "isPrayerAbbrEnabled": true,
+            "ishaDegrees": 17.0,
+            "juristicMethod": "Hanafi",
+            "lastCacheDate": Date(timeIntervalSince1970: 1_700_000_000),
+            "lastRegionName": "Somewhere",
+            "lastTimeZoneIdentifier": "Asia/Kuala_Lumpur",
+            "maghribDegrees": 4.0,
+            "notificationAdhan": ["fajr": "abdul.basit", "isha": "ahmad.al.batal"],
+            "notificationSounds": ["fajr": "chimes", "maghrib": "silent"],
+            "prayersCoordinates": [2.9, 101.6],
+            "preAdhanMinutes": ["dhuhr": 5, "fajr": 30],
+            "reminderSounds": ["asr": "beep", "isha": "off"],
+            "snoozeMinutes": 10,
+            "stopwatchMinutes": 15,
+            "sunriseAfterIsha": true,
+            "theme": "aqua"
+        ]
+    }
+
+    static func goldenPlace() throws -> Place {
+        Place(
+            coordinates: Coordinates(latitude: 2.9, longitude: 101.6),
+            timeZone: try #require(TimeZone(identifier: "Asia/Kuala_Lumpur")),
+            regionName: "Somewhere",
+            fixedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
     }
 }

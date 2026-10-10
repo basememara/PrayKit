@@ -15,7 +15,6 @@ import ZamzamLocation
 public protocol PrayKitDependency {
     // Settings
     func constants() -> Constants
-    func preferences() -> Preferences
     func settingsStorage() -> SettingsStorage
     func localStorage() -> UserDefaults
 

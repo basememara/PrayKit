@@ -8,8 +8,8 @@
 
 import Foundation
 
-/// Reads and writes a device's settings in the shared defaults suite, under the keys `Preferences` uses,
-/// plus one revision next to each value.
+/// Reads and writes a device's settings in the shared defaults suite, under the keys every app version has
+/// used, plus one revision next to each value.
 ///
 /// `@unchecked Sendable`: its only state is a `UserDefaults`, which is documented as thread-safe, so any
 /// process or thread can use it, including widgets and extensions.
@@ -47,16 +47,6 @@ public extension SettingsStorage {
         update { state in
             DeviceState(document: state.document.editing(at: date, edit), place: state.place)
         }
-    }
-
-    /// Stamps a setting whose value was just written another way, as `Preferences` does.
-    func stamp(_ key: SettingKey, at date: Date = .now) {
-        let newest = SettingKey.allCases
-            .compactMap { (defaults.object(forKey: $0.revisionKey) as? NSNumber)?.int64Value }
-            .max()
-            .map(Revision.init(milliseconds:)) ?? .legacy
-
-        defaults.set(NSNumber(value: Revision.stamp(at: date, after: newest).milliseconds), forKey: key.revisionKey)
     }
 }
 
@@ -142,7 +132,7 @@ private extension SettingsStorage {
     }
 }
 
-/// The keys `Preferences` stores the location under.
+/// The keys every app version stores the location under.
 private enum PlaceKey {
     static let coordinates = "prayersCoordinates"
     static let timeZone = "lastTimeZoneIdentifier"

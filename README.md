@@ -35,7 +35,7 @@ In `PrayKit`, there is the `PrayKitDependency` protocol that represents the depe
 public protocol PrayKitDependency {
     // Settings
     func constants() -> Constants
-    func preferences() -> Preferences
+    func settingsStorage() -> SettingsStorage
     func localStorage() -> UserDefaults
 
     // Network
@@ -76,13 +76,13 @@ The property wrapper can be extended from here to satisfy the dependency contain
 
 ```swift
 extension PrayDependency {
-    // Thread-safe single instance
-    private static let preferences = Preferences(
+    // One store shared by the app, its widgets and extensions through an App Group suite
+    private static let settingsStorage = SettingsStorage(
         defaults: UserDefaults(suiteName: "{{your suite name}}") ?? .standard
     )
 
-    public func preferences() -> Preferences {
-        Self.preferences
+    public func settingsStorage() -> SettingsStorage {
+        Self.settingsStorage
     }
 }
 
@@ -123,7 +123,7 @@ extension PrayDependency {
     private static let notificationService = NotificationServiceUN(
         prayerManager: prayerManager,
         userNotification: .current(),
-        preferences: preferences,
+        storage: settingsStorage,
         constants: constants,
         localized: NotificationServiceLocalize(),
         log: log
@@ -138,7 +138,6 @@ extension PrayDependency {
     private static let prayerManager = PrayerManager(
         service: prayerService,
         londonService: prayerServiceLondon,
-        preferences: preferences,
         log: log
     )
 
@@ -178,7 +177,7 @@ extension PrayDependency {
 extension PrayDependency {
     private static let hijriService = HijriServiceStatic(
         prayerManager: prayerManager,
-        preferences: preferences
+        storage: settingsStorage
     )
 
     public func hijriService() -> HijriService {
@@ -246,9 +245,11 @@ struct ContentView: View {
     var body: some View {
         Text("Salam, world!")
             .task {
-                guard let preferences = dependency?.preferences() else { return }
-                let request = PrayerAPI.Request(from: preferences)
-                let prayerDay = await dependency?.prayerManager().fetch(for: .now, with: request)
+                guard let state = dependency?.settingsStorage().load(),
+                      let request = PrayerAPI.Request(settings: state.document.settings, place: state.place)
+                else { return }
+
+                let prayerDay = try? await dependency?.prayerManager().fetch(for: .now, with: request)
             }
     }
 }

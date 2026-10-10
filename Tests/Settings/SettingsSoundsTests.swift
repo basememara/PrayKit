@@ -9,23 +9,24 @@
 import PrayCore
 import Testing
 
-/// Silencing prayers through `Settings` matches silencing them through `Preferences` holding the same values.
 struct SettingsSoundsTests {
-    private let fixture = PrayTestFixture()
+    @Test
+    func theDefaultsAreNotDisabled() {
+        #expect(!Settings().isPrayerSoundsDisabled)
+    }
 
     @Test(arguments: [Settings(), .everyFieldChanged])
-    func disablingSoundsMatchesPreferences(settings: Settings) {
-        settings.write(to: fixture.preferences)
-        #expect(settings.isPrayerSoundsDisabled == fixture.preferences.isPrayerSoundsDisabled)
-
+    func disablingTurnsEverySoundOffAndClearsTheIqamaTimes(settings: Settings) {
         var disabled = settings
         disabled.disablePrayerSounds()
-        fixture.preferences.disablePrayerSounds()
 
         #expect(disabled.isPrayerSoundsDisabled)
-        #expect(disabled.notificationSounds == fixture.preferences.notificationSounds)
-        #expect(disabled.reminderSounds == fixture.preferences.reminderSounds)
-        #expect(disabled.iqamaTimes == fixture.preferences.iqamaTimes)
+        #expect(disabled.iqamaTimes == IqamaTimes())
+
+        Prayer.allCases.forEach { prayer in
+            #expect(disabled.notificationSounds[prayer] == .off, "\(prayer)")
+            #expect(disabled.reminderSounds[prayer] == .off, "\(prayer)")
+        }
     }
 
     @Test

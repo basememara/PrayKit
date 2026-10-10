@@ -45,6 +45,19 @@ public extension SettingsStorage {
         update { LocationRule.apply(coordinates, timeZone: timeZone, at: date, to: $0) ?? $0 }
     }
 
+    /// Saves a GPS fix through the location rule, returning whether the rule kept it.
+    @discardableResult
+    func saveLocation(_ location: CLLocation, timeZone: TimeZone = .current, at date: Date = .now) -> Bool {
+        let before = load()
+        return saveLocation(Coordinates(from: location.coordinate), timeZone: timeZone, at: date) != before
+    }
+
+    /// Names the saved place by reverse geocoding the fix, unless a newer fix moved it in the meantime.
+    func nameLocation(_ location: CLLocation) async {
+        guard let regionName = await location.geocoder().0 else { return }
+        saveRegionName(regionName, for: Coordinates(from: location.coordinate))
+    }
+
     /// Names the saved place once reverse geocoding returns, unless a newer fix moved it in the meantime.
     @discardableResult
     func saveRegionName(_ regionName: String, for coordinates: Coordinates) -> DeviceState {

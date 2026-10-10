@@ -6,6 +6,7 @@
 //  Copyright © 2026 Zamzam Inc. All rights reserved.
 //
 
+import CoreLocation.CLLocation
 import Foundation
 import PrayCore
 import Testing
@@ -102,6 +103,16 @@ struct LocationRuleTests {
 // MARK: - Storage
 
 extension LocationRuleTests {
+    @Test
+    func savingAFixReportsWhetherTheRuleKeptIt() {
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.saveRegionName("Toronto", for: toronto)
+
+        #expect(storage.saveLocation(CLLocation(latitude: 43.6510, longitude: -79.3470)))
+        storage.saveRegionName("Toronto", for: toronto)
+        #expect(!storage.saveLocation(CLLocation(latitude: 43.6530, longitude: -79.3470)))
+    }
+
     @Test
     func theRegionNameLandsOnlyOnTheFixItWasLookedUpFor() throws {
         let storage = SettingsStorage(defaults: .makeTest())

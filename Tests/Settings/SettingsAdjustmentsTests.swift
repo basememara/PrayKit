@@ -22,13 +22,22 @@ struct SettingsAdjustmentsTests {
     @Test
     func adjustmentsBackToZeroSaveNone() {
         var settings = Settings()
-        settings.editAdjustments {
-            $0[.fajr] = -10
-            $0.isFajrSunriseRelative = true
-        }
-
+        settings.editAdjustments { $0[.fajr] = -10 }
         settings.editAdjustments { $0[.fajr] = 0 }
 
+        #expect(settings.adjustmentMinutes == nil)
+    }
+
+    @Test
+    func aRelativeChoiceStaysBeforeAnyMinutesAreSet() throws {
+        var settings = Settings()
+        settings.editAdjustments { $0.isFajrSunriseRelative = true }
+
+        let adjustments = try #require(settings.adjustmentMinutes)
+        #expect(adjustments.isFajrSunriseRelative)
+        #expect(adjustments[.fajr] == 0)
+
+        settings.editAdjustments { $0.isFajrSunriseRelative = false }
         #expect(settings.adjustmentMinutes == nil)
     }
 }

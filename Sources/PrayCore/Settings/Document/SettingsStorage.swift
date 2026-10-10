@@ -14,7 +14,8 @@ import Foundation
 /// `@unchecked Sendable`: its only state is a `UserDefaults`, which is documented as thread-safe, so any
 /// process or thread can use it, including widgets and extensions.
 public struct SettingsStorage: @unchecked Sendable {
-    private let defaults: UserDefaults
+    /// The suite the settings live in, for reading keys earlier versions left behind.
+    public let defaults: UserDefaults
 
     public init(defaults: UserDefaults) {
         self.defaults = defaults

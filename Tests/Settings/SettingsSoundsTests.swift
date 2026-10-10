@@ -37,4 +37,14 @@ struct SettingsSoundsTests {
 
         #expect(!settings.isPrayerSoundsDisabled)
     }
+
+    @Test
+    func fajrPlaysItsOwnAdhanLength() {
+        var settings = Settings()
+        settings.notificationAdhan[.fajr] = .makkah
+        settings.notificationAdhan[.dhuhr] = .makkah
+
+        #expect(settings.adhanURL(for: .fajr)?.lastPathComponent == "makkah-fajr.mp3")
+        #expect(settings.adhanURL(for: .dhuhr)?.lastPathComponent == "makkah.mp3")
+    }
 }

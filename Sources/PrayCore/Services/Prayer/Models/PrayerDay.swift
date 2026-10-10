@@ -38,4 +38,19 @@ public extension PrayerDay {
         let predicate: (PrayerTime) -> Bool = { $0.dateInterval.start > time && $0.type.isEssential && (sunriseAfterIsha ? $0.type != .fajr : true) }
         return times.first(where: predicate) ?? tomorrow.first(where: predicate)
     }
+
+    /// The obligatory prayer whose time began most recently, which before Fajr is yesterday's Isha.
+    func lastObligatory(at time: Date) -> PrayerTime? {
+        times
+            .filter { $0.type.isObligation && $0.dateInterval.start <= time }
+            .max { $0.dateInterval.start < $1.dateInterval.start }
+            ?? yesterday[.isha]
+    }
+
+    /// The next obligatory prayer to begin, which after Isha is tomorrow's Fajr.
+    func nextObligatory(at time: Date) -> PrayerTime? {
+        (times + tomorrow)
+            .filter { $0.type.isObligation && $0.dateInterval.start > time }
+            .min { $0.dateInterval.start < $1.dateInterval.start }
+    }
 }

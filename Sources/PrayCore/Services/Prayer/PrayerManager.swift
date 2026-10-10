@@ -30,6 +30,19 @@ public extension PrayerManager {
 }
 
 public extension PrayerManager {
+    /// The prayers of the day a date falls on, at the device's place with its settings.
+    ///
+    /// - Throws: `PrayError.locationFailure` before the device has a place.
+    func fetch(for date: Date, state: DeviceState, filter: PrayerFilter = .all) async throws -> PrayerDay {
+        guard let request = PrayerAPI.Request(settings: state.document.settings, place: state.place, filter: filter) else {
+            throw PrayError.locationFailure
+        }
+
+        return try await fetch(for: date, with: request)
+    }
+}
+
+public extension PrayerManager {
     enum Expanded: Sendable {
         case finalHour
         case hourly

@@ -28,7 +28,7 @@ public enum LocationRule {
 
         let method = state.document.settings.calculationMethod
         let document = hasChangedTimeZone && ![.moonsightingCommittee, .muslimWorldLeague].contains(method)
-            ? state.document.editing(at: date) { $0.calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee }
+            ? state.document.editing(at: date) { $0.recommendMethod(for: timeZone) }
             : state.document
 
         return DeviceState(
@@ -38,7 +38,30 @@ public enum LocationRule {
     }
 }
 
+public extension Settings {
+    /// Switches to the calculation method recommended for a time zone, the Moonsighting Committee's where
+    /// none is.
+    mutating func recommendMethod(for timeZone: TimeZone) {
+        calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee
+    }
+}
+
 public extension SettingsStorage {
+    /// Saves a place picked by hand. GPS turns off so no fix replaces it, and, as on arriving somewhere new,
+    /// the method recommended for its time zone applies.
+    @discardableResult
+    func setManualPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
+        update { state in
+            DeviceState(
+                document: state.document.editing(at: date) {
+                    $0.isGPSEnabled = false
+                    $0.recommendMethod(for: timeZone)
+                },
+                place: Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
+            )
+        }
+    }
+
     /// Saves a GPS fix through the location rule, returning the state as stored.
     @discardableResult
     func saveLocation(_ coordinates: Coordinates, timeZone: TimeZone = .current, at date: Date = .now) -> DeviceState {

@@ -128,4 +128,18 @@ extension LocationRuleTests {
         #expect(storage.load().place?.regionName == "Toronto")
         #expect(storage.load().place?.coordinates == away)
     }
+
+    @Test
+    func aManualPlaceTurnsGPSOffAndTakesItsRecommendedMethod() throws {
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.edit { $0.calculationMethod = .muslimWorldLeague }
+
+        let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
+
+        #expect(saved.place == Place(coordinates: toronto, timeZone: timeZone, regionName: "Kuala Lumpur", fixedAt: date))
+        #expect(!saved.document.settings.isGPSEnabled)
+        #expect(saved.document.settings.calculationMethod == .recommended(for: timeZone))
+        #expect(storage.load() == saved)
+    }
 }

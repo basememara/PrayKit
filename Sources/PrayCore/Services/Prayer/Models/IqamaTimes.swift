@@ -11,12 +11,12 @@ import Foundation.NSDate
 import ZamzamCore
 
 public struct IqamaTimes: Equatable, Codable, Sendable {
-    public let fajr: IqamaType?
-    public let dhuhr: IqamaType?
-    public let asr: IqamaType?
-    public let maghrib: IqamaType?
-    public let isha: IqamaType?
-    public let jumuah: IqamaType?
+    public var fajr: IqamaType?
+    public var dhuhr: IqamaType?
+    public var asr: IqamaType?
+    public var maghrib: IqamaType?
+    public var isha: IqamaType?
+    public var jumuah: IqamaType?
 
     public init(
         fajr: IqamaType?,
@@ -54,6 +54,42 @@ public extension IqamaTimes {
 }
 
 public extension IqamaTimes {
+    /// The iqama of one of the five daily prayers; any other prayer has none, and setting it changes nothing.
+    subscript(prayer: Prayer) -> IqamaType? {
+        get {
+            switch prayer {
+            case .fajr:
+                fajr
+            case .dhuhr:
+                dhuhr
+            case .asr:
+                asr
+            case .maghrib:
+                maghrib
+            case .isha:
+                isha
+            default:
+                nil
+            }
+        }
+        set {
+            switch prayer {
+            case .fajr:
+                fajr = newValue
+            case .dhuhr:
+                dhuhr = newValue
+            case .asr:
+                asr = newValue
+            case .maghrib:
+                maghrib = newValue
+            case .isha:
+                isha = newValue
+            default:
+                break
+            }
+        }
+    }
+
     subscript(_ prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
         let startTime = prayerTime.dateInterval.start
         let endTime = prayerTime.dateInterval.end

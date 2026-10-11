@@ -6,6 +6,7 @@
 //  Copyright © 2026 Zamzam Inc. All rights reserved.
 //
 
+import Foundation
 import PrayCore
 import Testing
 
@@ -61,5 +62,28 @@ struct SettingsSoundsTests {
         #expect(settings.notificationSounds[.dhuhr] == .adhan)
         #expect(settings.notificationSounds[.sunrise] == .tone)
         #expect(!settings.isMuted(.sunrise))
+    }
+
+    @Test
+    func theAdhanPlayedFollowsThePrayerUnderWay() throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let hours: [(Prayer, Double)] = [(.fajr, 5), (.sunrise, 6.5), (.dhuhr, 12), (.asr, 15.5), (.maghrib, 18), (.isha, 19.5)]
+        let times = hours.enumerated().map { index, entry in
+            let end = index + 1 < hours.count ? hours[index + 1].1 : 29
+            return PrayerTime(type: entry.0, dateInterval: DateInterval(start: start + entry.1 * 3600, end: start + end * 3600))
+        }
+        let day = PrayerDay(date: start, times: times, yesterday: [], tomorrow: [])
+
+        var settings = Settings()
+        settings.notificationAdhan[.fajr] = .makkah
+        settings.notificationAdhan[.sunrise] = .madina
+        settings.notificationAdhan[.maghrib] = .cairo
+
+        let fajr = try #require(settings.adhanURL(for: .fajr))
+        let sunrise = try #require(settings.adhanURL(for: .sunrise))
+
+        #expect(settings.adhanURL(at: start + 5.5 * 3600, in: day) == fajr)
+        #expect(settings.adhanURL(at: start + 9 * 3600, in: day) == sunrise)
+        #expect(settings.adhanURL(at: start + 9 * 3600, in: nil) == settings.adhanURL(for: .maghrib))
     }
 }

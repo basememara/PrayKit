@@ -39,4 +39,9 @@ public extension Settings {
     func adhanURL(for prayer: Prayer) -> URL? {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)
     }
+
+    /// The adhan of the prayer under way at `date`: Sunrise's once Fajr ends, and Maghrib's without a day to go by.
+    func adhanURL(at date: Date, in day: PrayerDay?) -> URL? {
+        adhanURL(for: day?.current(at: date)?.type ?? .maghrib)
+    }
 }

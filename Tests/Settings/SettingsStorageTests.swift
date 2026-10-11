@@ -177,6 +177,23 @@ extension SettingsStorageTests {
     }
 }
 
+// MARK: - Concurrency
+
+extension SettingsStorageTests {
+    @Test
+    func concurrentEditsInOneProcessAreNeverLost() async {
+        let storage = storage
+
+        await withTaskGroup { group in
+            (0..<200).forEach { _ in
+                group.addTask { storage.edit { $0.hijriDayOffset += 1 } }
+            }
+        }
+
+        #expect(storage.load().document.settings.hijriDayOffset == 200)
+    }
+}
+
 // MARK: - Helpers
 
 private extension SettingsStorageTests {

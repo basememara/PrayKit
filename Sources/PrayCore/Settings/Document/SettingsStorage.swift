@@ -20,6 +20,8 @@ public struct SettingsStorage: @unchecked Sendable {
     public init(defaults: UserDefaults) {
         self.defaults = defaults
     }
+
+    private static let lock = NSLock()
 }
 
 public extension SettingsStorage {
@@ -32,9 +34,13 @@ public extension SettingsStorage {
         read().unreadable
     }
 
-    /// Writes whatever `transform` changes, and nothing else, so a concurrent writer's other settings survive.
+    /// Writes whatever `transform` changes, and nothing else, so another process's other settings survive.
+    /// Within a process, updates run one at a time, so none is lost to a writer on another thread.
     @discardableResult
     func update(_ transform: (DeviceState) -> DeviceState) -> DeviceState {
+        Self.lock.lock()
+        defer { Self.lock.unlock() }
+
         let current = load()
         let updated = transform(current)
         write(updated, over: current)

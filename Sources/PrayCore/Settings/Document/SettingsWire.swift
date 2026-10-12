@@ -140,11 +140,17 @@ public extension SettingsDocument {
         }
     }
 
-    /// Whether any synced setting here is newer than in `other`, so `other` is behind.
-    func hasNewerRevisions(than other: SettingsDocument) -> Bool {
+    /// The synced settings revised here after `other`, which an upload over `other` needs to carry.
+    func keysNewer(than other: SettingsDocument) -> [SettingKey] {
         Settings.fields
             .filter(\.isSynced)
-            .contains { revision(of: $0.key) > other.revision(of: $0.key) }
+            .map(\.key)
+            .filter { revision(of: $0) > other.revision(of: $0) }
+    }
+
+    /// Whether any synced setting here is newer than in `other`, so `other` is behind.
+    func hasNewerRevisions(than other: SettingsDocument) -> Bool {
+        !keysNewer(than: other).isEmpty
     }
 
     /// Stamps `keys` as edited at `date` without changing their values, so they win over older copies.

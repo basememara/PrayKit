@@ -287,6 +287,19 @@ extension SettingsWireTests {
         #expect(local.hasNewerRevisions(than: server))
         #expect(!server.hasNewerRevisions(than: local))
         #expect(!local.hasNewerRevisions(than: local))
+        #expect(local.keysNewer(than: server) == [.snoozeMinutes])
+    }
+
+    /// An offline edit older than the record's last save still uploads, which needs the saved copy compared
+    /// by its own revisions rather than re-dated at its save time.
+    @Test
+    func aCopyReadAgainstItselfCarriesOnlyItsOwnRevisions() throws {
+        let fields = try Self.legacyRecord(of: .everyFieldChanged)
+        let server = SettingsDocument(wireFields: fields, base: Settings(), modifiedAt: saved, previous: fields)
+        let local = SettingsDocument().editing(at: saved - 60) { $0.snoozeMinutes = 50 }
+
+        #expect(SettingKey.allCases.allSatisfy { server.revision(of: $0) == .legacy })
+        #expect(local.keysNewer(than: server) == [.snoozeMinutes])
     }
 
     @Test

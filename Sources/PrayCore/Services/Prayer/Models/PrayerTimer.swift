@@ -23,7 +23,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let dangerZone: Double
     public let isDangerZone: Bool
     public let isJumuah: Bool
-    public let localizeAt: Date?
+    /// Whether the face names the prayer Jumuah: Friday's Dhuhr, except while its stopwatch runs before the khutba.
+    public let isNamedJumuah: Bool
     /// Sample or fallback data that widget views must render redacted, never as real times
     public let isPlaceholder: Bool
 
@@ -40,7 +41,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         dangerZone: Double,
         isDangerZone: Bool,
         isJumuah: Bool,
-        localizeAt: Date? = nil,
+        isNamedJumuah: Bool = false,
         isPlaceholder: Bool = false
     ) {
         self.date = date
@@ -55,7 +56,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.dangerZone = dangerZone
         self.isDangerZone = isDangerZone
         self.isJumuah = isJumuah
-        self.localizeAt = localizeAt
+        self.isNamedJumuah = isNamedJumuah
         self.isPlaceholder = isPlaceholder
     }
 }
@@ -109,7 +110,7 @@ public extension PrayerTimer {
         var prayerTime = [.stopwatch, .iqama].contains(timerType) ? currentPrayer : nextPrayer
         var countdownDate = timerType == .iqama ? iqamaTime ?? .now : prayerTime.dateInterval.start
         var currentDateInterval = currentPrayer.dateInterval
-        var countdownLocalizeAt: Date? = date
+        var isDhuhrStopwatchOnFriday = false
 
         // Jumuah is Friday's Dhuhr, judged by that prayer's own date rather than the moment's
         if let dhuhr = [currentPrayer, nextPrayer].first(where: { $0.type == .dhuhr }),
@@ -118,7 +119,7 @@ public extension PrayerTimer {
         {
             if isStopwatchTimer && currentPrayer.type == .dhuhr {
                 currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: khutbaIqama)
-                countdownLocalizeAt = nil
+                isDhuhrStopwatchOnFriday = true
             } else if khutbaIqama.isStopwatchTimer(at: date, minutes: stopwatchMinutes) {
                 currentDateInterval = DateInterval(start: khutbaIqama, end: nextPrayer.dateInterval.start)
                 prayerTime = currentPrayer
@@ -160,7 +161,7 @@ public extension PrayerTimer {
             dangerZone: dangerZone,
             isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
             isJumuah: isJumuah,
-            localizeAt: countdownLocalizeAt,
+            isNamedJumuah: isJumuah && !isDhuhrStopwatchOnFriday,
             isPlaceholder: isPlaceholder
         )
     }

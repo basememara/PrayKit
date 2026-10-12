@@ -126,6 +126,11 @@ private struct TimerContext: Sendable {
         PrayerTimer(at: date, using: prayerDay, settings: settings, timeZone: timeZone)
     }
 
+    /// A timer from whichever day holds the moment, since a reminder before Fajr belongs to the night before.
+    func timer(_ date: Date, in days: [PrayerDay]) -> PrayerTimer? {
+        days.first { $0.contains(date) }.flatMap { timer(date, $0) }
+    }
+
     func expandedTimeline(_ prayerTime: PrayerTime, _ calendar: Calendar) -> [Date] {
         settings.expandedTimeline(for: prayerTime, using: calendar)
     }
@@ -140,12 +145,25 @@ private extension PrayerManager {
         context: TimerContext
     ) async throws -> [PrayerTimer] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
-        var entries = try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, context: context, seed: [])
+        let firstDay = try await fetch(at: date, with: request)
+        let previousDay = try? await fetch(for: firstDay.date.yesterday(using: calendar), using: calendar, with: request)
+
+        var entries = try await calculate(
+            day: firstDay,
+            from: date,
+            after: previousDay,
+            expanded: expanded,
+            limit: limit,
+            using: calendar,
+            with: request,
+            context: context,
+            seed: []
+        )
 
         // The requested moment goes after the last entry before it, unless one already starts then
         if !entries.contains(where: { $0.date == date }),
            let lastIndex = entries.lastIndex(where: { $0.date < date }),
-           let newEntry = context.timer(date, entries[lastIndex].prayerDay) {
+           let newEntry = context.timer(date, firstDay) {
             entries.insert(newEntry, at: lastIndex + 1)
         }
 
@@ -201,8 +219,11 @@ private extension PrayerManager {
 }
 
 private extension PrayerManager {
+    /// The timers of one prayer day from a moment in it, then of each day after it until the limit.
     func calculate(
+        day prayerDay: PrayerDay,
         from date: Date,
+        after previousDay: PrayerDay?,
         expanded: Expanded,
         limit: Int,
         using calendar: Calendar,
@@ -210,14 +231,7 @@ private extension PrayerManager {
         context: TimerContext,
         seed: [PrayerTimer]
     ) async throws -> [PrayerTimer] {
-        let prayerDay: PrayerDay
-
-        do {
-            prayerDay = try await fetch(for: date, using: calendar, with: request)
-        } catch {
-            log.error("Could not fetch prayers for \(date, formatter: .zuluFormatter)", error: error)
-            return seed
-        }
+        let days = [previousDay, prayerDay].compactMap { $0 }
 
         guard let currentPrayer = prayerDay.current(at: date) else {
             log.error("Could not retrieve current prayer from prayer day for \(date, formatter: .zuluFormatter)")
@@ -238,29 +252,41 @@ private extension PrayerManager {
 
         switch expanded {
         case .finalHour:
-            entries = entries.expandedWithFinalHour(using: context, calendar: calendar)
+            entries = entries.expandedWithFinalHour(using: context, in: days, calendar: calendar)
         case .hourly:
-            entries = entries.expandedHourly(using: context, calendar: calendar)
+            entries = entries.expandedHourly(using: context, in: days, calendar: calendar)
         case let .intervals(progress):
-            entries = entries.expanded(using: context, calendar: calendar, progressIntervals: progress)
+            entries = entries.expanded(using: context, in: days, calendar: calendar, progressIntervals: progress)
         case .none:
             break
         }
 
-        // Midnight goes in date order: the expanded entries can already reach into tomorrow
-        let tomorrowStartOfDay = date.tomorrow(using: calendar).startOfDay(using: calendar)
-        if !entries.contains(where: { $0.date == tomorrowStartOfDay }), let entry = context.timer(tomorrowStartOfDay, prayerDay) {
-            entries.insert(entry, at: entries.firstIndex { $0.date > tomorrowStartOfDay } ?? entries.endIndex)
+        // Midnight changes no prayer, but it turns the calendar date and, without auto-increment, the Hijri date the
+        // faces show. It goes in date order, since the expanded entries can already reach past it.
+        let midnight = prayerDay.date.tomorrow(using: calendar)
+        if prayerDay.contains(midnight), !entries.contains(where: { $0.date == midnight }), let entry = context.timer(midnight, prayerDay) {
+            entries.insert(entry, at: entries.firstIndex { $0.date > midnight } ?? entries.endIndex)
         }
 
         let resultSeed = seed + entries
-        guard resultSeed.count < limit, let nextDate = prayerDay.tomorrow.first?.dateInterval.start else {
+        guard resultSeed.count < limit else { return resultSeed.prefix(limit).array }
+
+        let nextDay: PrayerDay
+
+        do {
+            nextDay = try await fetch(for: prayerDay.date.tomorrow(using: calendar), using: calendar, with: request)
+        } catch {
+            log.error("Could not fetch prayers for the day after \(prayerDay.date, formatter: .zuluFormatter)", error: error)
             return resultSeed.prefix(limit).array
         }
 
+        guard let nextFajr = nextDay.times[.fajr]?.dateInterval.start else { return resultSeed.prefix(limit).array }
+
         // Recursively call until all prayers retrieved for limit
         return try await calculate(
-            from: nextDate,
+            day: nextDay,
+            from: nextFajr,
+            after: prayerDay,
             expanded: expanded,
             limit: limit,
             using: calendar,
@@ -274,7 +300,7 @@ private extension PrayerManager {
 // MARK: - Extensions
 
 private extension Array where Element == PrayerTimer {
-    func expanded(using context: TimerContext, calendar: Calendar, progressIntervals: TimeInterval) -> Self {
+    func expanded(using context: TimerContext, in days: [PrayerDay], calendar: Calendar, progressIntervals: TimeInterval) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
@@ -285,15 +311,15 @@ private extension Array where Element == PrayerTimer {
                     to: currentPrayer.dateInterval.end.timeIntervalSince1970,
                     by: currentPrayer.dateInterval.duration / progressIntervals
                 ).compactMap { timeInterval in
-                    context.timer(Date(timeIntervalSince1970: timeInterval), entry.prayerDay)
+                    context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
                 }
-            } else if let prayerTimer = context.timer(currentPrayer.dateInterval.start, entry.prayerDay) {
+            } else if let prayerTimer = context.timer(currentPrayer.dateInterval.start, in: days) {
                 result.append(prayerTimer)
             }
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, entry.prayerDay) }
+                .compactMap { context.timer($0, in: days) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
@@ -301,18 +327,18 @@ private extension Array where Element == PrayerTimer {
 }
 
 private extension Array where Element == PrayerTimer {
-    func expandedWithFinalHour(using context: TimerContext, calendar: Calendar) -> Self {
+    func expandedWithFinalHour(using context: TimerContext, in days: [PrayerDay], calendar: Calendar) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
             result += [
-                context.timer(currentPrayer.dateInterval.start, entry.prayerDay),
-                context.timer(currentPrayer.dateInterval.end - .hours(1), entry.prayerDay)
+                context.timer(currentPrayer.dateInterval.start, in: days),
+                context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
             ].compactMap { $0 }
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, entry.prayerDay) }
+                .compactMap { context.timer($0, in: days) }
         }
         .removeDuplicates()
         .sorted(by: \.date)
@@ -320,13 +346,13 @@ private extension Array where Element == PrayerTimer {
 }
 
 private extension Array where Element == PrayerTimer {
-    func expandedHourly(using context: TimerContext, calendar: Calendar) -> Self {
+    func expandedHourly(using context: TimerContext, in days: [PrayerDay], calendar: Calendar) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
             result += [
-                context.timer(currentPrayer.dateInterval.start, entry.prayerDay),
-                context.timer(currentPrayer.dateInterval.end - .hours(1), entry.prayerDay)
+                context.timer(currentPrayer.dateInterval.start, in: days),
+                context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
             ].compactMap { $0 }
 
             result += stride(
@@ -334,12 +360,12 @@ private extension Array where Element == PrayerTimer {
                 to: currentPrayer.dateInterval.end.timeIntervalSince1970,
                 by: 3600
             ).compactMap { timeInterval in
-                context.timer(Date(timeIntervalSince1970: timeInterval), entry.prayerDay)
+                context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, entry.prayerDay) }
+                .compactMap { context.timer($0, in: days) }
         }
         .removeDuplicates()
         .sorted(by: \.date)

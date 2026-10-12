@@ -171,6 +171,77 @@ extension PrayerDayRuleTests {
     }
 }
 
+// MARK: - Timelines
+
+extension PrayerDayRuleTests {
+    /// Timelines started every three hours across two days: each entry comes from the day that holds it, in order,
+    /// and every later Fajr keeps the reminder before it, which belongs to the night before.
+    @Test(arguments: DayFixture.all)
+    func everyTimelineEntryComesFromTheDayThatHoldsIt(place: DayFixture) async throws {
+        let request = try place.request()
+        let noon = try place.firstNoon()
+        let days = try await place.days(4, using: fixture.prayerManager)
+        var settings = Settings()
+        settings.preAdhanMinutes[.fajr] = 30
+        settings.stopwatchMinutes = 10
+
+        var problems = [String]()
+
+        for hours in stride(from: 0, to: 48, by: 3) {
+            let start = noon + TimeInterval(hours * 3600)
+            let timeline = try await fixture.prayerManager.fetch(
+                from: start,
+                expanded: .intervals(0),
+                limit: 30,
+                with: request,
+                settings: settings,
+                timeZone: request.timeZone
+            )
+            let end = timeline.last?.date ?? start
+            // A reminder is only set when the prayer lasts longer than it, as Reykjavik's Fajr in June doesn't
+            let fajrReminders = days
+                .compactMap { $0.times[.fajr] }
+                .filter { $0.dateInterval.duration > 1800 }
+                .map { $0.dateInterval.start - 1800 }
+                .filter { $0 > start && $0 < end }
+
+            if !zip(timeline, timeline.dropFirst()).allSatisfy({ $0.date < $1.date }) { problems.append("\(start): out of order") }
+            if timeline.first(where: { $0.date == start }) == nil { problems.append("\(start): no entry for the moment itself") }
+            problems += timeline.filter { !$0.prayerDay.contains($0.date) }.map { "\(start): \($0.date) from a day that doesn't hold it" }
+            problems += fajrReminders.filter { reminder in !timeline.contains { $0.date == reminder } }.map { "\(start): no reminder at \($0)" }
+        }
+
+        let problemCount = problems.count
+        #expect(problemCount == 0, "first problems: \(problems.prefix(5))")
+    }
+
+    @Test
+    func aTimelineBuiltAfterMidnightCountsToTheIshaStillToCome() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
+        let start = try place.date(2026, 6, 22, 0, 10)
+        let ishaBegins = try place.date(2026, 6, 22, 0, 19)
+
+        let timeline = try await fixture.prayerManager.fetch(
+            from: start,
+            limit: 10,
+            with: request,
+            settings: Settings(),
+            timeZone: request.timeZone
+        )
+        let now = try #require(timeline.first { $0.date == start })
+        let isha = try #require(timeline.first { $0.date == ishaBegins })
+
+        #expect(now.prayerDay.date == june21)
+        #expect(now.type == .isha)
+        #expect(now.countdownDate == ishaBegins)
+        #expect(isha.prayerDay.date == june21)
+        #expect(isha.type == .fajr)
+    }
+}
+
 // MARK: - Hijri date
 
 extension PrayerDayRuleTests {

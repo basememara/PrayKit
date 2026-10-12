@@ -8,6 +8,7 @@
 
 import Foundation
 import PrayCore
+import PrayMocks
 @testable import PrayServices
 import Testing
 import ZamzamCore
@@ -349,6 +350,19 @@ extension PrayerDayRuleTests {
         #expect(today.upcoming(.dhuhr, at: afternoon) == today.times[.dhuhr])
         #expect(today.upcoming(.asr, at: afternoon) == today.times[.asr])
         #expect(today.upcoming(.sunrise, at: morning) == tomorrow.times[.sunrise])
+    }
+
+    /// Widget placeholders and previews build from the sample day, so it must hold any moment, as at 01:00.
+    @Test(arguments: [(1, 0), (4, 21), (4, 22), (12, 0), (23, 59)])
+    func aSampleDayHoldsTheMomentItIsMadeFor(hour: Int, minute: Int) throws {
+        let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let moment = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 12, hour: hour, minute: minute)))
+
+        let day = PrayerDay.mock(at: moment, calendar: calendar)
+
+        #expect(day.contains(moment))
+        #expect(PrayerTimer.mock(at: moment, prayerDay: day) != nil)
     }
 
     @Test

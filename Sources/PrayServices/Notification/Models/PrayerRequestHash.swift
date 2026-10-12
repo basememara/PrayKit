@@ -13,9 +13,7 @@ import ZamzamCore
 struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let id: String
     let request: PrayerAPI.Request
-    let snoozeMinutes: Int
     let preAdhanMinutes: PreAdhanMinutes
-    let sunriseAfterIsha: Bool
     let notificationAdhan: NotificationAdhan
     let notificationSounds: NotificationSounds
     let reminderSounds: ReminderSounds
@@ -27,9 +25,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
 
     init(request: PrayerAPI.Request, dateInterval: DateInterval, settings: Settings) {
         self.request = request
-        self.snoozeMinutes = settings.snoozeMinutes
         self.preAdhanMinutes = settings.preAdhanMinutes
-        self.sunriseAfterIsha = settings.sunriseAfterIsha
         self.notificationAdhan = settings.notificationAdhan
         self.notificationSounds = settings.notificationSounds
         self.reminderSounds = settings.reminderSounds

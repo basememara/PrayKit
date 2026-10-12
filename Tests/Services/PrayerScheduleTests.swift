@@ -47,6 +47,7 @@ struct PrayerScheduleTests {
         )
 
         #expect(timeline.map { "\(formatter.string(from: $0.date)) \($0.type.rawValue) \($0.timerType.rawValue)" } == recorded.timeline)
+        #expect(zip(timeline, timeline.dropFirst()).allSatisfy { $0.date < $1.date })
     }
 
     @Test
@@ -68,16 +69,16 @@ private extension RecordedTimeline {
         RecordedTimeline(
             expanded: .none,
             timeline: [
-                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 05:42:00 fajr stopwatch",
+                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 07:00:00 dhuhr iqama",
                 "2022/02/25 12:31:00 dhuhr stopwatch",
                 "2022/02/25 15:32:00 asr stopwatch",
                 "2022/02/25 18:01:00 maghrib iqama",
                 "2022/02/25 19:20:00 isha stopwatch",
                 "2022/02/25 23:51:00 fajr iqama",
+                "2022/02/26 00:00:00 fajr iqama",
                 "2022/02/26 01:47:00 fajr iqama",
-                "2022/02/25 11:00:00 dhuhr iqama",
                 "2022/02/26 05:40:00 fajr stopwatch",
                 "2022/02/26 06:59:00 dhuhr countdown",
                 "2022/02/26 12:31:00 dhuhr stopwatch",
@@ -85,8 +86,8 @@ private extension RecordedTimeline {
                 "2022/02/26 18:02:00 maghrib iqama",
                 "2022/02/26 19:21:00 isha stopwatch",
                 "2022/02/26 23:51:00 fajr iqama",
+                "2022/02/27 00:00:00 fajr iqama",
                 "2022/02/27 01:47:00 fajr iqama",
-                "2022/02/26 11:00:00 dhuhr countdown",
                 "2022/02/27 05:39:00 fajr stopwatch",
                 "2022/02/27 06:57:00 dhuhr countdown",
                 "2022/02/27 12:31:00 dhuhr stopwatch",
@@ -94,8 +95,8 @@ private extension RecordedTimeline {
                 "2022/02/27 18:04:00 maghrib iqama",
                 "2022/02/27 19:22:00 isha stopwatch",
                 "2022/02/27 23:51:00 fajr iqama",
+                "2022/02/28 00:00:00 fajr iqama",
                 "2022/02/28 01:46:00 fajr iqama",
-                "2022/02/27 11:00:00 dhuhr countdown",
                 "2022/02/28 05:37:00 fajr stopwatch",
                 "2022/02/28 06:56:00 dhuhr countdown",
                 "2022/02/28 12:31:00 dhuhr stopwatch",
@@ -103,19 +104,18 @@ private extension RecordedTimeline {
                 "2022/02/28 18:05:00 maghrib iqama",
                 "2022/02/28 19:24:00 isha stopwatch",
                 "2022/02/28 23:50:00 fajr iqama",
+                "2022/03/01 00:00:00 fajr iqama",
                 "2022/03/01 01:45:00 fajr iqama",
-                "2022/02/28 11:00:00 dhuhr countdown",
                 "2022/03/01 05:35:00 fajr stopwatch",
                 "2022/03/01 06:54:00 dhuhr countdown",
                 "2022/03/01 12:31:00 dhuhr stopwatch",
-                "2022/03/01 15:36:00 asr stopwatch"
+                "2022/03/01 15:36:00 asr stopwatch",
             ]
         ),
         RecordedTimeline(
             expanded: .intervals(0),
             timeline: [
                 "2022/02/25 05:08:00 fajr iqama",
-                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 05:42:00 fajr stopwatch",
                 "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 06:31:00 sunrise countdown",
@@ -137,7 +137,7 @@ private extension RecordedTimeline {
                 "2022/02/25 19:11:00 isha countdown",
                 "2022/02/25 19:20:00 isha stopwatch",
                 "2022/02/25 19:38:00 fajr iqama",
-                "2022/02/25 11:00:00 dhuhr iqama",
+                "2022/02/26 00:00:00 fajr iqama",
                 "2022/02/26 05:06:00 fajr iqama",
                 "2022/02/26 05:40:00 fajr stopwatch",
                 "2022/02/26 05:58:00 fajr iqama",
@@ -154,7 +154,7 @@ private extension RecordedTimeline {
                 "2022/02/26 15:51:00 asr iqama",
                 "2022/02/26 16:38:00 maghrib countdown",
                 "2022/02/26 17:40:00 maghrib countdown",
-                "2022/02/26 18:02:00 maghrib iqama"
+                "2022/02/26 18:02:00 maghrib iqama",
             ]
         ),
         RecordedTimeline(
@@ -162,7 +162,6 @@ private extension RecordedTimeline {
             timeline: [
                 "2022/02/25 05:08:00 fajr iqama",
                 "2022/02/25 05:42:00 fajr stopwatch",
-                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 05:57:36 fajr stopwatch",
                 "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 06:13:12 fajr iqama",
@@ -200,14 +199,13 @@ private extension RecordedTimeline {
                 "2022/02/25 18:32:36 isha countdown",
                 "2022/02/25 18:48:24 isha countdown",
                 "2022/02/25 19:04:12 isha countdown",
-                "2022/02/25 19:11:00 isha countdown"
+                "2022/02/25 19:11:00 isha countdown",
             ]
         ),
         RecordedTimeline(
             expanded: .hourly,
             timeline: [
                 "2022/02/25 05:08:00 fajr iqama",
-                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 05:42:00 fajr stopwatch",
                 "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 06:31:00 sunrise countdown",
@@ -246,14 +244,13 @@ private extension RecordedTimeline {
                 "2022/02/25 19:20:00 isha stopwatch",
                 "2022/02/25 19:38:00 fajr iqama",
                 "2022/02/25 20:20:00 fajr iqama",
-                "2022/02/25 21:20:00 fajr iqama"
+                "2022/02/25 21:20:00 fajr iqama",
             ]
         ),
         RecordedTimeline(
             expanded: .finalHour,
             timeline: [
                 "2022/02/25 05:08:00 fajr iqama",
-                "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 05:42:00 fajr stopwatch",
                 "2022/02/25 06:00:00 fajr iqama",
                 "2022/02/25 06:31:00 sunrise countdown",
@@ -279,8 +276,8 @@ private extension RecordedTimeline {
                 "2022/02/25 19:11:00 isha countdown",
                 "2022/02/25 19:20:00 isha stopwatch",
                 "2022/02/25 19:38:00 fajr iqama",
+                "2022/02/26 00:00:00 fajr iqama",
                 "2022/02/26 04:40:00 fajr iqama",
-                "2022/02/25 11:00:00 dhuhr iqama",
                 "2022/02/26 05:06:00 fajr iqama",
                 "2022/02/26 05:40:00 fajr stopwatch",
                 "2022/02/26 05:58:00 fajr iqama",
@@ -292,7 +289,7 @@ private extension RecordedTimeline {
                 "2022/02/26 11:31:00 dhuhr countdown",
                 "2022/02/26 12:17:00 dhuhr countdown",
                 "2022/02/26 12:31:00 dhuhr stopwatch",
-                "2022/02/26 12:43:00 dhuhr stopwatch"
+                "2022/02/26 12:43:00 dhuhr stopwatch",
             ]
         )
     ]

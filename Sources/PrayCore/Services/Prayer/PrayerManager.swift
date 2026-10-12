@@ -97,12 +97,15 @@ public extension PrayerManager {
 
 /// How a timeline builds its timers from the settings.
 private struct TimerContext: Sendable {
-    let timer: @Sendable (Date, PrayerDay) -> PrayerTimer?
-    let expandedTimeline: @Sendable (PrayerTime, Calendar) -> [Date]
+    let settings: Settings
+    let timeZone: TimeZone
 
-    init(settings: Settings, timeZone: TimeZone) {
-        timer = { PrayerTimer(at: $0, using: $1, settings: settings, timeZone: timeZone) }
-        expandedTimeline = { settings.expandedTimeline(for: $0, using: $1) }
+    func timer(_ date: Date, _ prayerDay: PrayerDay) -> PrayerTimer? {
+        PrayerTimer(at: date, using: prayerDay, settings: settings, timeZone: timeZone)
+    }
+
+    func expandedTimeline(_ prayerTime: PrayerTime, _ calendar: Calendar) -> [Date] {
+        settings.expandedTimeline(for: prayerTime, using: calendar)
     }
 }
 
@@ -117,10 +120,11 @@ private extension PrayerManager {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         var entries = try await calculate(from: date, expanded: expanded, limit: limit, using: calendar, with: request, context: context, seed: [])
 
-        // Insert specified date into timeline
-        if let insertIndex = entries.lastIndex(where: { $0.date < date }),
-           let newEntry = context.timer(date, entries[insertIndex].prayerDay) {
-            entries.insert(newEntry, at: insertIndex)
+        // The requested moment goes after the last entry before it, unless one already starts then
+        if !entries.contains(where: { $0.date == date }),
+           let lastIndex = entries.lastIndex(where: { $0.date < date }),
+           let newEntry = context.timer(date, entries[lastIndex].prayerDay) {
+            entries.insert(newEntry, at: lastIndex + 1)
         }
 
         return entries
@@ -187,9 +191,10 @@ private extension PrayerManager {
             break
         }
 
-        let tomorrowStartOfDay = date.tomorrow(using: calendar).startOfDay
-        if let entry = context.timer(tomorrowStartOfDay, prayerDay) {
-            entries.append(entry)
+        // Midnight goes in date order: the expanded entries can already reach into tomorrow
+        let tomorrowStartOfDay = date.tomorrow(using: calendar).startOfDay(using: calendar)
+        if !entries.contains(where: { $0.date == tomorrowStartOfDay }), let entry = context.timer(tomorrowStartOfDay, prayerDay) {
+            entries.insert(entry, at: entries.firstIndex { $0.date > tomorrowStartOfDay } ?? entries.endIndex)
         }
 
         let resultSeed = seed + entries

@@ -152,7 +152,8 @@ private extension NotificationServiceUN {
                         date: prayerTime.dateInterval.start,
                         body: localized.prayerNotificationBody(
                             for: prayerTime,
-                            at: prayerTime.dateInterval.start.formatted(timeFormatStyle)
+                            at: prayerTime.dateInterval.start.formatted(timeFormatStyle),
+                            using: calendar
                         ),
                         sound: notificationSound(for: prayerTime.type, in: settings),
                         interruptionLevel: .timeSensitive,
@@ -207,6 +208,7 @@ private extension NotificationServiceUN {
                 INRelevantShortcut(
                     for: prayerTime,
                     formatStyle: timeFormatStyle,
+                    calendar: calendar,
                     region: state.place?.regionName,
                     localized: localized,
                     userInfo: userInfo
@@ -226,7 +228,7 @@ private extension NotificationServiceUN {
                 pendingAdds.append((reminderIdentifier, {
                     try await userNotification.add(
                         date: reminderDate,
-                        body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
+                        body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes, using: calendar),
                         sound: reminderSound.file.map {
                             #if os(iOS)
                             return UNNotificationSound(named: UNNotificationSoundName($0))
@@ -258,7 +260,7 @@ private extension NotificationServiceUN {
                     pendingAdds.append((reminderIdentifier, {
                         try await userNotification.add(
                             date: reminderDate,
-                            body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
+                            body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes, using: calendar),
                             sound: reminderSound.file.map {
                                 #if os(iOS)
                                 return UNNotificationSound(named: UNNotificationSoundName($0))
@@ -460,11 +462,12 @@ public extension NotificationServiceUN {
         let date = Date(timeIntervalSinceNow: timeInterval)
         let identifier = "\(date.shortString(timeZone: state.place?.timeZone ?? .current, locale: .posix))-\(prayerTime.type)-snooze"
         let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
+        let calendar = Calendar(identifier: .gregorian, timeZone: state.place?.timeZone ?? .current)
 
         do {
             try await userNotification.add(
                 timeInterval: timeInterval,
-                body: localized.prayerNotificationReminder(for: prayerTime),
+                body: localized.prayerNotificationReminder(for: prayerTime, using: calendar),
                 sound: sound.file.map {
                     #if os(iOS)
                     return UNNotificationSound(named: UNNotificationSoundName($0))
@@ -558,8 +561,15 @@ public extension PrayerTime {
 
 #if !os(macOS)
 private extension INRelevantShortcut {
-    convenience init(for prayerTime: PrayerTime, formatStyle: Date.FormatStyle, region: String?, localized: NotificationServiceLocalizable, userInfo: [AnyHashable: Any]) {
-        let title = localized.prayerNotificationBody(for: prayerTime, at: prayerTime.dateInterval.start.formatted(formatStyle))
+    convenience init(
+        for prayerTime: PrayerTime,
+        formatStyle: Date.FormatStyle,
+        calendar: Calendar,
+        region: String?,
+        localized: NotificationServiceLocalizable,
+        userInfo: [AnyHashable: Any]
+    ) {
+        let title = localized.prayerNotificationBody(for: prayerTime, at: prayerTime.dateInterval.start.formatted(formatStyle), using: calendar)
         let subtitle = region
 
         let userActivity = NSUserActivity(activityType: "io.zamzam.Pray-Watch.prayer-time")
@@ -595,9 +605,10 @@ public protocol NotificationServiceLocalizable: Sendable {
     var beaconNotificationTitle: String { get }
     var calibrateNotificationBody: String { get }
 
-    func prayerNotificationBody(for prayerTime: PrayerTime, at time: String) -> String
-    func prayerNotificationReminder(for prayerTime: PrayerTime) -> String
-    func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int) -> String
+    /// Names the prayer on its own date in `calendar`, the place's, so a Friday Dhuhr is Jumuah wherever the device is.
+    func prayerNotificationBody(for prayerTime: PrayerTime, at time: String, using calendar: Calendar) -> String
+    func prayerNotificationReminder(for prayerTime: PrayerTime, using calendar: Calendar) -> String
+    func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int, using calendar: Calendar) -> String
     func iqamaNotificationBody(for prayerTime: PrayerTime, minutes: Int, isJumuah: Bool) -> String
     func duhaNotificationBody(at time: String) -> String
 }

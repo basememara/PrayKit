@@ -146,6 +146,36 @@ extension PrayerDayRuleTests {
         #expect(next.dateInterval.start > threeAM)
     }
 
+    /// Fajr set 300 minutes before sunrise lands before midnight in an Edinburgh June: from then the moment belongs to
+    /// the next calendar day's prayer day.
+    @Test
+    func aFajrBeforeMidnightStartsTheNextDay() async throws {
+        let place = DayFixture("Edinburgh", 55.9533, -3.1883, "Europe/London", .moonsightingCommittee, 2026, 6, 20, adjustments: .relative(fajr: -300))
+        let fixtureRequest = try place.request()
+        let request = PrayerAPI.Request(
+            coordinates: fixtureRequest.coordinates,
+            timeZone: fixtureRequest.timeZone,
+            method: fixtureRequest.method,
+            adjustments: fixtureRequest.adjustments,
+            filter: .essential
+        )
+        let calendar = try place.calendar()
+        let june20 = calendar.startOfDay(for: try place.date(2026, 6, 20))
+        let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
+        let eveningIsha = try place.date(2026, 6, 20, 23, 0)
+        let lateEvening = try place.date(2026, 6, 20, 23, 45)
+
+        let ishaDay = try await fixture.prayerManager.fetch(at: eveningIsha, with: request)
+        let fajrDay = try await fixture.prayerManager.fetch(at: lateEvening, with: request)
+        let fajr = try #require(fajrDay.times[.fajr])
+
+        #expect(ishaDay.date == june20)
+        #expect(ishaDay.current(at: eveningIsha)?.type == .isha)
+        #expect(fajrDay.date == june21)
+        #expect(fajr.dateInterval.start < june21)
+        #expect(fajrDay.current(at: lateEvening)?.type == .fajr)
+    }
+
     @Test
     func aDayHoldsItsFajrButNotTheNextOne() async throws {
         let place = try #require(DayFixture.all.first)

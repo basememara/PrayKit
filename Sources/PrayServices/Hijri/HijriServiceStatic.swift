@@ -47,7 +47,7 @@ public extension HijriServiceStatic {
         }
 
         do {
-            let prayerDay = try await prayerManager.fetch(for: time, with: request)
+            let prayerDay = try await prayerManager.fetch(at: time, with: request)
             return time.hijriDayOffset(
                 for: prayerDay,
                 hijriDayOffset: settings.hijriDayOffset,
@@ -78,11 +78,30 @@ public extension HijriServiceStatic {
         }
 
         do {
-            let dateInterval = DateInterval(start: startDate, end: endDate)
-            let maghribTimeline = try await prayerManager.fetch(between: dateInterval, with: prayerRequest)
+            // From the day before, which holds the first midnight until its Fajr
+            let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone)
+            let dateInterval = DateInterval(start: startDate.yesterday(using: calendar), end: endDate)
+            let prayerDays = try await prayerManager.fetch(between: dateInterval, with: prayerRequest)
+            let maghribs = prayerDays
                 .compactMap { $0.times[.maghrib]?.dateInterval.start }
-                .map { HijriAPI.TimelineEntry(date: $0, timeZone: request.timeZone, hijriOffset: settings.hijriDayOffset + 1) }
-            return (startOfDayTimeline + maghribTimeline).sorted(by: \.date).prefix(request.limit).array
+                .filter { $0 >= startDate }
+
+            return (startOfDayTimeline.map(\.date) + maghribs)
+                .sorted()
+                .map { date in
+                    HijriAPI.TimelineEntry(
+                        date: date,
+                        timeZone: request.timeZone,
+                        hijriOffset: date.hijriDayOffset(
+                            for: prayerDays.first { $0.contains(date) },
+                            hijriDayOffset: settings.hijriDayOffset,
+                            autoIncrementHijri: true,
+                            timeZone: request.timeZone
+                        )
+                    )
+                }
+                .prefix(request.limit)
+                .array
         } catch {
             return startOfDayTimeline
         }

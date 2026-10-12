@@ -101,6 +101,32 @@ extension HijriServiceStaticTests {
     }
 }
 
+extension HijriServiceStaticTests {
+    @Test
+    func timelineWaitsForAMaghribAfterMidnight() async throws {
+        // Given: Reykjavik in June, where each day's Maghrib begins just after the next midnight
+        let timeZone = try #require(TimeZone(identifier: "Atlantic/Reykjavik"))
+        let startDate = try #require(Date(year: 2026, month: 6, day: 21, hour: 12, timeZone: timeZone))
+        let request = HijriAPI.FetchTimelineRequest(startDate: startDate, timeZone: timeZone, limit: 8)
+
+        // When
+        saveManualAddress(
+            Coordinates(latitude: 64.1466, longitude: -21.9426),
+            timeZone: timeZone,
+            hijriDayOffset: 2,
+            autoIncrementHijri: true
+        )
+
+        let timeline = try await hijriService.fetch(with: request)
+
+        // Then: each midnight holds the previous Hijri day until that Maghrib turns it
+        let midnight = try #require(Date(year: 2026, month: 6, day: 21, hour: 0, timeZone: timeZone))
+        #expect(timeline.prefix(4).map(\.hijriOffset) == [1, 2, 1, 2])
+        #expect(timeline.first?.date == midnight)
+        #expect(zip(timeline, timeline.dropFirst()).allSatisfy { $0.date < $1.date })
+    }
+}
+
 // MARK: - Helpers
 
 private extension HijriServiceStaticTests {

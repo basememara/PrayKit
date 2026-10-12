@@ -31,23 +31,26 @@ public extension Date {
 }
 
 public extension Date {
+    /// The days to add to this instant's calendar date for its Hijri date. With auto-increment, the Hijri day turns at
+    /// Maghrib rather than midnight, so it counts from the date of the prayer day holding the instant, a day on once
+    /// that day's Maghrib has begun, whichever side of midnight the instant falls.
     func hijriDayOffset(
         for prayerDay: PrayerDay?,
         hijriDayOffset: Int,
         autoIncrementHijri: Bool,
         timeZone: TimeZone
     ) -> Int {
-        // The day boundary belongs to the prayer location, not the device's current calendar
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
         guard autoIncrementHijri,
-              let prayerTime = prayerDay?.current(at: self),
-              [.maghrib, .isha].contains(prayerTime.type),
-              prayerTime.dateInterval.start.inSameDay(as: self, using: calendar)
+              let prayerDay,
+              prayerDay.contains(self),
+              let daysPastPrayerDay = calendar.dateComponents([.day], from: prayerDay.date, to: calendar.startOfDay(for: self)).day
         else {
             return hijriDayOffset
         }
 
-        return hijriDayOffset + 1
+        let hasMaghribBegun = prayerDay.times[.maghrib].map { self >= $0.dateInterval.start } ?? false
+        return hijriDayOffset + (hasMaghribBegun ? 1 : 0) - daysPastPrayerDay
     }
 }

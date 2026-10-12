@@ -171,6 +171,41 @@ extension PrayerDayRuleTests {
     }
 }
 
+// MARK: - Hijri date
+
+extension PrayerDayRuleTests {
+    @Test
+    func theHijriDayTurnsOnceAtMaghribWhenIshaBeginsAfterMidnight() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+
+        // Maghrib 21:58 on June 21; Isha 00:19 and Fajr 03:26 on June 22. Past midnight the calendar date has already
+        // moved on, so the offset falls back to none rather than counting the day twice.
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 21, 21, 0), in: place) == 0)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 21, 23, 0), in: place) == 1)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 0, 10), in: place) == 0)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 0, 30), in: place) == 0)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 4, 0), in: place) == 0)
+    }
+
+    @Test
+    func theHijriDayWaitsForAMaghribAfterMidnight() async throws {
+        let place = try #require(DayFixture.all.first { $0.timeZoneIdentifier == "Atlantic/Reykjavik" })
+
+        // June 21's Maghrib begins at 00:07 on June 22: until then the Hijri date is still June 21's, a day behind
+        // the calendar date
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 21, 23, 0), in: place) == 0)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 0, 3), in: place) == -1)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 0, 10), in: place) == 0)
+        #expect(try await hijriOffset(at: try place.date(2026, 6, 22, 3, 0), in: place) == 0)
+    }
+
+    private func hijriOffset(at date: Date, in place: DayFixture) async throws -> Int {
+        let request = try place.request()
+        let day = try await fixture.prayerManager.fetch(at: date, with: request)
+        return date.hijriDayOffset(for: day, hijriDayOffset: 0, autoIncrementHijri: true, timeZone: request.timeZone)
+    }
+}
+
 // MARK: - What screens show
 
 extension PrayerDayRuleTests {

@@ -33,6 +33,14 @@ extension PrayerDayRuleTests {
 
             #expect(day.times[.isha]?.dateInterval.end == next.times[.fajr]?.dateInterval.start, "Isha ends at the next Fajr")
             #expect(day.times[.lastThird]?.dateInterval.end == day.times[.isha]?.dateInterval.end, "The night ends with Isha")
+
+            let maghrib = try #require(day.times[.maghrib]).dateInterval.start
+            let nextFajr = try #require(day.times[.isha]).dateInterval.end
+            let lastThird = try #require(day.times[.lastThird]).dateInterval.start
+            #expect(
+                abs(lastThird.timeIntervalSince(maghrib) - nextFajr.timeIntervalSince(maghrib) * 2 / 3) <= 30,
+                "The last third begins two-thirds into the night"
+            )
         }
     }
 }
@@ -546,11 +554,29 @@ extension DayFixture {
         DayFixture("Tokyo", 35.6762, 139.6503, "Asia/Tokyo", .muslimWorldLeague, 2026, 10, 12),
         DayFixture("New York, clocks forward", 40.7128, -74.0060, "America/New_York", .northAmerica, 2026, 3, 7),
         DayFixture("New York, clocks back", 40.7128, -74.0060, "America/New_York", .northAmerica, 2026, 10, 31),
+        DayFixture(
+            "New York, clocks back, the last third in the repeated hour", 40.7128, -74.0060, "America/New_York", .muslimWorldLeague, 2026, 10, 31,
+            adjustments: .absolute(fajr: 30)
+        ),
         DayFixture("Kuala Lumpur", 3.1390, 101.6869, "Asia/Kuala_Lumpur", .jakim, 2026, 10, 12)
     ]
 }
 
 private extension PrayerAdjustments {
+    static func absolute(fajr: Int) -> PrayerAdjustments {
+        PrayerAdjustments(
+            fajr: fajr,
+            sunrise: 0,
+            dhuhr: 0,
+            asr: 0,
+            maghrib: 0,
+            isha: 0,
+            isFajrSunriseRelative: false,
+            isIshaMaghribRelative: false,
+            elevation: nil
+        )
+    }
+
     static func relative(fajr: Int = 0, sunrise: Int = 0, isha: Int = 0) -> PrayerAdjustments {
         PrayerAdjustments(
             fajr: fajr,

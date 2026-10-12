@@ -85,13 +85,13 @@ public extension PrayerServiceLondon {
         // Apply user adjustments if applicable; tomorrow's are applied the same way, so Isha ends where its Fajr begins
         if let adjustments = request.adjustments, request.adjustments?.isEmpty == false {
             if adjustments.sunrise != 0 {
-                sunriseTime = (sunriseTime + .minutes(adjustments.sunrise)).roundedMinute(using: calendar)
-                tomorrowSunriseTime = (tomorrowSunriseTime + .minutes(adjustments.sunrise)).roundedMinute(using: calendar)
+                sunriseTime = (sunriseTime + .minutes(adjustments.sunrise)).roundedMinute
+                tomorrowSunriseTime = (tomorrowSunriseTime + .minutes(adjustments.sunrise)).roundedMinute
             }
 
             if adjustments.fajr != 0 {
-                fajrTime = (fajrTime + .minutes(adjustments.fajr)).roundedMinute(using: calendar)
-                tomorrowFajrTime = (tomorrowFajrTime + .minutes(adjustments.fajr)).roundedMinute(using: calendar)
+                fajrTime = (fajrTime + .minutes(adjustments.fajr)).roundedMinute
+                tomorrowFajrTime = (tomorrowFajrTime + .minutes(adjustments.fajr)).roundedMinute
 
                 if adjustments.isFajrSunriseRelative {
                     let fajr = sunriseTime + .minutes(adjustments.fajr)
@@ -103,19 +103,19 @@ public extension PrayerServiceLondon {
             }
 
             if adjustments.dhuhr != 0 {
-                dhuhrTime = (dhuhrTime + .minutes(adjustments.dhuhr)).roundedMinute(using: calendar)
+                dhuhrTime = (dhuhrTime + .minutes(adjustments.dhuhr)).roundedMinute
             }
 
             if adjustments.asr != 0 {
-                asrTime = (asrTime + .minutes(adjustments.asr)).roundedMinute(using: calendar)
+                asrTime = (asrTime + .minutes(adjustments.asr)).roundedMinute
             }
 
             if adjustments.maghrib != 0 {
-                magribTime = (magribTime + .minutes(adjustments.maghrib)).roundedMinute(using: calendar)
+                magribTime = (magribTime + .minutes(adjustments.maghrib)).roundedMinute
             }
 
             if adjustments.isha != 0 {
-                ishaTime = (ishaTime + .minutes(adjustments.isha)).roundedMinute(using: calendar)
+                ishaTime = (ishaTime + .minutes(adjustments.isha)).roundedMinute
 
                 if adjustments.isIshaMaghribRelative {
                     let isha = magribTime + .minutes(adjustments.isha)
@@ -210,7 +210,7 @@ public extension PrayerServiceLondon {
         ])
 
         if [.all, .sunnah].contains(request.filter) {
-            guard let night = PrayerTime.night(from: magribTime, to: tomorrowFajrTime, using: calendar) else {
+            guard let night = PrayerTime.night(from: magribTime, to: tomorrowFajrTime) else {
                 log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
                 throw PrayError.invalidTimes
             }

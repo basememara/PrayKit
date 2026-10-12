@@ -141,7 +141,7 @@ public extension PrayerServiceAdhan {
         ])
 
         if [.all, .sunnah].contains(request.filter) {
-            guard let night = PrayerTime.night(from: prayers.maghrib, to: tomorrowFajrTime, using: calendar) else {
+            guard let night = PrayerTime.night(from: prayers.maghrib, to: tomorrowFajrTime) else {
                 log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
                 throw PrayError.invalidTimes
             }

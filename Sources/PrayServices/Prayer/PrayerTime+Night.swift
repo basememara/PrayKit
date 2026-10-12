@@ -12,10 +12,10 @@ import PrayCore
 extension PrayerTime {
     /// The middle and the last third of the night, which runs from Maghrib to the Fajr actually used, so the last third
     /// ends where Isha does; `nil` when the night is too short to order them.
-    static func night(from maghrib: Date, to fajr: Date, using calendar: Calendar) -> [PrayerTime]? {
+    static func night(from maghrib: Date, to fajr: Date) -> [PrayerTime]? {
         let duration = fajr.timeIntervalSince(maghrib)
-        let middle = maghrib.addingTimeInterval(duration / 2).roundedMinute(using: calendar)
-        let lastThird = maghrib.addingTimeInterval(duration * 2 / 3).roundedMinute(using: calendar)
+        let middle = maghrib.addingTimeInterval(duration / 2).roundedMinute
+        let lastThird = maghrib.addingTimeInterval(duration * 2 / 3).roundedMinute
 
         guard middle < lastThird, lastThird < fajr else { return nil }
 
@@ -27,13 +27,9 @@ extension PrayerTime {
 }
 
 extension Date {
-    /// The nearest whole minute, as the Adhan library rounds.
-    func roundedMinute(using calendar: Calendar) -> Date {
-        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: self)
-        let minute = Double(components.minute ?? 0)
-        let second = Double(components.second ?? 0)
-        components.minute = Int(minute + round(second / 60))
-        components.second = 0
-        return calendar.date(from: components) ?? self
+    /// The nearest whole minute, as the Adhan library rounds; on the instant itself, so a time in the hour that
+    /// repeats when clocks go back keeps its own occurrence.
+    var roundedMinute: Date {
+        Date(timeIntervalSinceReferenceDate: (timeIntervalSinceReferenceDate / 60).rounded() * 60)
     }
 }

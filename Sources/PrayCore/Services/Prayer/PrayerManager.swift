@@ -86,6 +86,14 @@ public extension PrayerManager {
 }
 
 public extension PrayerManager {
+    /// The prayer days holding the interval's moments, starting with the one holding its first, which before Fajr is
+    /// the previous calendar day's. `fetch(between:)` takes the interval's calendar days instead.
+    func fetch(spanning dateInterval: DateInterval, with request: PrayerAPI.Request) async throws -> [PrayerDay] {
+        let firstDay = try await fetch(at: dateInterval.start, with: request)
+        return try await fetch(between: DateInterval(start: firstDay.date, end: dateInterval.end), with: request)
+    }
+
+    /// The prayer days of each calendar day from the interval's start to its end.
     func fetch(between dateInterval: DateInterval, with request: PrayerAPI.Request) async throws -> [PrayerDay] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         let startAfterDate = dateInterval.start - .days(1, calendar)

@@ -8,7 +8,9 @@
 
 import Foundation
 import PrayCore
+@testable import PrayServices
 import Testing
+import ZamzamCore
 
 /// A prayer day runs from its Fajr to the next Fajr: its essential prayers tile that span, and the days tile in turn.
 struct PrayerDayRuleTests {
@@ -239,6 +241,59 @@ extension PrayerDayRuleTests {
         #expect(now.countdownDate == ishaBegins)
         #expect(isha.prayerDay.date == june21)
         #expect(isha.type == .fajr)
+    }
+}
+
+// MARK: - Notifications
+
+extension PrayerDayRuleTests {
+    @Test
+    func aLateIshaIsStillNotifiedAfterMidnightUnderItsOwnDay() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let now = try place.date(2026, 6, 22, 0, 10)
+        let ishaBegins = try place.date(2026, 6, 22, 0, 19)
+        let week = DateInterval(start: now, duration: 7 * 24 * 3600)
+
+        let days = try await fixture.prayerManager.fetch(spanning: week, with: request)
+        let scheduled = NotificationServiceUN.prayersToNotify(in: days, from: now, calendar: calendar)
+        let isha = try #require(scheduled.first { $0.prayerTime.type == .isha })
+        let june21 = try #require(days.first)
+
+        #expect(isha.prayerTime.dateInterval.start == ishaBegins)
+        #expect(isha.prefix == june21.date.shortString(timeZone: calendar.timeZone, calendar: calendar, locale: .posix))
+
+        // The calendar days from now leave that Isha out
+        let calendarDays = try await fixture.prayerManager.fetch(between: week, with: request)
+        let fromCalendarDays = NotificationServiceUN.prayersToNotify(in: calendarDays, from: now, calendar: calendar)
+        #expect(!fromCalendarDays.contains { $0.prayerTime.dateInterval.start == ishaBegins })
+    }
+
+    /// From moments every three hours across two days: names are unique, prayers come in time order, and the next
+    /// prayer is always among them.
+    @Test(arguments: DayFixture.all)
+    func everyPrayerStillToComeIsNotifiedOnceInOrder(place: DayFixture) async throws {
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let noon = try place.firstNoon()
+        var problems = [String]()
+
+        for hours in stride(from: 0, to: 48, by: 3) {
+            let now = noon + TimeInterval(hours * 3600)
+            let days = try await fixture.prayerManager.fetch(spanning: DateInterval(start: now, duration: 7 * 24 * 3600), with: request)
+            let scheduled = NotificationServiceUN.prayersToNotify(in: days, from: now, calendar: calendar)
+            let identifiers = scheduled.map { "\($0.prefix)-\($0.prayerTime.type)" }
+            let starts = scheduled.map(\.prayerTime.dateInterval.start)
+            let next = try await fixture.prayerManager.fetch(at: now, with: request).next(at: now)
+
+            if Set(identifiers).count != identifiers.count { problems.append("\(now): an identifier repeats") }
+            if starts != starts.sorted() { problems.append("\(now): out of order") }
+            if !scheduled.contains(where: { $0.prayerTime == next }) { problems.append("\(now): the next prayer is missing") }
+        }
+
+        let problemCount = problems.count
+        #expect(problemCount == 0, "first problems: \(problems.prefix(5))")
     }
 }
 

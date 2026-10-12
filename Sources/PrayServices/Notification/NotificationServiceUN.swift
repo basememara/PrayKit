@@ -53,6 +53,18 @@ public extension NotificationServiceUN {
     }
 }
 
+extension NotificationServiceUN {
+    /// The prayers with something left to notify from now, each named by its prayer day rather than its start, so an
+    /// Isha after midnight can't share an identifier with the next day's. A prayer that has ended has nothing left,
+    /// its reminders all being earlier.
+    static func prayersToNotify(in prayerDays: [PrayerDay], from now: Date, calendar: Calendar) -> [(prefix: String, prayerTime: PrayerTime)] {
+        prayerDays.flatMap { prayerDay in
+            let prefix = prayerDay.date.shortString(timeZone: calendar.timeZone, calendar: calendar, locale: .posix)
+            return prayerDay.times.filter { $0.dateInterval.end > now }.map { (prefix, $0) }
+        }
+    }
+}
+
 private extension NotificationServiceUN {
     func scheduleOnce() async {
         // swiftlint:disable:previous function_body_length cyclomatic_complexity
@@ -83,11 +95,8 @@ private extension NotificationServiceUN {
         let prayerDays: [PrayerDay]
 
         do {
-            // From yesterday, whose Isha can begin after midnight at high latitudes and is still to come
-            prayerDays = try await prayerManager.fetch(
-                between: DateInterval(start: dateInterval.start - .days(1, calendar), end: dateInterval.end),
-                with: request
-            )
+            // From the prayer day holding now, whose Isha may still be to come after midnight
+            prayerDays = try await prayerManager.fetch(spanning: dateInterval, with: request)
         } catch {
             log.error("Could not fetch prayers for scheduling notifications", error: error)
             return
@@ -111,112 +120,139 @@ private extension NotificationServiceUN {
         #endif
 
         // Schedule available notifications
-        prayerDays.forEach { prayerDay in
-            // Named by the prayer's day rather than its start, so an Isha after midnight can't share an identifier
-            let prefixIdentifier = prayerDay.date.shortString(timeZone: timeZone, calendar: calendar, locale: .posix)
+        Self.prayersToNotify(in: prayerDays, from: now, calendar: calendar).forEach { prefixIdentifier, prayerTime in
+            guard counter > 0 else { return }
 
-            // A prayer that has ended has nothing left to notify, its reminders all being earlier
-            prayerDay.times.filter { $0.dateInterval.end > now }.forEach { prayerTime in
-                guard counter > 0 else { return }
+            let isObligation = prayerTime.type.isObligation
+            let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
+            let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
+            let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
+            let iqamaSound = settings.iqamaReminders.sound
+            let iqamaReminderDate = iqamaTime.map { $0 - .minutes(iqamaMinutes) }
+            let hasIqamaReminder = iqamaReminderDate.map { iqamaSound != .off && iqamaMinutes > 0 && $0 > now } ?? false
 
-                let isObligation = prayerTime.type.isObligation
-                let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
-                let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
-                let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
-                let iqamaSound = settings.iqamaReminders.sound
-                let iqamaReminderDate = iqamaTime.map { $0 - .minutes(iqamaMinutes) }
-                let hasIqamaReminder = iqamaReminderDate.map { iqamaSound != .off && iqamaMinutes > 0 && $0 > now } ?? false
+            // Schedule local notification for each prayer
+            let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
+            let sound = sound(for: prayerTime.type, in: settings)
+            var userInfo: [String: Any] = [:]
 
-                // Schedule local notification for each prayer
-                let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
-                let sound = sound(for: prayerTime.type, in: settings)
-                var userInfo: [String: Any] = [:]
+            // Encode prayer time for later retrieval
+            do {
+                let data = try prayerTime.encode()
+                userInfo["prayer_time"] = data
+            } catch {
+                log.error("Failed to encode prayer time for notification", error: error)
+            }
 
-                // Encode prayer time for later retrieval
-                do {
-                    let data = try prayerTime.encode()
-                    userInfo["prayer_time"] = data
-                } catch {
-                    log.error("Failed to encode prayer time for notification", error: error)
-                }
-
-                // Add prayer notifications; the system silently drops calendar triggers already in the past,
-                // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
-                if sound != .off && counter > 0 && prayerTime.dateInterval.start > now && !(isJumuah && hasIqamaReminder) {
-                    pendingAdds.append((identifier, {
-                        try await userNotification.add(
-                            date: prayerTime.dateInterval.start,
-                            body: localized.prayerNotificationBody(
-                                for: prayerTime,
-                                at: prayerTime.dateInterval.start.formatted(timeFormatStyle)
-                            ),
-                            sound: notificationSound(for: prayerTime.type, in: settings),
-                            interruptionLevel: .timeSensitive,
-                            calendar: calendar,
-                            identifier: identifier,
-                            category: (isObligation ? NotificationCategory.main : .reminder).rawValue,
-                            userInfo: userInfo
-                        )
-                    }))
-
-                    // Update scheduled range and counter
-                    firstScheduledDate = firstScheduledDate ?? prayerTime.dateInterval.start
-                    lastScheduledDate = prayerTime.dateInterval.start
-                    counter -= 1
-                } else if sound == .off {
-                    userNotification.remove(withIdentifier: identifier)
-                }
-
-                // Add iqama notification if applicable; it goes before the optional reminders so the Jumuah
-                // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
-                let iqamaIdentifier = "\(identifier)-iqama-reminder"
-
-                if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
-                    pendingAdds.append((iqamaIdentifier, {
-                        try await userNotification.add(
-                            date: iqamaReminderDate,
-                            body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
-                            sound: iqamaSound.file.map {
-                                #if os(iOS)
-                                return UNNotificationSound(named: UNNotificationSoundName($0))
-                                #else
-                                return .default
-                                #endif
-                            },
-                            interruptionLevel: .timeSensitive,
-                            calendar: calendar,
-                            identifier: iqamaIdentifier,
-                            category: NotificationCategory.reminder.rawValue,
-                            userInfo: userInfo
-                        )
-                    }))
-
-                    // Update counter
-                    counter -= 1
-                } else if iqamaSound == .off {
-                    userNotification.remove(withIdentifier: iqamaIdentifier)
-                }
-
-                #if !os(macOS)
-                // Add Siri shortcut
-                siriShortcuts.append(
-                    INRelevantShortcut(
-                        for: prayerTime,
-                        formatStyle: timeFormatStyle,
-                        region: state.place?.regionName,
-                        localized: localized,
+            // Add prayer notifications; the system silently drops calendar triggers already in the past,
+            // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
+            if sound != .off && counter > 0 && prayerTime.dateInterval.start > now && !(isJumuah && hasIqamaReminder) {
+                pendingAdds.append((identifier, {
+                    try await userNotification.add(
+                        date: prayerTime.dateInterval.start,
+                        body: localized.prayerNotificationBody(
+                            for: prayerTime,
+                            at: prayerTime.dateInterval.start.formatted(timeFormatStyle)
+                        ),
+                        sound: notificationSound(for: prayerTime.type, in: settings),
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: identifier,
+                        category: (isObligation ? NotificationCategory.main : .reminder).rawValue,
                         userInfo: userInfo
                     )
+                }))
+
+                // Update scheduled range and counter
+                firstScheduledDate = firstScheduledDate ?? prayerTime.dateInterval.start
+                lastScheduledDate = prayerTime.dateInterval.start
+                counter -= 1
+            } else if sound == .off {
+                userNotification.remove(withIdentifier: identifier)
+            }
+
+            // Add iqama notification if applicable; it goes before the optional reminders so the Jumuah
+            // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
+            let iqamaIdentifier = "\(identifier)-iqama-reminder"
+
+            if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
+                pendingAdds.append((iqamaIdentifier, {
+                    try await userNotification.add(
+                        date: iqamaReminderDate,
+                        body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
+                        sound: iqamaSound.file.map {
+                            #if os(iOS)
+                            return UNNotificationSound(named: UNNotificationSoundName($0))
+                            #else
+                            return .default
+                            #endif
+                        },
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: iqamaIdentifier,
+                        category: NotificationCategory.reminder.rawValue,
+                        userInfo: userInfo
+                    )
+                }))
+
+                // Update counter
+                counter -= 1
+            } else if iqamaSound == .off {
+                userNotification.remove(withIdentifier: iqamaIdentifier)
+            }
+
+            #if !os(macOS)
+            // Add Siri shortcut
+            siriShortcuts.append(
+                INRelevantShortcut(
+                    for: prayerTime,
+                    formatStyle: timeFormatStyle,
+                    region: state.place?.regionName,
+                    localized: localized,
+                    userInfo: userInfo
                 )
-                #endif
+            )
+            #endif
 
-                // Add reminder notifications
-                let reminderIdentifier = "\(identifier)-reminder"
-                let reminderSound = settings.reminderSounds[prayerTime.type] ?? .off
-                let reminderMinutes = settings.preAdhanMinutes[prayerTime.type]
+            // Add reminder notifications
+            let reminderIdentifier = "\(identifier)-reminder"
+            let reminderSound = settings.reminderSounds[prayerTime.type] ?? .off
+            let reminderMinutes = settings.preAdhanMinutes[prayerTime.type]
 
-                let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
-                    - .minutes(reminderMinutes)
+            let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
+                - .minutes(reminderMinutes)
+
+            if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
+                pendingAdds.append((reminderIdentifier, {
+                    try await userNotification.add(
+                        date: reminderDate,
+                        body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
+                        sound: reminderSound.file.map {
+                            #if os(iOS)
+                            return UNNotificationSound(named: UNNotificationSoundName($0))
+                            #else
+                            return .default
+                            #endif
+                        },
+                        interruptionLevel: .timeSensitive,
+                        calendar: calendar,
+                        identifier: reminderIdentifier,
+                        category: NotificationCategory.reminder.rawValue,
+                        userInfo: userInfo
+                    )
+                }))
+
+                // Update counter
+                counter -= 1
+            } else if reminderSound == .off {
+                userNotification.remove(withIdentifier: reminderIdentifier)
+            }
+
+            // Add imsak notifications if applicable
+            if prayerTime.type == .fajr {
+                let reminderIdentifier = "\(identifier)-imsak-reminder"
+                let reminderMinutes = settings.preAdhanMinutes.imsak
+                let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
 
                 if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
                     pendingAdds.append((reminderIdentifier, {
@@ -243,70 +279,37 @@ private extension NotificationServiceUN {
                 } else if reminderSound == .off {
                     userNotification.remove(withIdentifier: reminderIdentifier)
                 }
+            }
 
-                // Add imsak notifications if applicable
-                if prayerTime.type == .fajr {
-                    let reminderIdentifier = "\(identifier)-imsak-reminder"
-                    let reminderMinutes = settings.preAdhanMinutes.imsak
-                    let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
+            // Add duha notifications if applicable
+            if prayerTime.type == .sunrise {
+                let reminderIdentifier = "\(identifier)-duha-reminder"
+                let reminderTime = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
-                    if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
-                        pendingAdds.append((reminderIdentifier, {
-                            try await userNotification.add(
-                                date: reminderDate,
-                                body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
-                                sound: reminderSound.file.map {
-                                    #if os(iOS)
-                                    return UNNotificationSound(named: UNNotificationSoundName($0))
-                                    #else
-                                    return .default
-                                    #endif
-                                },
-                                interruptionLevel: .timeSensitive,
-                                calendar: calendar,
-                                identifier: reminderIdentifier,
-                                category: NotificationCategory.reminder.rawValue,
-                                userInfo: userInfo
-                            )
-                        }))
+                if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
+                    pendingAdds.append((reminderIdentifier, {
+                        try await userNotification.add(
+                            date: reminderTime,
+                            body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
+                            sound: reminderSound.file.map {
+                                #if os(iOS)
+                                return UNNotificationSound(named: UNNotificationSoundName($0))
+                                #else
+                                return .default
+                                #endif
+                            },
+                            interruptionLevel: .timeSensitive,
+                            calendar: calendar,
+                            identifier: reminderIdentifier,
+                            category: NotificationCategory.reminder.rawValue,
+                            userInfo: userInfo
+                        )
+                    }))
 
-                        // Update counter
-                        counter -= 1
-                    } else if reminderSound == .off {
-                        userNotification.remove(withIdentifier: reminderIdentifier)
-                    }
-                }
-
-                // Add duha notifications if applicable
-                if prayerTime.type == .sunrise {
-                    let reminderIdentifier = "\(identifier)-duha-reminder"
-                    let reminderTime = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
-
-                    if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
-                        pendingAdds.append((reminderIdentifier, {
-                            try await userNotification.add(
-                                date: reminderTime,
-                                body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
-                                sound: reminderSound.file.map {
-                                    #if os(iOS)
-                                    return UNNotificationSound(named: UNNotificationSoundName($0))
-                                    #else
-                                    return .default
-                                    #endif
-                                },
-                                interruptionLevel: .timeSensitive,
-                                calendar: calendar,
-                                identifier: reminderIdentifier,
-                                category: NotificationCategory.reminder.rawValue,
-                                userInfo: userInfo
-                            )
-                        }))
-
-                        // Update counter
-                        counter -= 1
-                    } else if reminderSound == .off {
-                        userNotification.remove(withIdentifier: reminderIdentifier)
-                    }
+                    // Update counter
+                    counter -= 1
+                } else if reminderSound == .off {
+                    userNotification.remove(withIdentifier: reminderIdentifier)
                 }
             }
         }

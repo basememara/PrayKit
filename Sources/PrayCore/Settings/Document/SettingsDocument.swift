@@ -32,13 +32,9 @@ public extension SettingsDocument {
     /// associative, commutative and idempotent: copies converge whatever order they arrive in.
     func merging(_ other: SettingsDocument) -> SettingsDocument {
         Settings.fields.reduce(into: self) { result, field in
-            let mine = revision(of: field.key)
+            guard other.wins(field, over: self) else { return }
+
             let theirs = other.revision(of: field.key)
-
-            guard theirs > mine
-                || (theirs == mine && !field.isEqual(settings, other.settings) && field.sortsAfter(other.settings, settings))
-            else { return }
-
             field.copy(from: other.settings, into: &result.settings)
             result.revisions[field.key] = theirs == .legacy ? nil : theirs
         }
@@ -103,5 +99,15 @@ public struct DeviceState: Equatable, Sendable {
     public init(document: SettingsDocument = SettingsDocument(), place: Place? = nil) {
         self.document = document
         self.place = place
+    }
+}
+
+extension SettingsDocument {
+    /// Whether a merge takes this copy's value of `field` over `other`'s: a newer revision, or an equal one
+    /// whose different value sorts after.
+    func wins(_ field: any AnySettingField, over other: SettingsDocument) -> Bool {
+        let mine = revision(of: field.key)
+        let theirs = other.revision(of: field.key)
+        return mine > theirs || (mine == theirs && !field.isEqual(settings, other.settings) && field.sortsAfter(settings, other.settings))
     }
 }

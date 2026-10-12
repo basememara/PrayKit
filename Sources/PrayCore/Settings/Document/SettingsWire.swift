@@ -140,15 +140,16 @@ public extension SettingsDocument {
         }
     }
 
-    /// The synced settings revised here after `other`, which an upload over `other` needs to carry.
+    /// The synced settings revised here that a merge into `other` would take, which an upload over `other`
+    /// needs to carry: later revisions, and equal ones this copy's value wins, so every copy converges on the
+    /// winner. A setting never revised here is never sent over another device's value.
     func keysNewer(than other: SettingsDocument) -> [SettingKey] {
         Settings.fields
-            .filter(\.isSynced)
+            .filter { $0.isSynced && revision(of: $0.key) != .legacy && wins($0, over: other) }
             .map(\.key)
-            .filter { revision(of: $0) > other.revision(of: $0) }
     }
 
-    /// Whether any synced setting here is newer than in `other`, so `other` is behind.
+    /// Whether any synced setting here would win a merge into `other`, so `other` is behind.
     func hasNewerRevisions(than other: SettingsDocument) -> Bool {
         !keysNewer(than: other).isEmpty
     }

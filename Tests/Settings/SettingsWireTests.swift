@@ -290,6 +290,21 @@ extension SettingsWireTests {
         #expect(local.keysNewer(than: server) == [.snoozeMinutes])
     }
 
+    /// Two devices that edit a setting in the same millisecond tie: the copy whose value wins the merge uploads
+    /// it, so iCloud carries the winner and every device converges.
+    @Test
+    func anEqualRevisionUploadsFromTheCopyWhoseValueWins() {
+        let date = Date(timeIntervalSince1970: 1_900_000_000)
+        let ten = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 10 }
+        let twenty = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 20 }
+        let (winning, losing) = ten.merging(twenty).settings.snoozeMinutes == 20 ? (twenty, ten) : (ten, twenty)
+
+        #expect(ten.revision(of: .snoozeMinutes) == twenty.revision(of: .snoozeMinutes))
+        #expect(winning.keysNewer(than: losing) == [.snoozeMinutes])
+        #expect(losing.keysNewer(than: winning).isEmpty)
+        #expect(losing.merging(winning).keysNewer(than: winning).isEmpty)
+    }
+
     /// An offline edit older than the record's last save still uploads, which needs the saved copy compared
     /// by its own revisions rather than re-dated at its save time.
     @Test

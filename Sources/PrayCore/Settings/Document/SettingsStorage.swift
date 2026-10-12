@@ -45,7 +45,8 @@ public extension SettingsStorage {
     }
 
     /// Writes whatever `transform` changes, and nothing else, so another process's other settings survive.
-    /// Within a process, updates run one at a time, so none is lost to a writer on another thread.
+    /// Within a process, updates run one at a time, so none is lost to a writer on another thread; across
+    /// processes (the app, its widgets and extensions), the last writer of each key wins.
     @discardableResult
     func update(_ transform: (DeviceState) -> DeviceState) -> DeviceState {
         Self.lock.withLock {

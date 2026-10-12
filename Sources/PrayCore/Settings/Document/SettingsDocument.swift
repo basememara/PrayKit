@@ -10,10 +10,10 @@ import Foundation
 
 /// The settings with the revision of each one, so copies from different devices merge setting by setting.
 public struct SettingsDocument: Equatable, Sendable {
-    public var settings: Settings
+    public internal(set) var settings: Settings
 
     /// A setting without an entry is `.legacy`.
-    public var revisions: [SettingKey: Revision]
+    public internal(set) var revisions: [SettingKey: Revision]
 
     public init(settings: Settings = Settings(), revisions: [SettingKey: Revision] = [:]) {
         self.settings = settings

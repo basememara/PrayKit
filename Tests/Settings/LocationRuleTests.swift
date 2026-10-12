@@ -131,19 +131,25 @@ extension LocationRuleTests {
     }
 
     @Test
-    func theRegionNameLandsOnlyOnTheFixItWasLookedUpFor() throws {
+    func aMoveClearsTheNameAndOnlyTheNewPlacesLookupNamesIt() throws {
         let storage = SettingsStorage(defaults: .makeTest())
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
         let away = Coordinates(latitude: 43.6700, longitude: -79.3470)
 
         storage.saveLocation(toronto, timeZone: timeZone, at: date)
         storage.saveRegionName("Toronto", for: toronto)
-        #expect(storage.load().place?.regionName == "Toronto")
+        let named = try #require(storage.load().place)
+        #expect(named.regionName == "Toronto")
 
         storage.saveLocation(away, timeZone: timeZone, at: date + 60)
         storage.saveRegionName("Somewhere stale", for: toronto)
-        #expect(storage.load().place?.regionName == "Toronto")
-        #expect(storage.load().place?.coordinates == away)
+        let moved = try #require(storage.load().place)
+        #expect(moved.regionName == nil)
+        #expect(moved.coordinates == away)
+
+        storage.saveRegionName("East York", for: away)
+        let renamed = try #require(storage.load().place)
+        #expect(renamed.regionName == "East York")
     }
 
     @Test

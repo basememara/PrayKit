@@ -9,7 +9,7 @@
 import Foundation
 
 /// When a setting last changed, in whole milliseconds so it survives CloudKit, defaults and property lists unchanged.
-public struct Revision: Comparable, Hashable, Codable, Sendable {
+public struct Revision: Comparable, Hashable, Sendable {
     public let milliseconds: Int64
 
     public init(milliseconds: Int64) {
@@ -37,6 +37,7 @@ public extension Revision {
     ///
     /// A device whose clock runs behind still orders its edit after every revision it has merged.
     static func stamp(at date: Date, after newest: Revision) -> Revision {
-        max(Revision(date), Revision(milliseconds: newest.milliseconds + 1))
+        // A corrupt revision from a record can't overflow it
+        max(Revision(date), Revision(milliseconds: min(newest.milliseconds, .max - 1) + 1))
     }
 }

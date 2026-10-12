@@ -12,7 +12,7 @@ import Foundation
 /// How a GPS fix updates the device's place: only while GPS is on, jitter under a kilometre is ignored unless the
 /// time zone changed, and arriving in a new time zone switches to its recommended method.
 public enum LocationRule {
-    public static let significantDistance: CLLocationDistance = 1_000
+    private static let significantDistance: CLLocationDistance = 1_000
 
     /// The state after a fix taken in `timeZone` at `date`, or `nil` when the fix changes nothing worth saving.
     public static func apply(_ coordinates: Coordinates, timeZone: TimeZone, at date: Date, to state: DeviceState) -> DeviceState? {
@@ -33,7 +33,8 @@ public enum LocationRule {
 
         return DeviceState(
             document: document,
-            place: Place(coordinates: coordinates, timeZone: timeZone, regionName: place?.regionName, fixedAt: date)
+            // A move leaves the old name behind, so the next fix names the new place even if this lookup fails
+            place: Place(coordinates: coordinates, timeZone: timeZone, regionName: hasMoved ? nil : place?.regionName, fixedAt: date)
         )
     }
 }
@@ -71,8 +72,18 @@ public extension SettingsStorage {
     /// Saves a GPS fix through the location rule, dated when it was taken, returning whether the rule kept it.
     @discardableResult
     func saveLocation(_ location: CLLocation, timeZone: TimeZone = .current) -> Bool {
-        let before = load()
-        return saveLocation(Coordinates(from: location.coordinate), timeZone: timeZone, at: location.timestamp) != before
+        var isKept = false
+
+        update { state in
+            guard let kept = LocationRule.apply(Coordinates(from: location.coordinate), timeZone: timeZone, at: location.timestamp, to: state) else {
+                return state
+            }
+
+            isKept = true
+            return kept
+        }
+
+        return isKept
     }
 
     /// Names the saved place by reverse geocoding the fix, unless a newer fix moved it in the meantime.

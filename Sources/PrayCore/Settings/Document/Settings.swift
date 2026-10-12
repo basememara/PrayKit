@@ -102,7 +102,7 @@ public struct Settings: Codable, Equatable, Sendable {
 }
 
 /// A setting's stable name: its key in the defaults suite and its field name on the wire.
-public enum SettingKey: String, CaseIterable, Codable, Sendable {
+public enum SettingKey: String, CaseIterable, Sendable {
     case calculationMethod
     case juristicMethod
     case fajrDegrees

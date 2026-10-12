@@ -92,10 +92,14 @@ public extension PrayerManager {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         var days = [try await fetch(at: dateInterval.start, with: request)]
 
-        // The next day joins once its Fajr, where this day's Isha ends, has begun by the end, so no day the span
-        // doesn't reach is calculated
-        while let lastDay = days.last, let nextFajr = lastDay.times[.isha]?.dateInterval.end, nextFajr <= dateInterval.end {
-            days.append(try await fetch(for: lastDay.date.tomorrow(using: calendar), with: request))
+        // The next day joins once its Fajr, where this day's Isha ends, has begun by the end. One that can't be
+        // calculated ends the span there, as it ends a timeline, so the days before it still count.
+        do {
+            while let lastDay = days.last, let nextFajr = lastDay.times[.isha]?.dateInterval.end, nextFajr <= dateInterval.end {
+                days.append(try await fetch(for: lastDay.date.tomorrow(using: calendar), with: request))
+            }
+        } catch {
+            log.error("Could not fetch a prayer day the span reaches, so it ends at the day before", error: error)
         }
 
         return days

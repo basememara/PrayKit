@@ -323,9 +323,10 @@ extension PrayerDayRuleTests {
         #expect(evening.map(\.date) == [june21])
     }
 
-    /// A span calculates only the days it reaches, so a day past its end that can't be calculated never stops it.
+    /// A span calculates only the days it reaches, and one it reaches that can't be calculated ends it there, so the
+    /// days before it still count: May 26 puts Fajr past sunrise, so May 25, whose Isha ends at May 26's Fajr, can't be.
     @Test
-    func aDayPastTheSpanNeverStopsIt() async throws {
+    func aDayThatCantBeCalculatedNeverCostsTheDaysBeforeIt() async throws {
         let place = DayFixture(
             "Edinburgh, Fajr 60 minutes later, past sunrise by May 26", 55.9533, -3.1883, "Europe/London", .muslimWorldLeague, 2026, 5, 17,
             adjustments: .absolute(fajr: 60)
@@ -339,6 +340,13 @@ extension PrayerDayRuleTests {
 
         let week = try await fixture.prayerManager.fetch(spanning: DateInterval(start: start, duration: 7 * 24 * 3600), with: request)
         #expect(week.count == 8)
+
+        let weekReachingMay25 = try await fixture.prayerManager.fetch(
+            spanning: DateInterval(start: try place.date(2026, 5, 18, 12, 0), duration: 7 * 24 * 3600),
+            with: request
+        )
+        #expect(weekReachingMay25.count == 7)
+        #expect(weekReachingMay25.last?.date == (try place.calendar()).startOfDay(for: try place.date(2026, 5, 24)))
     }
 
     /// A night too short to order its middle and last third keeps its day: the prayers stand, without those two times.

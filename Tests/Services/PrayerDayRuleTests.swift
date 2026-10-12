@@ -323,6 +323,24 @@ extension PrayerDayRuleTests {
         #expect(evening.map(\.date) == [june21])
     }
 
+    /// A span calculates only the days it reaches, so a day past its end that can't be calculated never stops it.
+    @Test
+    func aDayPastTheSpanNeverStopsIt() async throws {
+        let place = DayFixture(
+            "Edinburgh, Fajr 60 minutes later, past sunrise by May 26", 55.9533, -3.1883, "Europe/London", .muslimWorldLeague, 2026, 5, 17,
+            adjustments: .absolute(fajr: 60)
+        )
+        let request = try place.request()
+        let start = try place.date(2026, 5, 17, 12, 0)
+
+        await #expect(throws: PrayError.self) {
+            try await fixture.prayerManager.fetch(for: try place.date(2026, 5, 25), with: request)
+        }
+
+        let week = try await fixture.prayerManager.fetch(spanning: DateInterval(start: start, duration: 7 * 24 * 3600), with: request)
+        #expect(week.count == 8)
+    }
+
     /// From moments every three hours across two days: names are unique, prayers come in time order, and the next
     /// prayer is always among them.
     @Test(arguments: DayFixture.all)

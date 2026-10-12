@@ -90,11 +90,15 @@ public extension PrayerManager {
     /// whichever calendar days those are. `fetch(between:)` takes the interval's calendar days instead.
     func fetch(spanning dateInterval: DateInterval, with request: PrayerAPI.Request) async throws -> [PrayerDay] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
-        let firstDay = try await fetch(at: dateInterval.start, with: request)
+        var days = [try await fetch(at: dateInterval.start, with: request)]
 
-        // The last moment can belong to the next calendar day, whose Fajr may begin before midnight
-        return try await fetch(between: DateInterval(start: firstDay.date, end: dateInterval.end + .days(1, calendar)), with: request)
-            .filter { day in day.times[.fajr].map { $0.dateInterval.start <= dateInterval.end } ?? false }
+        // The next day joins once its Fajr, where this day's Isha ends, has begun by the end, so no day the span
+        // doesn't reach is calculated
+        while let lastDay = days.last, let nextFajr = lastDay.times[.isha]?.dateInterval.end, nextFajr <= dateInterval.end {
+            days.append(try await fetch(for: lastDay.date.tomorrow(using: calendar), with: request))
+        }
+
+        return days
     }
 
     /// The prayer days of each calendar day from the interval's start to its end.

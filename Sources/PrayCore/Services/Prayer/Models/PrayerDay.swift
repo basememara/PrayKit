@@ -39,17 +39,17 @@ public extension PrayerDay {
         return times.first(where: predicate) ?? tomorrow.first(where: predicate)
     }
 
-    /// The obligatory prayer whose time began most recently, which before Fajr is yesterday's Isha.
+    /// The obligatory prayer whose time began most recently, which before Fajr is yesterday's Isha once it has begun.
     func lastObligatory(at time: Date) -> PrayerTime? {
-        times
+        (yesterday + times)
             .filter { $0.type.isObligation && $0.dateInterval.start <= time }
             .max { $0.dateInterval.start < $1.dateInterval.start }
-            ?? yesterday[.isha]
     }
 
-    /// The next obligatory prayer to begin, which after Isha is tomorrow's Fajr.
+    /// The next obligatory prayer to begin: after Isha, tomorrow's Fajr; after midnight, yesterday's Isha if it
+    /// hasn't begun, as at high latitudes in summer.
     func nextObligatory(at time: Date) -> PrayerTime? {
-        (times + tomorrow)
+        (yesterday + times + tomorrow)
             .filter { $0.type.isObligation && $0.dateInterval.start > time }
             .min { $0.dateInterval.start < $1.dateInterval.start }
     }

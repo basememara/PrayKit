@@ -59,6 +59,19 @@ extension PrayerDayTests {
     }
 
     @Test
+    func yesterdaysIshaAfterMidnightIsNextUntilItBegins() throws {
+        // A high-latitude summer: yesterday's Isha begins at 00:50 today
+        let lateIsha = PrayerTime(type: .isha, dateInterval: DateInterval(start: start + 50 * 60, duration: 3600))
+        let day = PrayerDay(date: start, times: times(from: 0), yesterday: times(from: -24 * 3600).dropLast() + [lateIsha], tomorrow: [])
+
+        let last = try #require(day.lastObligatory(at: start + 20 * 60))
+        let next = try #require(day.nextObligatory(at: start + 20 * 60))
+
+        #expect(last.type == .maghrib)
+        #expect(next == lateIsha)
+    }
+
+    @Test
     func aSnoozeMustLandBeforeThePrayerEnds() throws {
         let dhuhr = try #require(day.times[.dhuhr])
         let halfway = dhuhr.dateInterval.start + 1800

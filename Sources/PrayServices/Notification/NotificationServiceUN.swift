@@ -58,12 +58,14 @@ private extension NotificationServiceUN {
         // swiftlint:disable:previous function_body_length cyclomatic_complexity
         let state = storage.load()
         let settings = state.document.settings
-        let timeZone = state.place?.timeZone ?? .current
 
         guard let request = PrayerAPI.Request(settings: settings, place: state.place) else {
-            log.error("Could not schedule prayer notifications due to missing settings")
+            log.error("Could not schedule prayer notifications without a place")
             return
         }
+
+        let timeZone = request.timeZone
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
         let dateInterval = DateInterval(start: .now, end: .now + .weeks(1))
         let prayerRequestHash = PrayerRequestHash(request: request, dateInterval: dateInterval, settings: settings)
@@ -81,7 +83,11 @@ private extension NotificationServiceUN {
         let prayerDays: [PrayerDay]
 
         do {
-            prayerDays = try await prayerManager.fetch(between: dateInterval, with: request)
+            // From yesterday, whose Isha can begin after midnight at high latitudes and is still to come
+            prayerDays = try await prayerManager.fetch(
+                between: DateInterval(start: dateInterval.start - .days(1, calendar), end: dateInterval.end),
+                with: request
+            )
         } catch {
             log.error("Could not fetch prayers for scheduling notifications", error: error)
             return
@@ -94,7 +100,6 @@ private extension NotificationServiceUN {
 
         log.info("Fetched \(prayerDays.count) days of prayers, begin scheduling notifications")
 
-        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
         let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: timeZone)
         var firstScheduledDate: Date?
         var lastScheduledDate = dateInterval.end
@@ -107,13 +112,15 @@ private extension NotificationServiceUN {
 
         // Schedule available notifications
         prayerDays.forEach { prayerDay in
-            prayerDay.times.forEach { prayerTime in
+            // Named by the prayer's day rather than its start, so an Isha after midnight can't share an identifier
+            let prefixIdentifier = prayerDay.date.shortString(timeZone: timeZone, calendar: calendar, locale: .posix)
+
+            // A prayer that has ended has nothing left to notify, its reminders all being earlier
+            prayerDay.times.filter { $0.dateInterval.end > now }.forEach { prayerTime in
                 guard counter > 0 else { return }
 
                 let isObligation = prayerTime.type.isObligation
                 let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
-                let prefixIdentifier = prayerTime.dateInterval.start
-                    .shortString(timeZone: timeZone, calendar: calendar, locale: .posix)
                 let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
                 let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
                 let iqamaSound = settings.iqamaReminders.sound
@@ -329,7 +336,7 @@ private extension NotificationServiceUN {
                     interruptionLevel: .passive,
                     identifier: iqamaUpdateIntervalIdentifier,
                     category: NotificationCategory.reminder.rawValue,
-                    userInfo: ["origin_at": iqamaUpdateIntervalOriginAt.timeIntervalSince1970]
+                    userInfo: ["origin_at": date.timeIntervalSince1970]
                 )
             }))
 

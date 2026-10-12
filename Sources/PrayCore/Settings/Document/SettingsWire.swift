@@ -109,8 +109,10 @@ public extension SettingsDocument {
                     return isChanged && previous[field.key.revisionKey] == revisionField
                 } ?? (stamped == nil)
 
-                // Never below the revision it replaces, which a device with a fast clock may have set ahead of the save
-                revisions[field.key] = isUnrevisedChange ? Revision.stamp(at: modifiedAt, after: stamped ?? .legacy) : stamped
+                // Never below a revision it replaces, which a device with a fast clock may have set ahead of the save
+                revisions[field.key] = isUnrevisedChange
+                    ? stamped.map { Revision.stamp(at: modifiedAt, after: $0) } ?? Revision(modifiedAt)
+                    : stamped
             }
 
         self.init(settings: settings, revisions: revisions)

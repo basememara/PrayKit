@@ -60,6 +60,18 @@ extension SettingsWireTests {
     }
 
     @Test
+    func aCopyWithNoRevisionsReadAtTheLegacyTimeStaysUnrevised() throws {
+        let document = SettingsDocument(
+            wireFields: try Self.legacyRecord(of: .everyFieldChanged),
+            base: Settings(),
+            modifiedAt: Revision.legacy.date,
+            previous: nil
+        )
+
+        #expect(SettingKey.allCases.allSatisfy { document.revision(of: $0) == .legacy })
+    }
+
+    @Test
     func anOlderVersionsChangeIsDetectedThoughItsRevisionStayed() {
         let previous = Self.revised.wireFields
         var incoming = previous

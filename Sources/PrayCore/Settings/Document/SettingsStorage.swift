@@ -25,13 +25,23 @@ public struct SettingsStorage: @unchecked Sendable {
 }
 
 public extension SettingsStorage {
+    /// The stored state; a value that doesn't decode reads as its default and keeps its stored revision.
     func load() -> DeviceState {
-        read().state
-    }
+        var settings = Settings()
+        var revisions = [SettingKey: Revision]()
 
-    /// Settings whose stored value does not decode. They read as their defaults and carry the stored revision.
-    func unreadableKeys() -> [SettingKey] {
-        read().unreadable
+        Settings.fields.forEach { field in
+            field.read(defaults.object(forKey: field.key.rawValue), into: &settings)
+
+            if let milliseconds = (defaults.object(forKey: field.key.revisionKey) as? NSNumber)?.int64Value {
+                revisions[field.key] = Revision(milliseconds: milliseconds)
+            }
+        }
+
+        return DeviceState(
+            document: SettingsDocument(settings: settings, revisions: revisions),
+            place: readPlace()
+        )
     }
 
     /// Writes whatever `transform` changes, and nothing else, so another process's other settings survive.
@@ -59,29 +69,6 @@ public extension SettingsStorage {
 // MARK: - Reading
 
 private extension SettingsStorage {
-    func read() -> (state: DeviceState, unreadable: [SettingKey]) {
-        var settings = Settings()
-        var revisions = [SettingKey: Revision]()
-        var unreadable = [SettingKey]()
-
-        Settings.fields.forEach { field in
-            if field.read(defaults.object(forKey: field.key.rawValue), into: &settings) == .unreadable {
-                unreadable.append(field.key)
-            }
-
-            if let milliseconds = (defaults.object(forKey: field.key.revisionKey) as? NSNumber)?.int64Value {
-                revisions[field.key] = Revision(milliseconds: milliseconds)
-            }
-        }
-
-        let state = DeviceState(
-            document: SettingsDocument(settings: settings, revisions: revisions),
-            place: readPlace()
-        )
-
-        return (state, unreadable)
-    }
-
     func readPlace() -> Place? {
         guard let pair = defaults.object(forKey: PlaceKey.coordinates) as? [Double], pair.count == 2 else {
             return nil

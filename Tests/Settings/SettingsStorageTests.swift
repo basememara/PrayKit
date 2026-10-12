@@ -24,7 +24,6 @@ extension SettingsStorageTests {
 
         #expect(state.document.settings == Settings())
         #expect(state.place == nil)
-        #expect(storage.unreadableKeys().isEmpty)
     }
 
     @Test
@@ -36,7 +35,6 @@ extension SettingsStorageTests {
         #expect(state.document.settings == .everyFieldChanged)
         #expect(state.document.revisions.isEmpty)
         #expect(state.place == expectedPlace)
-        #expect(storage.unreadableKeys().isEmpty)
     }
 
     @Test
@@ -73,13 +71,12 @@ extension SettingsStorageTests {
 
 extension SettingsStorageTests {
     @Test
-    func undecodableValuesAreReportedNotGuessed() {
+    func undecodableValuesKeepTheirDefaultsNotAGuess() {
         defaults.set(Data("not json".utf8), forKey: "iqamaTimes")
         defaults.set("NotAMethod", forKey: "calculationMethod")
         defaults.set(["fajr": "adhan", "isha": "no.such.sound"], forKey: "notificationSounds")
 
         let settings = storage.load().document.settings
-        #expect(Set(storage.unreadableKeys()) == [.iqamaTimes, .calculationMethod, .notificationSounds])
         #expect(settings.iqamaTimes == Settings().iqamaTimes)
         #expect(settings.calculationMethod == Settings().calculationMethod)
         #expect(settings.notificationSounds == NotificationSounds(rawValue: ["fajr": .adhan]))

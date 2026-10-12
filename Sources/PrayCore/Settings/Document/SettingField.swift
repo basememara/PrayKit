@@ -20,7 +20,7 @@ extension Settings {
         SettingField(.adjustmentMinutes, optional: \.adjustmentMinutes, .map(.int)),
         SettingField(.adjustmentElevation, optional: \.adjustmentElevation, .string),
         SettingField(.isGPSEnabled, \.isGPSEnabled, .bool),
-        SettingField(.geofenceRadius, \.geofenceRadius, .double),
+        SettingField(.geofenceRadius, \.geofenceRadius, .double, synced: false),
         SettingField(.iqamaTimes, \.iqamaTimes, .json),
         SettingField(.iqamaReminders, \.iqamaReminders, .json),
         SettingField(.isIqamaTimerEnabled, \.isIqamaTimerEnabled, .bool),
@@ -47,19 +47,15 @@ extension Settings {
 
 // MARK: - Field
 
-/// What reading one stored value found.
-enum FieldRead {
-    case absent
-    case stored
-
-    /// Undecodable, so the setting keeps its default rather than a guess.
-    case unreadable
-}
-
 /// One setting's knowledge, erased so the table can hold every value type.
 protocol AnySettingField: Sendable {
     var key: SettingKey { get }
-    func read(_ raw: Any?, into settings: inout Settings) -> FieldRead
+
+    /// Whether the setting follows the user to their other devices; the rest describe this device only.
+    var isSynced: Bool { get }
+
+    /// Applies a stored value, leaving the default when it doesn't decode.
+    func read(_ raw: Any?, into settings: inout Settings)
 
     /// The value to store, or `nil` to remove the key.
     func raw(of settings: Settings) -> Any?
@@ -82,14 +78,16 @@ protocol AnySettingField: Sendable {
 
 struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
     let key: SettingKey
+    let isSynced: Bool
     private let keyPath: WritableKeyPath<Settings, Value> & Sendable
-    private let decode: @Sendable (Any) -> Decoded<Value>
+    private let decode: @Sendable (Any) -> Value?
     private let encode: @Sendable (Value) -> Any?
     private let decodeWire: @Sendable (WireValue?) -> Value?
     private let encodeWire: @Sendable (Value) -> WireValue?
 
-    init(_ key: SettingKey, _ keyPath: WritableKeyPath<Settings, Value> & Sendable, _ codec: FieldCodec<Value>) {
+    init(_ key: SettingKey, _ keyPath: WritableKeyPath<Settings, Value> & Sendable, _ codec: FieldCodec<Value>, synced: Bool = true) {
         self.key = key
+        self.isSynced = synced
         self.keyPath = keyPath
         decode = codec.decode
         encode = codec.encode
@@ -104,6 +102,7 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
         _ codec: FieldCodec<Wrapped>
     ) where Value == Wrapped? {
         self.key = key
+        self.isSynced = true
         self.keyPath = keyPath
         decode = { codec.decode($0).map { Optional($0) } }
         encode = { $0.flatMap(codec.encode) }
@@ -114,19 +113,9 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
         encodeWire = { $0.flatMap(codec.encodeWire) }
     }
 
-    func read(_ raw: Any?, into settings: inout Settings) -> FieldRead {
-        guard let raw else { return .absent }
-
-        switch decode(raw) {
-        case let .value(value):
-            settings[keyPath: keyPath] = value
-            return .stored
-        case let .lossy(value):
-            settings[keyPath: keyPath] = value
-            return .unreadable
-        case .unreadable:
-            return .unreadable
-        }
+    func read(_ raw: Any?, into settings: inout Settings) {
+        guard let raw, let value = decode(raw) else { return }
+        settings[keyPath: keyPath] = value
     }
 
     func raw(of settings: Settings) -> Any? {
@@ -167,30 +156,10 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
 
 // MARK: - Codec
 
-enum Decoded<Value> {
-    case value(Value)
-
-    /// Decoded with some entries dropped, as when a map holds a value this version doesn't know.
-    case lossy(Value)
-
-    case unreadable
-
-    func map<T>(_ transform: (Value) -> T) -> Decoded<T> {
-        switch self {
-        case let .value(value):
-            return .value(transform(value))
-        case let .lossy(value):
-            return .lossy(transform(value))
-        case .unreadable:
-            return .unreadable
-        }
-    }
-}
-
 /// How a value is stored in a defaults suite and sent over the wire, matching the encodings the defaults
 /// suite and the iCloud record have always used.
 struct FieldCodec<Value: Sendable>: Sendable {
-    let decode: @Sendable (Any) -> Decoded<Value>
+    let decode: @Sendable (Any) -> Value?
     let encode: @Sendable (Value) -> Any?
     let decodeWire: @Sendable (WireValue) -> Value?
     let encodeWire: @Sendable (Value) -> WireValue?
@@ -199,7 +168,7 @@ struct FieldCodec<Value: Sendable>: Sendable {
 extension FieldCodec where Value == Double {
     static var double: Self {
         Self(
-            decode: { ($0 as? Double).map { .value($0) } ?? .unreadable },
+            decode: { $0 as? Double },
             encode: { $0 },
             decodeWire: { wire in
                 switch wire {
@@ -219,7 +188,7 @@ extension FieldCodec where Value == Double {
 extension FieldCodec where Value == Int {
     static var int: Self {
         Self(
-            decode: { ($0 as? Int).map { .value($0) } ?? .unreadable },
+            decode: { $0 as? Int },
             encode: { $0 },
             decodeWire: { wire in
                 guard case let .int(value) = wire else { return nil }
@@ -234,7 +203,7 @@ extension FieldCodec where Value == Bool {
     /// A flag, which the iCloud record stores as a number and reads back as "greater than zero".
     static var bool: Self {
         Self(
-            decode: { ($0 as? Bool).map { .value($0) } ?? .unreadable },
+            decode: { $0 as? Bool },
             encode: { $0 },
             decodeWire: { wire in
                 guard case let .int(value) = wire else { return nil }
@@ -248,7 +217,7 @@ extension FieldCodec where Value == Bool {
 extension FieldCodec where Value: RawRepresentable, Value.RawValue == String {
     static var string: Self {
         Self(
-            decode: { ($0 as? String).flatMap(Value.init(rawValue:)).map { .value($0) } ?? .unreadable },
+            decode: { ($0 as? String).flatMap(Value.init(rawValue:)) },
             encode: { $0.rawValue },
             decodeWire: { wire in
                 guard case let .string(value) = wire else { return nil }
@@ -263,34 +232,19 @@ extension FieldCodec where Value: Codable {
     /// A value stored, and sent, as JSON `Data`.
     static var json: Self {
         Self(
-            decode: { raw in
-                guard let data = raw as? Data, let value = try? JSONDecoder().decode(Value.self, from: data) else {
-                    return .unreadable
-                }
-
-                return .value(value)
-            },
+            decode: { ($0 as? Data).flatMap { try? JSONDecoder().decode(Value.self, from: $0) } },
             encode: { try? JSONEncoder().encode($0) },
             decodeWire: Self.decodeJSON,
             encodeWire: Self.encodeJSON
         )
     }
 
-    /// A per-prayer map, stored as a dictionary whose entries decode one by one, and sent as JSON `Data`.
+    /// A per-prayer map, stored as a dictionary whose entries decode one by one, so an entry this version
+    /// doesn't know is dropped rather than losing the map, and sent as JSON `Data`.
     static func map<Element: Sendable>(_ element: FieldCodec<Element>) -> Self
     where Value: RawRepresentable, Value.RawValue == [String: Element] {
         Self(
-            decode: { raw in
-                guard let dictionary = raw as? [String: Any] else { return .unreadable }
-
-                let entries = dictionary.compactMapValues { entry -> Element? in
-                    guard case let .value(value) = element.decode(entry) else { return nil }
-                    return value
-                }
-
-                guard let value = Value(rawValue: entries) else { return .unreadable }
-                return entries.count == dictionary.count ? .value(value) : .lossy(value)
-            },
+            decode: { ($0 as? [String: Any]).flatMap { Value(rawValue: $0.compactMapValues(element.decode)) } },
             encode: { $0.rawValue.compactMapValues(element.encode) },
             decodeWire: Self.decodeJSON,
             encodeWire: Self.encodeJSON

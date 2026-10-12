@@ -137,9 +137,9 @@ public enum SettingKey: String, CaseIterable, Codable, Sendable {
 }
 
 public extension SettingKey {
-    /// Whether the setting follows the user to their other devices; the rest describe this device only.
+    /// Whether the setting follows the user to their other devices, as its row in the field table says.
     var isSynced: Bool {
-        self != .geofenceRadius
+        Settings.fields.contains { $0.key == self && $0.isSynced }
     }
 
     /// The defaults key holding the setting's revision, next to its value.

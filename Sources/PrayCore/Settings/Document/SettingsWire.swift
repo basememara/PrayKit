@@ -60,7 +60,7 @@ public extension SettingsDocument {
     /// setting adds `"<key>_at"`. A `nil` setting has no field.
     var wireFields: [String: WireValue] {
         Settings.fields
-            .filter(\.key.isSynced)
+            .filter(\.isSynced)
             .reduce(into: [:]) { fields, field in
                 fields[field.key.rawValue] = field.wire(of: settings)
 
@@ -84,7 +84,7 @@ public extension SettingsDocument {
         var revisions = [SettingKey: Revision]()
 
         Settings.fields
-            .filter(\.key.isSynced)
+            .filter(\.isSynced)
             .forEach { field in
                 let value = fields[field.key.rawValue]
                 let revisionField = fields[field.key.revisionKey]
@@ -140,9 +140,9 @@ public extension SettingsDocument {
 
     /// Whether any synced setting here is newer than in `other`, so `other` is behind.
     func hasNewerRevisions(than other: SettingsDocument) -> Bool {
-        SettingKey.allCases
+        Settings.fields
             .filter(\.isSynced)
-            .contains { revision(of: $0) > other.revision(of: $0) }
+            .contains { revision(of: $0.key) > other.revision(of: $0.key) }
     }
 
     /// Stamps `keys` as edited at `date` without changing their values, so they win over older copies.

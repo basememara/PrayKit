@@ -11,8 +11,8 @@ import Foundation
 /// Reads and writes a device's settings in the shared defaults suite, under the keys every app version has
 /// used, plus one revision next to each value.
 ///
-/// `@unchecked Sendable`: its only state is a `UserDefaults`, which is documented as thread-safe, so any
-/// process or thread can use it, including widgets and extensions.
+/// `@unchecked Sendable`: its only state is a `UserDefaults`, which is documented as thread-safe, and within a
+/// process one lock keeps each read and write whole, so a value is never read with another value's revision.
 public struct SettingsStorage: @unchecked Sendable {
     /// The suite the settings live in, for reading keys earlier versions left behind.
     public let defaults: UserDefaults
@@ -27,21 +27,7 @@ public struct SettingsStorage: @unchecked Sendable {
 public extension SettingsStorage {
     /// The stored state; a value that doesn't decode reads as its default and keeps its stored revision.
     func load() -> DeviceState {
-        var settings = Settings()
-        var revisions = [SettingKey: Revision]()
-
-        Settings.fields.forEach { field in
-            field.read(defaults.object(forKey: field.key.rawValue), into: &settings)
-
-            if let milliseconds = (defaults.object(forKey: field.key.revisionKey) as? NSNumber)?.int64Value {
-                revisions[field.key] = Revision(milliseconds: milliseconds)
-            }
-        }
-
-        return DeviceState(
-            document: SettingsDocument(settings: settings, revisions: revisions),
-            place: readPlace()
-        )
+        Self.lock.withLock(read)
     }
 
     /// Writes whatever `transform` changes, and nothing else, so another process's other settings survive.
@@ -50,7 +36,7 @@ public extension SettingsStorage {
     @discardableResult
     func update(_ transform: (DeviceState) -> DeviceState) -> DeviceState {
         Self.lock.withLock {
-            let current = load()
+            let current = read()
             let updated = transform(current)
             write(updated, over: current)
             return updated
@@ -69,6 +55,24 @@ public extension SettingsStorage {
 // MARK: - Reading
 
 private extension SettingsStorage {
+    func read() -> DeviceState {
+        var settings = Settings()
+        var revisions = [SettingKey: Revision]()
+
+        Settings.fields.forEach { field in
+            field.read(defaults.object(forKey: field.key.rawValue), into: &settings)
+
+            if let milliseconds = (defaults.object(forKey: field.key.revisionKey) as? NSNumber)?.int64Value {
+                revisions[field.key] = Revision(milliseconds: milliseconds)
+            }
+        }
+
+        return DeviceState(
+            document: SettingsDocument(settings: settings, revisions: revisions),
+            place: readPlace()
+        )
+    }
+
     func readPlace() -> Place? {
         guard let pair = defaults.object(forKey: PlaceKey.coordinates) as? [Double], pair.count == 2 else {
             return nil

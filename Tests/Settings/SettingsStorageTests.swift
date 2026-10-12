@@ -189,6 +189,30 @@ extension SettingsStorageTests {
 
         #expect(storage.load().document.settings.hijriDayOffset == 200)
     }
+
+    @Test
+    func aReadNeverPairsAValueWithAnotherValuesRevision() throws {
+        let defaults = try #require(InterleavingDefaults(suiteName: UUID().uuidString))
+        let storage = SettingsStorage(defaults: defaults)
+        let writing = DispatchGroup()
+        storage.edit { $0.snoozeMinutes = 10 }
+
+        // Between reading the value and its revision, another thread saves a new value with a new revision
+        defaults.afterReading(SettingKey.snoozeMinutes.rawValue) {
+            writing.enter()
+            Thread {
+                storage.edit { $0.snoozeMinutes = 20 }
+                writing.leave()
+            }.start()
+            _ = writing.wait(timeout: .now() + 0.2)
+        }
+
+        let read = storage.load().document
+        writing.wait()
+        let stored = storage.load().document
+
+        #expect(read.revision(of: .snoozeMinutes) != stored.revision(of: .snoozeMinutes) || read.settings.snoozeMinutes == 20)
+    }
 }
 
 // MARK: - Helpers
@@ -263,5 +287,26 @@ private extension SettingsStorageTests {
             regionName: "Somewhere",
             fixedAt: Date(timeIntervalSince1970: 1_700_000_000)
         )
+    }
+}
+
+/// Runs a step once, right after a key is read, to land a write between two reads.
+private final class InterleavingDefaults: UserDefaults, @unchecked Sendable {
+    private let lock = NSLock()
+    private var pending: (key: String, step: () -> Void)?
+
+    func afterReading(_ key: String, _ step: @escaping () -> Void) {
+        lock.withLock { pending = (key, step) }
+    }
+
+    override func object(forKey defaultName: String) -> Any? {
+        let value = super.object(forKey: defaultName)
+        let step = lock.withLock {
+            guard let pending, pending.key == defaultName else { return nil as (() -> Void)? }
+            self.pending = nil
+            return pending.step
+        }
+        step?()
+        return value
     }
 }

@@ -13,6 +13,15 @@ Pure SPM, `swift-tools-version: 6.0`, platforms macOS 14 / iOS 17 / watchOS 10 (
 
 Dependencies (both branch-tracked): ZamzamKit (`main`), adhan-swift (`develop`). Honor the committed `Package.resolved`; re-resolve deliberately, in its own commit. When this checkout is open inside the PrayWatch workspace, Xcode rewrites that file with the app's workspace-wide resolution (the ZamzamKit pin disappears, app-only packages appear); never commit that drift — `git checkout -- Package.resolved` first. ZamzamKit is Basem's own foundation package (`/Users/basem/Developer/Zamzam/ZamzamKit`, with its own `AGENTS.md`); utilities that are not prayer-specific belong there.
 
+## The prayer day
+
+A prayer day runs from its Fajr to the next Fajr: its essential prayers (Fajr, sunrise, Dhuhr, Asr, Maghrib, Isha) follow one another with no gap, Isha ends at the next day's Fajr, and every moment belongs to exactly one day. Midnight is not a boundary; Isha (Paris on France 18) and even Maghrib (Reykjavik) can begin after it.
+
+- `PrayerManager.fetch(at:)` is the day holding a moment, `fetch(spanning:)` the days from it, `fetch(for:)` and `fetch(between:)` calendar days for browsing.
+- A `PrayerDay` answers from its Fajr through its `tomorrow`, never for a moment before its Fajr, which belongs to the day before. There is no `yesterday`.
+- The calculators must keep the days tiling: Maghrib ends at the Isha actually used, tomorrow's Fajr takes the same adjustments as the next day's own, and an Isha that would reach the next Fajr throws.
+- `PrayerDayRuleTests` holds the rule: sweeps over 16 real fixtures (three with Isha or Maghrib after midnight) for days, timelines, notifications and the Hijri date. A change to day logic lands with a case there.
+
 ## Build & test
 
 ```sh

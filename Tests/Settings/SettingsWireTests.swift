@@ -64,8 +64,37 @@ extension SettingsWireTests {
         let document = SettingsDocument(wireFields: incoming, base: Settings(), modifiedAt: saved, previous: previous)
 
         #expect(document.settings.snoozeMinutes == 45)
-        #expect(document.revision(of: .snoozeMinutes) == Revision(saved))
+        #expect(document.revision(of: .snoozeMinutes) > Self.revised.revision(of: .snoozeMinutes))
         #expect(document.revision(of: .theme) == Self.revised.revision(of: .theme))
+    }
+
+    @Test
+    func aSettingTheRecordNeverCarriedArrivesUnrevised() {
+        // An upgraded device uploads a synced setting the record never had; its value is no edit
+        var previous = Self.revised.wireFields
+        previous["adhanDuaa"] = nil
+        previous["adhanDuaa_at"] = nil
+        var incoming = previous
+        incoming["adhanDuaa"] = .string("off")
+
+        let document = SettingsDocument(wireFields: incoming, base: Settings(), modifiedAt: saved, previous: previous)
+
+        #expect(document.revision(of: .adhanDuaa) == .legacy)
+    }
+
+    @Test
+    func anOlderVersionsChangeOutranksTheRevisionItReplaced() {
+        // A newer device with a fast clock stamped the setting after the moment the older version saved
+        let stampedAhead = saved + 30
+        var previous = Self.revised.wireFields
+        previous["snoozeMinutes_at"] = .int(Revision(stampedAhead).milliseconds)
+        var incoming = previous
+        incoming["snoozeMinutes"] = .int(45)
+
+        let document = SettingsDocument(wireFields: incoming, base: Settings(), modifiedAt: saved, previous: previous)
+
+        #expect(document.settings.snoozeMinutes == 45)
+        #expect(document.revision(of: .snoozeMinutes) > Revision(stampedAhead))
     }
 
     @Test
@@ -77,7 +106,7 @@ extension SettingsWireTests {
         let document = SettingsDocument(wireFields: incoming, base: Settings(), modifiedAt: saved, previous: previous)
 
         #expect(document.settings.duhaReminder == nil)
-        #expect(document.revision(of: .duhaReminder) == Revision(saved))
+        #expect(document.revision(of: .duhaReminder) > Self.revised.revision(of: .duhaReminder))
     }
 
     @Test

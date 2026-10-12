@@ -69,6 +69,9 @@ protocol AnySettingField: Sendable {
     /// Applies a field from the wire, returning `false` when it can't be used and the setting keeps its value.
     func readWire(_ value: WireValue?, into settings: inout Settings) -> Bool
 
+    /// Whether a missing field is itself a value, as for an optional setting that is off.
+    var isOptional: Bool { get }
+
     func isEqual(_ lhs: Settings, _ rhs: Settings) -> Bool
     func copy(from source: Settings, into target: inout Settings)
 
@@ -137,6 +140,10 @@ struct SettingField<Value: Codable & Equatable & Sendable>: AnySettingField {
         guard let decoded = decodeWire(value) else { return false }
         settings[keyPath: keyPath] = decoded
         return true
+    }
+
+    var isOptional: Bool {
+        decodeWire(nil) != nil
     }
 
     func isEqual(_ lhs: Settings, _ rhs: Settings) -> Bool {

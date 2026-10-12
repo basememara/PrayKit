@@ -101,12 +101,16 @@ public extension SettingsDocument {
                 }
 
                 let isUnrevisedChange = previous.map { previous in
+                    // A setting the last copy never carried is new to the copy, not changed by an older version
+                    guard previous[field.key.rawValue] != nil || field.isOptional else { return false }
+
                     var seen = settings
                     let isChanged = !field.readWire(previous[field.key.rawValue], into: &seen) || !field.isEqual(seen, settings)
                     return isChanged && previous[field.key.revisionKey] == revisionField
                 } ?? (stamped == nil)
 
-                revisions[field.key] = isUnrevisedChange ? Revision(modifiedAt) : stamped
+                // Never below the revision it replaces, which a device with a fast clock may have set ahead of the save
+                revisions[field.key] = isUnrevisedChange ? Revision.stamp(at: modifiedAt, after: stamped ?? .legacy) : stamped
             }
 
         self.init(settings: settings, revisions: revisions)

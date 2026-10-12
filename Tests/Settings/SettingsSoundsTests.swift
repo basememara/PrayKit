@@ -65,6 +65,19 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func aSoundPickedWhileMutedReplacesTheOneRemembered() {
+        var settings = Settings()
+        settings.notificationSounds[.asr] = .chimes
+        settings.setMuted(true, for: .asr)
+
+        settings.setSound(.vibrate, for: .asr)
+        settings.setSound(.silent, for: .asr)
+        settings.setMuted(false, for: .asr)
+
+        #expect(settings.notificationSounds[.asr] == .adhan)
+    }
+
+    @Test
     func unmutingWithNothingRememberedPicksTheDefaultSound() {
         var settings = Settings()
         settings.notificationSounds[.dhuhr] = .off

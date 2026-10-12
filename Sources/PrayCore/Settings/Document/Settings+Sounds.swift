@@ -44,6 +44,13 @@ public extension Settings {
         }
     }
 
+    /// Sets the sound a prayer's notification plays, as chosen in a picker, so a later unmute brings back what
+    /// was picked last rather than what played before an earlier mute.
+    mutating func setSound(_ sound: NotificationSound, for prayer: Prayer) {
+        notificationSounds[prayer] = sound
+        soundsBeforeMute[prayer] = nil
+    }
+
     /// The adhan the user chose for a prayer, in the length that prayer uses; Al-Aqsa when none is chosen.
     func adhanURL(for prayer: Prayer) -> URL? {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)

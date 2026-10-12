@@ -82,8 +82,7 @@ public extension PrayerTimer {
         }
 
         let preAdhanMinutes = preAdhanMinutes[nextPrayer.type]
-        var calendar = Calendar.current
-        calendar.timeZone = timeZone
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
         // Declare iqama time if applicable
         var iqamaTime: Date?

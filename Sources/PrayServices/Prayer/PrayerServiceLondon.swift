@@ -16,7 +16,9 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
-    private let lastDate = Date(year: 2026, month: 12, day: 31)
+
+    /// The last day the bundled timetables cover.
+    private static let lastDay = DateComponents(year: 2026, month: 12, day: 31)
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager
@@ -37,8 +39,7 @@ public extension PrayerServiceLondon {
         let dateFormatter = DateFormatter(dateFormat: "yyyy-MM-dd", calendar: calendar)
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
-        // Validate does not go beyond available dates
-        guard date <= lastDate ?? .now.endOfYear(using: calendar) else {
+        guard let lastDate = calendar.date(from: Self.lastDay), calendar.startOfDay(for: date) <= lastDate else {
             log.warning("London prayers not available for '\(date.formatted())'")
             return []
         }

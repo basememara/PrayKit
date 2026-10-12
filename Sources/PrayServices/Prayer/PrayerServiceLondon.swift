@@ -74,7 +74,7 @@ public extension PrayerServiceLondon {
 
         guard let tomorrowPrayers,
               let originalTomorrowFajrTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.fajr].joined(separator: " ")),
-              let tomorrowSunriseTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.sunrise].joined(separator: " "))
+              var tomorrowSunriseTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.sunrise].joined(separator: " "))
         else {
             log.error("Could not initialize tomorrow prayer times from London prayer response.")
             throw PrayError.invalidTimes
@@ -82,10 +82,11 @@ public extension PrayerServiceLondon {
 
         var tomorrowFajrTime = originalTomorrowFajrTime
 
-        // Apply user adjustments if applicable
+        // Apply user adjustments if applicable; tomorrow's are applied the same way, so Isha ends where its Fajr begins
         if let adjustments = request.adjustments, request.adjustments?.isEmpty == false {
             if adjustments.sunrise != 0 {
                 sunriseTime = (sunriseTime + .minutes(adjustments.sunrise)).roundedMinute(using: calendar)
+                tomorrowSunriseTime = (tomorrowSunriseTime + .minutes(adjustments.sunrise)).roundedMinute(using: calendar)
             }
 
             if adjustments.fajr != 0 {

@@ -92,6 +92,23 @@ public extension PrayerServiceAdhan {
             throw PrayError.invalidElevation
         }
 
+        let ishaTime: Date = {
+            if let adjustments = request.adjustments, adjustments.isha != 0, adjustments.isIshaMaghribRelative {
+                let isha = prayers.maghrib + .minutes(adjustments.isha)
+                return isha < tomorrowFajrTime ? isha : prayers.isha
+            }
+
+            guard request.method == .ummAlQuraRamadan,
+                  date.isRamadan(timeZone: request.timeZone),
+                  request.adjustments?.isha ?? 0 == 0
+            else {
+                return prayers.isha
+            }
+
+            let isha = prayers.isha + .minutes(30)
+            return isha < tomorrowFajrTime ? isha : prayers.isha
+        }()
+
         times.append(contentsOf: [
             PrayerTime(
                 type: .dhuhr,
@@ -111,28 +128,13 @@ public extension PrayerServiceAdhan {
                 type: .maghrib,
                 dateInterval: .init(
                     start: prayers.maghrib,
-                    end: prayers.isha
+                    end: ishaTime
                 )
             ),
             PrayerTime(
                 type: .isha,
                 dateInterval: .init(
-                    start: {
-                        if let adjustments = request.adjustments, adjustments.isha != 0, adjustments.isIshaMaghribRelative {
-                            let isha = prayers.maghrib + .minutes(adjustments.isha)
-                            return isha < tomorrowFajrTime ? isha : prayers.isha
-                        }
-
-                        guard request.method == .ummAlQuraRamadan,
-                              date.isRamadan(timeZone: request.timeZone),
-                              request.adjustments?.isha ?? 0 == 0
-                        else {
-                            return prayers.isha
-                        }
-
-                        let isha = prayers.isha + .minutes(30)
-                        return isha < tomorrowFajrTime ? isha : prayers.isha
-                    }(),
+                    start: ishaTime,
                     end: tomorrowFajrTime
                 )
             )

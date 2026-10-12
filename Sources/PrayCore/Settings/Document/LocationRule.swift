@@ -68,11 +68,11 @@ public extension SettingsStorage {
         update { LocationRule.apply(coordinates, timeZone: timeZone, at: date, to: $0) ?? $0 }
     }
 
-    /// Saves a GPS fix through the location rule, returning whether the rule kept it.
+    /// Saves a GPS fix through the location rule, dated when it was taken, returning whether the rule kept it.
     @discardableResult
-    func saveLocation(_ location: CLLocation, timeZone: TimeZone = .current, at date: Date = .now) -> Bool {
+    func saveLocation(_ location: CLLocation, timeZone: TimeZone = .current) -> Bool {
         let before = load()
-        return saveLocation(Coordinates(from: location.coordinate), timeZone: timeZone, at: date) != before
+        return saveLocation(Coordinates(from: location.coordinate), timeZone: timeZone, at: location.timestamp) != before
     }
 
     /// Names the saved place by reverse geocoding the fix, unless a newer fix moved it in the meantime.

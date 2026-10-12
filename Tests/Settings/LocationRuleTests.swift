@@ -59,7 +59,7 @@ struct LocationRuleTests {
         let updated = try #require(LocationRule.apply(nearby, timeZone: current, at: date + 60, to: state))
 
         #expect(updated.place?.timeZone == current)
-        #expect(updated.document.settings.calculationMethod == CalculationMethod.recommended(for: current) ?? .moonsightingCommittee)
+        #expect(updated.document.settings.calculationMethod == .ummAlQura)
         #expect(updated.document.revision(of: .calculationMethod) > state.document.revision(of: .calculationMethod))
     }
 
@@ -114,6 +114,23 @@ extension LocationRuleTests {
     }
 
     @Test
+    func aFixIsDatedWhenItWasTakenNotWhenItWasSaved() throws {
+        let storage = SettingsStorage(defaults: .makeTest())
+        let cached = CLLocation(
+            coordinate: CLLocationCoordinate2D(latitude: toronto.latitude, longitude: toronto.longitude),
+            altitude: 0,
+            horizontalAccuracy: 10,
+            verticalAccuracy: 10,
+            timestamp: date
+        )
+
+        storage.saveLocation(cached)
+
+        let place = try #require(storage.load().place)
+        #expect(place.fixedAt == date)
+    }
+
+    @Test
     func theRegionNameLandsOnlyOnTheFixItWasLookedUpFor() throws {
         let storage = SettingsStorage(defaults: .makeTest())
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
@@ -139,7 +156,7 @@ extension LocationRuleTests {
 
         #expect(saved.place == Place(coordinates: toronto, timeZone: timeZone, regionName: "Kuala Lumpur", fixedAt: date))
         #expect(!saved.document.settings.isGPSEnabled)
-        #expect(saved.document.settings.calculationMethod == .recommended(for: timeZone))
+        #expect(saved.document.settings.calculationMethod == .jakim)
         #expect(storage.load() == saved)
     }
 }

@@ -154,12 +154,11 @@ private extension PrayerManager {
     ) async throws -> [PrayerTimer] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         let firstDay = try await fetch(at: date, with: request)
-        let previousDay = try? await fetch(for: firstDay.date.yesterday(using: calendar), using: calendar, with: request)
 
         var entries = try await calculate(
             day: firstDay,
             from: date,
-            after: previousDay,
+            after: nil,
             expanded: expanded,
             limit: limit,
             using: calendar,

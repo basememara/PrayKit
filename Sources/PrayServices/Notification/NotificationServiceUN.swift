@@ -99,7 +99,7 @@ private extension NotificationServiceUN {
         var firstScheduledDate: Date?
         var lastScheduledDate = dateInterval.end
         var counter = 58 // Unofficial limit for scheduling local notifications
-        var pendingAdds: [(identifier: String, add: () -> Void)] = []
+        var pendingAdds: [(identifier: String, add: () async throws -> Void)] = []
         let now = dateInterval.start
         #if !os(macOS)
         var siriShortcuts = [INRelevantShortcut]()
@@ -137,7 +137,7 @@ private extension NotificationServiceUN {
                 // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
                 if sound != .off && counter > 0 && prayerTime.dateInterval.start > now && !(isJumuah && hasIqamaReminder) {
                     pendingAdds.append((identifier, {
-                        userNotification.add(
+                        try await userNotification.add(
                             date: prayerTime.dateInterval.start,
                             body: localized.prayerNotificationBody(
                                 for: prayerTime,
@@ -149,10 +149,7 @@ private extension NotificationServiceUN {
                             identifier: identifier,
                             category: (isObligation ? NotificationCategory.main : .reminder).rawValue,
                             userInfo: userInfo
-                        ) {
-                            guard let error = $0 else { return }
-                            log.error("Failed to create a notifications for \"\(identifier)\"", error: error)
-                        }
+                        )
                     }))
 
                     // Update scheduled range and counter
@@ -169,7 +166,7 @@ private extension NotificationServiceUN {
 
                 if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
                     pendingAdds.append((iqamaIdentifier, {
-                        userNotification.add(
+                        try await userNotification.add(
                             date: iqamaReminderDate,
                             body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
                             sound: iqamaSound.file.map {
@@ -184,10 +181,7 @@ private extension NotificationServiceUN {
                             identifier: iqamaIdentifier,
                             category: NotificationCategory.reminder.rawValue,
                             userInfo: userInfo
-                        ) {
-                            guard let error = $0 else { return }
-                            log.error("Failed to create a notifications for \"\(iqamaIdentifier)\"", error: error)
-                        }
+                        )
                     }))
 
                     // Update counter
@@ -219,7 +213,7 @@ private extension NotificationServiceUN {
 
                 if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
                     pendingAdds.append((reminderIdentifier, {
-                        userNotification.add(
+                        try await userNotification.add(
                             date: reminderDate,
                             body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
                             sound: reminderSound.file.map {
@@ -234,10 +228,7 @@ private extension NotificationServiceUN {
                             identifier: reminderIdentifier,
                             category: NotificationCategory.reminder.rawValue,
                             userInfo: userInfo
-                        ) {
-                            guard let error = $0 else { return }
-                            log.error("Failed to create a notifications for \"\(reminderIdentifier)\"", error: error)
-                        }
+                        )
                     }))
 
                     // Update counter
@@ -254,7 +245,7 @@ private extension NotificationServiceUN {
 
                     if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
                         pendingAdds.append((reminderIdentifier, {
-                            userNotification.add(
+                            try await userNotification.add(
                                 date: reminderDate,
                                 body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes),
                                 sound: reminderSound.file.map {
@@ -269,10 +260,7 @@ private extension NotificationServiceUN {
                                 identifier: reminderIdentifier,
                                 category: NotificationCategory.reminder.rawValue,
                                 userInfo: userInfo
-                            ) {
-                                guard let error = $0 else { return }
-                                log.error("Failed to create a notifications for \"\(reminderIdentifier)\"", error: error)
-                            }
+                            )
                         }))
 
                         // Update counter
@@ -289,7 +277,7 @@ private extension NotificationServiceUN {
 
                     if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
                         pendingAdds.append((reminderIdentifier, {
-                            userNotification.add(
+                            try await userNotification.add(
                                 date: reminderTime,
                                 body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
                                 sound: reminderSound.file.map {
@@ -304,10 +292,7 @@ private extension NotificationServiceUN {
                                 identifier: reminderIdentifier,
                                 category: NotificationCategory.reminder.rawValue,
                                 userInfo: userInfo
-                            ) {
-                                guard let error = $0 else { return }
-                                log.error("Failed to create a notifications for \"\(reminderIdentifier)\"", error: error)
-                            }
+                            )
                         }))
 
                         // Update counter
@@ -338,17 +323,14 @@ private extension NotificationServiceUN {
             let date = -iqamaUpdateIntervalOriginAt.timeIntervalSinceNow < timeInterval ? iqamaUpdateIntervalOriginAt : .now
 
             pendingAdds.append((iqamaUpdateIntervalIdentifier, {
-                userNotification.add(
+                try await userNotification.add(
                     date: date.addingTimeInterval(timeInterval),
                     body: "Check masjid iqama times",
                     interruptionLevel: .passive,
                     identifier: iqamaUpdateIntervalIdentifier,
                     category: NotificationCategory.reminder.rawValue,
                     userInfo: ["origin_at": iqamaUpdateIntervalOriginAt.timeIntervalSince1970]
-                ) {
-                    guard let error = $0 else { return }
-                    log.error("Failed to create a notifications for \"\(iqamaUpdateIntervalIdentifier)\"", error: error)
-                }
+                )
             }))
 
             // Update counter
@@ -368,7 +350,7 @@ private extension NotificationServiceUN {
         }
 
         pendingAdds.append(("calibrate", {
-            userNotification.add(
+            try await userNotification.add(
                 date: calibrateDate,
                 body: localized.calibrateNotificationBody,
                 sound: .default,
@@ -376,10 +358,7 @@ private extension NotificationServiceUN {
                 identifier: "calibrate",
                 category: NotificationCategory.calibrate.rawValue,
                 userInfo: calibrateUserInfo
-            ) {
-                guard let error = $0 else { return }
-                log.error("Failed to create a notifications for \"calibrate\"", error: error)
-            }
+            )
         }))
 
         #if os(iOS)
@@ -394,7 +373,7 @@ private extension NotificationServiceUN {
             }
 
             pendingAdds.append(("calibrate-beacon", {
-                userNotification.add(
+                try await userNotification.add(
                     region: region,
                     body: localized.beaconNotificationBody,
                     title: localized.beaconNotificationTitle,
@@ -402,10 +381,7 @@ private extension NotificationServiceUN {
                     identifier: "calibrate-beacon",
                     category: NotificationCategory.beacon.rawValue,
                     userInfo: ["coordinates": request.coordinates.description]
-                ) {
-                    guard let error = $0 else { return }
-                    log.error("Failed to create a notifications for \"calibrate-beacon\"", error: error)
-                }
+                )
             }))
         } else {
             await userNotification.remove(withCategory: NotificationCategory.beacon.rawValue)
@@ -429,10 +405,17 @@ private extension NotificationServiceUN {
         // The removal has no completion, so wait for it to land: adding first could exceed the 64-request cap
         userNotification.remove(withIdentifiers: staleIdentifiers)
         _ = await userNotification.pendingNotificationRequests()
-        pendingAdds.forEach { $0.add() }
+
+        for pending in pendingAdds {
+            do {
+                try await pending.add()
+            } catch {
+                log.error("Failed to create a notifications for \"\(pending.identifier)\"", error: error)
+            }
+        }
+
         log.debug("Replaced pending notifications, removed \(staleIdentifiers.count) no longer scheduled")
 
-        // The add completions are asynchronous, so ask the store what actually landed
         let pendingCount = await userNotification.pendingNotificationRequests().count
         let scheduledRange = "\(firstScheduledDate?.formatted() ?? "none") to \(lastScheduledDate.formatted())"
         log.info("Requested \(58 - counter) notifications for prayers from \(scheduledRange), \(pendingCount) pending in the notification center")
@@ -461,38 +444,39 @@ public extension NotificationServiceUN {
         }
     }
 
-    func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) -> Date {
+    func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) async -> Date {
         let state = storage.load()
         let timeInterval = timeInterval ?? TimeInterval(state.document.settings.snoozeMinutes * 60)
         let date = Date(timeIntervalSinceNow: timeInterval)
         let identifier = "\(date.shortString(timeZone: state.place?.timeZone ?? .current, locale: .posix))-\(prayerTime.type)-snooze"
         let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
 
-        userNotification.add(
-            timeInterval: timeInterval,
-            body: localized.prayerNotificationReminder(for: prayerTime),
-            sound: sound.file.map {
-                #if os(iOS)
-                return UNNotificationSound(named: UNNotificationSoundName($0))
-                #else
-                return .default
-                #endif
-            },
-            interruptionLevel: .timeSensitive,
-            identifier: identifier,
-            category: NotificationCategory.snooze.rawValue,
-            userInfo: [
-                "prayer_time": (try? prayerTime.encode()) ?? Data(),
-                // Next trigger date not as expected
-                // https://stackoverflow.com/q/40411812
-                "trigger_timestamp": date.timeIntervalSince1970
-            ]
-        ) {
-            guard let error = $0 else { return }
+        do {
+            try await userNotification.add(
+                timeInterval: timeInterval,
+                body: localized.prayerNotificationReminder(for: prayerTime),
+                sound: sound.file.map {
+                    #if os(iOS)
+                    return UNNotificationSound(named: UNNotificationSoundName($0))
+                    #else
+                    return .default
+                    #endif
+                },
+                interruptionLevel: .timeSensitive,
+                identifier: identifier,
+                category: NotificationCategory.snooze.rawValue,
+                userInfo: [
+                    "prayer_time": (try? prayerTime.encode()) ?? Data(),
+                    // Next trigger date not as expected
+                    // https://stackoverflow.com/q/40411812
+                    "trigger_timestamp": date.timeIntervalSince1970
+                ]
+            )
+            log.info("Added notification reminder")
+        } catch {
             log.error("Failed to create a notifications for \"\(identifier)\"", error: error)
         }
 
-        log.info("Added notification reminder")
         return date
     }
 

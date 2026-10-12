@@ -12,7 +12,7 @@ public protocol NotificationService: Sendable {
     func schedulePrayers() async
 
     @discardableResult
-    func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) -> Date
+    func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) async -> Date
 
     var hasSnooze: Bool { get async }
     func removeSnooze() async
@@ -20,8 +20,8 @@ public protocol NotificationService: Sendable {
 
 public extension NotificationService {
     @discardableResult
-    func addSnooze(for prayerTime: PrayerTime) -> Date {
-        addSnooze(for: prayerTime, in: nil)
+    func addSnooze(for prayerTime: PrayerTime) async -> Date {
+        await addSnooze(for: prayerTime, in: nil)
     }
 }
 

@@ -6,9 +6,9 @@ let package = Package(
     name: "PrayKit",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v12),
-        .iOS(.v15),
-        .watchOS(.v8)
+        .macOS(.v14),
+        .iOS(.v17),
+        .watchOS(.v10)
     ],
     products: [
         .library(name: "PrayKit", targets: ["PrayKit"]),

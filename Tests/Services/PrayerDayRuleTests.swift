@@ -303,6 +303,26 @@ extension PrayerDayRuleTests {
         #expect(!fromCalendarDays.contains { $0.prayerTime.dateInterval.start == ishaBegins })
     }
 
+    /// The days a span reaches are those holding its moments, so an end after a Fajr that begins before midnight
+    /// reaches the next calendar day's, and a span inside one evening is that one day.
+    @Test
+    func aSpanEndsWithTheDayHoldingItsLastMoment() async throws {
+        let place = try #require(DayFixture.all.first { $0.name.hasPrefix("Edinburgh") })
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
+        let june28 = calendar.startOfDay(for: try place.date(2026, 6, 28))
+        let start = try place.date(2026, 6, 20, 23, 45)
+
+        let week = try await fixture.prayerManager.fetch(spanning: DateInterval(start: start, duration: 7 * 24 * 3600), with: request)
+        let evening = try await fixture.prayerManager.fetch(spanning: DateInterval(start: start, duration: 300), with: request)
+
+        #expect(week.first?.date == june21)
+        #expect(week.last?.date == june28)
+        #expect(week.count == 8)
+        #expect(evening.map(\.date) == [june21])
+    }
+
     /// From moments every three hours across two days: names are unique, prayers come in time order, and the next
     /// prayer is always among them.
     @Test(arguments: DayFixture.all)
@@ -314,7 +334,8 @@ extension PrayerDayRuleTests {
 
         for hours in stride(from: 0, to: 48, by: 3) {
             let now = noon + TimeInterval(hours * 3600)
-            let days = try await fixture.prayerManager.fetch(spanning: DateInterval(start: now, duration: 7 * 24 * 3600), with: request)
+            let week = DateInterval(start: now, duration: 7 * 24 * 3600)
+            let days = try await fixture.prayerManager.fetch(spanning: week, with: request)
             let scheduled = NotificationServiceUN.prayersToNotify(in: days, from: now, calendar: calendar)
             let identifiers = scheduled.map { "\($0.prefix)-\($0.prayerTime.type)" }
             let starts = scheduled.map(\.prayerTime.dateInterval.start)
@@ -323,6 +344,9 @@ extension PrayerDayRuleTests {
             if Set(identifiers).count != identifiers.count { problems.append("\(now): an identifier repeats") }
             if starts != starts.sorted() { problems.append("\(now): out of order") }
             if !scheduled.contains(where: { $0.prayerTime == next }) { problems.append("\(now): the next prayer is missing") }
+            if days.first?.contains(week.start) != true || days.last?.contains(week.end) != true {
+                problems.append("\(now): the days don't reach both ends of the week")
+            }
         }
 
         let problemCount = problems.count

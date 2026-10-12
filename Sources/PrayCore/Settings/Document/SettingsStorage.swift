@@ -48,13 +48,12 @@ public extension SettingsStorage {
     /// Within a process, updates run one at a time, so none is lost to a writer on another thread.
     @discardableResult
     func update(_ transform: (DeviceState) -> DeviceState) -> DeviceState {
-        Self.lock.lock()
-        defer { Self.lock.unlock() }
-
-        let current = load()
-        let updated = transform(current)
-        write(updated, over: current)
-        return updated
+        Self.lock.withLock {
+            let current = load()
+            let updated = transform(current)
+            write(updated, over: current)
+            return updated
+        }
     }
 
     /// Applies a local edit and stamps the settings it changed.

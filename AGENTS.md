@@ -4,7 +4,7 @@ Open-source Swift package (github.com/ZamzamInc/PrayKit) powering the closed-sou
 
 ## Layout
 
-Pure SPM, `swift-tools-version: 6.0`, platforms macOS 12 / iOS 15 / watchOS 8. Every library target builds in the **Swift 6 language mode** under strict concurrency; Models and service protocols are `Sendable`; the service structs that hold `UserDefaults`, `NetworkManager` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
+Pure SPM, `swift-tools-version: 6.0`, platforms macOS 14 / iOS 17 / watchOS 10 (matching ZamzamKit 7 and the app). Every library target builds in the **Swift 6 language mode** under strict concurrency; Models and service protocols are `Sendable`; the service structs that hold `UserDefaults`, `NetworkManager` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
 
 - `PrayCore` — enums, errors, extensions, service protocols, settings
 - `PrayServices` — service implementations (Hijri, Notification, Prayer, Qibla, Resources)

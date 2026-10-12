@@ -89,7 +89,7 @@ extension SettingsWireTests {
         // An upgraded device uploads a synced setting the record never had; its value is no edit
         var previous = Self.revised.wireFields
         previous["adhanDuaa"] = nil
-        previous["adhanDuaa_at"] = nil
+        previous["adhanDuaaAt"] = nil
         var incoming = previous
         incoming["adhanDuaa"] = .string("off")
 
@@ -103,7 +103,7 @@ extension SettingsWireTests {
         // A newer device with a fast clock stamped the setting after the moment the older version saved
         let stampedAhead = saved + 30
         var previous = Self.revised.wireFields
-        previous["snoozeMinutes_at"] = .int(Revision(stampedAhead).milliseconds)
+        previous["snoozeMinutesAt"] = .int(Revision(stampedAhead).milliseconds)
         var incoming = previous
         incoming["snoozeMinutes"] = .int(45)
 
@@ -181,7 +181,7 @@ extension SettingsWireTests {
         let fields = Self.revised.wireFields
 
         #expect(fields["geofenceRadius"] == nil)
-        #expect(fields["geofenceRadius_at"] == nil)
+        #expect(fields["geofenceRadiusAt"] == nil)
     }
 
     @Test
@@ -216,7 +216,7 @@ extension SettingsWireTests {
         base.adhanDuaa = .wasilahFadilah
         var incoming = Self.revised.wireFields
         incoming["adhanDuaa"] = nil
-        incoming["adhanDuaa_at"] = nil
+        incoming["adhanDuaaAt"] = nil
 
         let document = SettingsDocument(wireFields: incoming, base: base, modifiedAt: saved, previous: nil)
 

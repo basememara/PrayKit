@@ -53,7 +53,7 @@ extension SettingsStorageTests {
 
         #expect(defaults.string(forKey: "elavationMethod") == ElevationRule.seventhOfTheNight.rawValue)
         #expect(defaults.object(forKey: "elevationRule") == nil)
-        #expect(defaults.object(forKey: "elavationMethod_at") != nil)
+        #expect(defaults.object(forKey: "elavationMethodAt") != nil)
     }
 
     @Test
@@ -101,7 +101,7 @@ extension SettingsStorageTests {
     func revisionsAreStoredAsWholeMilliseconds() throws {
         storage.edit(at: Date(timeIntervalSince1970: 1_760_000_000.123_9)) { $0.theme = .dawn }
 
-        let stored = try #require(defaults.object(forKey: "theme_at") as? NSNumber)
+        let stored = try #require(defaults.object(forKey: "themeAt") as? NSNumber)
         #expect(stored.int64Value == 1_760_000_000_123)
         #expect(storage.load().document.revision(of: .theme) == Revision(milliseconds: 1_760_000_000_123))
     }

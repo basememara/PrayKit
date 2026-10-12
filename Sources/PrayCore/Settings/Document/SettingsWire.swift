@@ -57,7 +57,7 @@ public extension SettingsDocument {
     /// The synced settings and their revisions, as the fields of the iCloud record and of the watch payload.
     ///
     /// Each setting is a field under its key, encoded the way older app versions read it, and a revised
-    /// setting adds `"<key>_at"`. A `nil` setting has no field.
+    /// setting adds `"<key>At"`. A `nil` setting has no field.
     var wireFields: [String: WireValue] {
         Settings.fields
             .filter(\.isSynced)

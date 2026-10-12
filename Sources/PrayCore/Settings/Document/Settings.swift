@@ -144,6 +144,6 @@ public extension SettingKey {
 
     /// The defaults key holding the setting's revision, next to its value.
     var revisionKey: String {
-        "\(rawValue)_at"
+        "\(rawValue)At"
     }
 }

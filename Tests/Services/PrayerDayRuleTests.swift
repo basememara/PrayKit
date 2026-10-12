@@ -33,6 +33,192 @@ extension PrayerDayRuleTests {
     }
 }
 
+// MARK: - The day a moment belongs to
+
+extension PrayerDayRuleTests {
+    /// Every moment across three days, sampled every five minutes and a second either side of each prayer boundary.
+    @Test(arguments: DayFixture.all)
+    func everyMomentBelongsToTheOneDayWhoseSpanHoldsIt(place: DayFixture) async throws {
+        let request = try place.request()
+        let days = try await place.days(4, using: fixture.prayerManager)
+        let spanStart = try #require(days[0].times[.fajr]).dateInterval.start
+        let spanEnd = try #require(days[2].times[.isha]).dateInterval.end
+
+        let boundaries = days.prefix(3)
+            .flatMap { $0.times.filter(\.type.isEssential) }
+            .flatMap { [$0.dateInterval.start - 1, $0.dateInterval.start, $0.dateInterval.end - 1, $0.dateInterval.end] }
+        let samples = stride(from: spanStart, to: spanEnd, by: 300).map { $0 }
+        let instants = (boundaries + samples).filter { spanStart <= $0 && $0 < spanEnd }.sorted()
+
+        var problems = [String]()
+        var previousDate = Date.distantPast
+
+        for instant in instants {
+            let day = try await fixture.prayerManager.fetch(at: instant, with: request)
+            let expected = days.first { $0.contains(instant) }
+            let current = day.current(at: instant)
+
+            if !day.contains(instant) { problems.append("\(instant): the day doesn't contain it") }
+            if day.date != expected?.date || day.times != expected?.times { problems.append("\(instant): not the day whose span holds it") }
+            if current.map({ !$0.dateInterval.contains(instant) || !$0.type.isEssential }) ?? true { problems.append("\(instant): no current prayer holds it") }
+            if day.next(at: instant).map({ $0.dateInterval.start <= instant }) ?? true { problems.append("\(instant): no next prayer after it") }
+            if day.date < previousDate { problems.append("\(instant): the day went backwards") }
+            previousDate = day.date
+        }
+
+        let problemCount = problems.count
+        #expect(problemCount == 0, "\(instants.count) moments checked, first problems: \(problems.prefix(5))")
+    }
+
+    @Test
+    func parisIshaAfterMidnightBelongsToTheDayBefore() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
+        let june22 = calendar.startOfDay(for: try place.date(2026, 6, 22))
+
+        // Maghrib 21:58, Isha 00:19, the next Fajr 03:26
+        let beforeIsha = try place.date(2026, 6, 22, 0, 10)
+        let ishaBegins = try place.date(2026, 6, 22, 0, 19)
+        let duringIsha = try place.date(2026, 6, 22, 0, 30)
+        let lastSecond = try place.date(2026, 6, 22, 3, 25, 59)
+        let fajrBegins = try place.date(2026, 6, 22, 3, 26)
+
+        let dayBeforeIsha = try await fixture.prayerManager.fetch(at: beforeIsha, with: request)
+        #expect(dayBeforeIsha.date == june21)
+        #expect(dayBeforeIsha.current(at: beforeIsha)?.type == .maghrib)
+        #expect(dayBeforeIsha.next(at: beforeIsha)?.dateInterval.start == ishaBegins)
+
+        let dayDuringIsha = try await fixture.prayerManager.fetch(at: duringIsha, with: request)
+        #expect(dayDuringIsha.date == june21)
+        #expect(dayDuringIsha.current(at: duringIsha)?.type == .isha)
+        #expect(dayDuringIsha.next(at: duringIsha)?.dateInterval.start == fajrBegins)
+
+        let dayAtLastSecond = try await fixture.prayerManager.fetch(at: lastSecond, with: request)
+        let dayAtFajr = try await fixture.prayerManager.fetch(at: fajrBegins, with: request)
+        #expect(dayAtLastSecond.date == june21)
+        #expect(dayAtFajr.date == june22)
+        #expect(dayAtFajr.current(at: fajrBegins)?.type == .fajr)
+    }
+
+    @Test
+    func reykjavikMaghribAfterMidnightBelongsToTheDayBefore() async throws {
+        let place = try #require(DayFixture.all.first { $0.timeZoneIdentifier == "Atlantic/Reykjavik" })
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
+
+        // Maghrib 00:07 and Isha 00:29, both after midnight, then Fajr 02:31
+        let beforeMaghrib = try place.date(2026, 6, 22, 0, 3)
+        let maghribBegins = try place.date(2026, 6, 22, 0, 7)
+        let duringMaghrib = try place.date(2026, 6, 22, 0, 20)
+        let ishaBegins = try place.date(2026, 6, 22, 0, 29)
+        let dayBeforeMaghrib = try await fixture.prayerManager.fetch(at: beforeMaghrib, with: request)
+        let dayDuringMaghrib = try await fixture.prayerManager.fetch(at: duringMaghrib, with: request)
+
+        #expect(dayBeforeMaghrib.date == june21)
+        #expect(dayBeforeMaghrib.current(at: beforeMaghrib)?.type == .asr)
+        #expect(dayBeforeMaghrib.next(at: beforeMaghrib)?.dateInterval.start == maghribBegins)
+        #expect(dayDuringMaghrib.date == june21)
+        #expect(dayDuringMaghrib.current(at: duringMaghrib)?.type == .maghrib)
+        #expect(dayDuringMaghrib.next(at: duringMaghrib)?.dateInterval.start == ishaBegins)
+    }
+
+    @Test
+    func beforeFajrIsThePreviousDaysIsha() async throws {
+        let place = try #require(DayFixture.all.first)
+        let request = try place.request()
+        let calendar = try place.calendar()
+        let threeAM = try place.date(2021, 1, 3, 3, 0)
+
+        let january2 = calendar.startOfDay(for: try place.date(2021, 1, 2))
+
+        let day = try await fixture.prayerManager.fetch(at: threeAM, with: request)
+        let next = try #require(day.next(at: threeAM))
+
+        #expect(day.date == january2)
+        #expect(day.current(at: threeAM)?.type == .isha)
+        #expect(next.type == .fajr)
+        #expect(next.dateInterval.start > threeAM)
+    }
+
+    @Test
+    func aDayHoldsItsFajrButNotTheNextOne() async throws {
+        let place = try #require(DayFixture.all.first)
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+        let fajr = try #require(day.times[.fajr]).dateInterval.start
+        let nextFajr = try #require(day.times[.isha]).dateInterval.end
+
+        #expect(!day.contains(fajr - 1))
+        #expect(day.contains(fajr))
+        #expect(day.contains(nextFajr - 1))
+        #expect(!day.contains(nextFajr))
+    }
+
+    @Test
+    func aDayWithoutTimesIsNeverChosen() async throws {
+        let place = DayFixture("London timetable after its last day", 51.5074, -0.1278, "Europe/London", .london, 2027, 6, 1)
+
+        let error = await #expect(throws: PrayError.self) {
+            try await fixture.prayerManager.fetch(at: try place.firstNoon(), with: try place.request())
+        }
+
+        guard case .invalidTimes = error else {
+            Issue.record("Expected invalid times, got \(String(describing: error))")
+            return
+        }
+    }
+}
+
+// MARK: - What screens show
+
+extension PrayerDayRuleTests {
+    @Test
+    func theUpcomingPrayerIsUnderWayOrStillToComeAndSunriseOnlyToCome() async throws {
+        let place = try #require(DayFixture.all.first)
+        let days = try await place.days(2, using: fixture.prayerManager)
+        let today = days[0]
+        let tomorrow = days[1]
+        let morning = try place.date(2021, 1, 2, 10, 0)
+        let afternoon = try place.date(2021, 1, 2, 13, 0)
+        let night = try place.date(2021, 1, 2, 23, 0)
+
+        #expect(today.upcoming(.fajr, at: night) == tomorrow.times[.fajr])
+        #expect(today.upcoming(.dhuhr, at: afternoon) == today.times[.dhuhr])
+        #expect(today.upcoming(.asr, at: afternoon) == today.times[.asr])
+        #expect(today.upcoming(.sunrise, at: morning) == tomorrow.times[.sunrise])
+    }
+
+    @Test
+    func aCountdownListsTomorrowOnceItCountsPastIsha() async throws {
+        let place = try #require(DayFixture.all.first)
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+        let isha = try #require(day.times[.isha]).dateInterval.start
+        let timeZone = try place.request().timeZone
+
+        func timer(at date: Date, sunriseAfterIsha: Bool = false) throws -> PrayerTimer {
+            try #require(
+                PrayerTimer(
+                    at: date,
+                    using: day,
+                    iqamaTimes: IqamaTimes(),
+                    isIqamaTimerEnabled: false,
+                    stopwatchMinutes: 10,
+                    preAdhanMinutes: PreAdhanMinutes(rawValue: [:]),
+                    sunriseAfterIsha: sunriseAfterIsha,
+                    timeZone: timeZone
+                )
+            )
+        }
+
+        #expect(try timer(at: isha - 60).listedTimes == day.times, "Counting down to Isha")
+        #expect(try timer(at: isha + 60).listedTimes == day.times, "Isha's stopwatch")
+        #expect(try timer(at: isha + 20 * 60).listedTimes == day.tomorrow, "Counting down to tomorrow's Fajr")
+        #expect(try timer(at: isha + 20 * 60, sunriseAfterIsha: true).listedTimes == day.tomorrow, "Counting down to tomorrow's sunrise")
+    }
+}
+
 // MARK: - Fixtures
 
 /// A place, a method and a first calendar day, chosen for the edge it exercises.
@@ -86,7 +272,12 @@ struct DayFixture: Sendable, CustomTestStringConvertible {
 
     /// Noon on the fixture's first day, in the place's zone.
     func firstNoon() throws -> Date {
-        try #require(try calendar().date(from: DateComponents(year: year, month: month, day: day, hour: 12)))
+        try date(year, month, day, 12)
+    }
+
+    /// A wall-clock time in the place's zone.
+    func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 12, _ minute: Int = 0, _ second: Int = 0) throws -> Date {
+        try #require(try calendar().date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second)))
     }
 
     /// The calendar days from the fixture's first, each fetched on its own.

@@ -189,6 +189,15 @@ public extension PrayerTimer {
     }
 }
 
+public extension PrayerTimer {
+    /// The times a countdown face lists: this day's, then tomorrow's once what it counts toward lies past this
+    /// day's Isha, so the Isha stopwatch and iqama still show tonight's list.
+    var listedTimes: [PrayerTime] {
+        guard let isha = prayerDay.times[.isha], countdownDate >= isha.dateInterval.end else { return prayerDay.times }
+        return prayerDay.tomorrow
+    }
+}
+
 // MARK: - Types
 
 public extension PrayerTimer {

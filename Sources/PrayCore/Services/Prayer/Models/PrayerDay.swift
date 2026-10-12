@@ -29,6 +29,21 @@ public struct PrayerDay: Equatable, Codable, Sendable {
 }
 
 public extension PrayerDay {
+    /// Whether the instant falls in this prayer day, which runs from its Fajr until its Isha ends at the next Fajr.
+    func contains(_ instant: Date) -> Bool {
+        guard let fajr = times[.fajr], let isha = times[.isha] else { return false }
+        return fajr.dateInterval.start <= instant && instant < isha.dateInterval.end
+    }
+
+    /// The next time of a prayer: one under way or still to come, or for sunrise, one still to come.
+    func upcoming(_ prayer: Prayer, at time: Date) -> PrayerTime? {
+        (times + tomorrow).first {
+            $0.type == prayer && (prayer == .sunrise ? $0.dateInterval.start > time : $0.dateInterval.end > time)
+        }
+    }
+}
+
+public extension PrayerDay {
     func current(at time: Date = .now) -> PrayerTime? {
         times.first { time.isBetween($0.dateInterval.start, $0.dateInterval.end) && $0.type.isEssential }
             ?? yesterday[.isha]

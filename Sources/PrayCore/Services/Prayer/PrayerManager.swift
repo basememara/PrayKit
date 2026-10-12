@@ -30,6 +30,28 @@ public extension PrayerManager {
 }
 
 public extension PrayerManager {
+    /// The prayer day an instant belongs to: the one whose Fajr has begun and whose Isha hasn't ended at the next Fajr.
+    /// Midnight is not a prayer boundary, so before Fajr this is the previous calendar day's.
+    ///
+    /// - Throws: `PrayError.invalidTimes` when no day's times contain the instant.
+    func fetch(at instant: Date, with request: PrayerAPI.Request) async throws -> PrayerDay {
+        let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
+        return try await day(containing: instant, from: instant, steps: 2, using: calendar, with: request)
+    }
+
+    /// The prayer day an instant belongs to, at the device's place with its settings.
+    ///
+    /// - Throws: `PrayError.locationFailure` before the device has a place.
+    func fetch(at instant: Date, state: DeviceState, filter: PrayerFilter = .all) async throws -> PrayerDay {
+        guard let request = PrayerAPI.Request(settings: state.document.settings, place: state.place, filter: filter) else {
+            throw PrayError.locationFailure
+        }
+
+        return try await fetch(at: instant, with: request)
+    }
+}
+
+public extension PrayerManager {
     /// The prayers of the day a date falls on, at the device's place with its settings.
     ///
     /// - Throws: `PrayError.locationFailure` before the device has a place.
@@ -128,6 +150,40 @@ private extension PrayerManager {
         }
 
         return entries
+    }
+}
+
+private extension PrayerManager {
+    /// Steps from a calendar day toward the one whose span holds the instant: back while it's before that day's Fajr,
+    /// forward once its Isha has ended. A Fajr adjustment or a distant time zone can put a day's Fajr before midnight.
+    func day(
+        containing instant: Date,
+        from date: Date,
+        steps: Int,
+        using calendar: Calendar,
+        with request: PrayerAPI.Request
+    ) async throws -> PrayerDay {
+        let day = try await fetch(for: date, using: calendar, with: request)
+
+        guard let fajr = day.times[.fajr], let isha = day.times[.isha] else {
+            log.error("Could not find the prayer day for \(instant, formatter: .zuluFormatter) without its Fajr and Isha")
+            throw PrayError.invalidTimes
+        }
+
+        if steps > 0, instant < fajr.dateInterval.start {
+            return try await self.day(containing: instant, from: date.yesterday(using: calendar), steps: steps - 1, using: calendar, with: request)
+        }
+
+        if steps > 0, instant >= isha.dateInterval.end {
+            return try await self.day(containing: instant, from: date.tomorrow(using: calendar), steps: steps - 1, using: calendar, with: request)
+        }
+
+        guard day.contains(instant) else {
+            log.error("Could not find the prayer day for \(instant, formatter: .zuluFormatter)")
+            throw PrayError.invalidTimes
+        }
+
+        return day
     }
 }
 

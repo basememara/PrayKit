@@ -71,6 +71,12 @@ public extension PrayerDay {
 }
 
 public extension PrayerTime {
+    /// The time a list shows for this prayer: on a Friday, by its own date, Dhuhr shows the khutba when one is set.
+    func listedStart(iqamaTimes: IqamaTimes, using calendar: Calendar) -> Date {
+        guard type == .dhuhr, dateInterval.start.isJumuah(using: calendar) else { return dateInterval.start }
+        return iqamaTimes[self, using: calendar] ?? dateInterval.start
+    }
+
     /// Whether a reminder `interval` from `date` still lands inside this prayer's time.
     func acceptsSnooze(of interval: TimeInterval, at date: Date) -> Bool {
         date + interval < dateInterval.end

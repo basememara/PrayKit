@@ -352,6 +352,24 @@ extension PrayerDayRuleTests {
         #expect(today.upcoming(.sunrise, at: morning) == tomorrow.times[.sunrise])
     }
 
+    @Test
+    func aListShowsFridaysKhutbaForDhuhrByThePrayersOwnDate() throws {
+        let timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let thursdayDhuhr = try #require(calendar.date(from: DateComponents(year: 2022, month: 11, day: 24, hour: 12, minute: 10)))
+        let fridayDhuhr = try #require(calendar.date(from: DateComponents(year: 2022, month: 11, day: 25, hour: 12, minute: 10)))
+        let khutba = try #require(calendar.date(from: DateComponents(year: 2022, month: 11, day: 25, hour: 13, minute: 30)))
+        let withKhutba = IqamaTimes(fajr: nil, dhuhr: .minutes(15), asr: nil, maghrib: nil, isha: nil, jumuah: .time(hour: 13, minutes: 30))
+        let withoutKhutba = IqamaTimes(fajr: nil, dhuhr: .minutes(15), asr: nil, maghrib: nil, isha: nil, jumuah: nil)
+
+        let thursday = PrayerTime(type: .dhuhr, dateInterval: DateInterval(start: thursdayDhuhr, duration: 3 * 3600))
+        let friday = PrayerTime(type: .dhuhr, dateInterval: DateInterval(start: fridayDhuhr, duration: 3 * 3600))
+
+        #expect(thursday.listedStart(iqamaTimes: withKhutba, using: calendar) == thursdayDhuhr)
+        #expect(friday.listedStart(iqamaTimes: withKhutba, using: calendar) == khutba)
+        #expect(friday.listedStart(iqamaTimes: withoutKhutba, using: calendar) == fridayDhuhr)
+    }
+
     /// Widget placeholders and previews build from the sample day, so it must hold any moment, as at 01:00.
     @Test(arguments: [(1, 0), (4, 21), (4, 22), (12, 0), (23, 59)])
     func aSampleDayHoldsTheMomentItIsMadeFor(hour: Int, minute: Int) throws {

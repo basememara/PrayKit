@@ -24,7 +24,3 @@ public extension NotificationService {
         await addSnooze(for: prayerTime, in: nil)
     }
 }
-
-// MARK: - Namespace
-
-public enum NotificationAPI {}

@@ -287,7 +287,8 @@ private extension PrayerManager {
             entries.insert(entry, at: entries.firstIndex { $0.date > midnight } ?? entries.endIndex)
         }
 
-        // A short night can put this day's first reminder before the last entries of the day before
+        // A short night can put this day's first reminder before the last entries of the day before, and both days
+        // expand into the night between them, so a moment both produce is kept once
         let resultSeed = (seed + entries)
             .sorted(by: \.date)
             .reduce(into: [PrayerTimer]()) { result, entry in

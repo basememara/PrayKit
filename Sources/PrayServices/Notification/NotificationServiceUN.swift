@@ -157,7 +157,6 @@ private extension NotificationServiceUN {
                         ),
                         sound: notificationSound(for: prayerTime.type, in: settings),
                         interruptionLevel: .timeSensitive,
-                        calendar: calendar,
                         identifier: identifier,
                         category: (isObligation ? NotificationCategory.main : .reminder).rawValue,
                         userInfo: userInfo
@@ -189,7 +188,6 @@ private extension NotificationServiceUN {
                             #endif
                         },
                         interruptionLevel: .timeSensitive,
-                        calendar: calendar,
                         identifier: iqamaIdentifier,
                         category: NotificationCategory.reminder.rawValue,
                         userInfo: userInfo
@@ -237,7 +235,6 @@ private extension NotificationServiceUN {
                             #endif
                         },
                         interruptionLevel: .timeSensitive,
-                        calendar: calendar,
                         identifier: reminderIdentifier,
                         category: NotificationCategory.reminder.rawValue,
                         userInfo: userInfo
@@ -269,7 +266,6 @@ private extension NotificationServiceUN {
                                 #endif
                             },
                             interruptionLevel: .timeSensitive,
-                            calendar: calendar,
                             identifier: reminderIdentifier,
                             category: NotificationCategory.reminder.rawValue,
                             userInfo: userInfo
@@ -301,7 +297,6 @@ private extension NotificationServiceUN {
                                 #endif
                             },
                             interruptionLevel: .timeSensitive,
-                            calendar: calendar,
                             identifier: reminderIdentifier,
                             category: NotificationCategory.reminder.rawValue,
                             userInfo: userInfo
@@ -366,7 +361,6 @@ private extension NotificationServiceUN {
                 date: calibrateDate,
                 body: localized.calibrateNotificationBody,
                 sound: .default,
-                calendar: calendar,
                 identifier: "calibrate",
                 category: NotificationCategory.calibrate.rawValue,
                 userInfo: calibrateUserInfo

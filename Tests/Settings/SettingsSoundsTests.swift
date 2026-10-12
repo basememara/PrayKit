@@ -107,7 +107,7 @@ struct SettingsSoundsTests {
             let end = index + 1 < hours.count ? hours[index + 1].1 : 29
             return PrayerTime(type: entry.0, dateInterval: DateInterval(start: start + entry.1 * 3600, end: start + end * 3600))
         }
-        let day = PrayerDay(date: start, times: times, yesterday: [], tomorrow: [])
+        let day = PrayerDay(date: start, times: times, tomorrow: [])
 
         var settings = Settings()
         settings.notificationAdhan[.fajr] = .makkah

@@ -62,7 +62,6 @@ public extension PrayerTimer {
                 timerType: .countdown,
                 prayerDay: prayerDay,
                 countdownDate: countdownDate,
-                khutbaTime: nil,
                 timeRange: date...countdownDate,
                 timeRemaining: countdownDate.timeIntervalSince(date),
                 timeDuration: DateInterval(start: date, end: countdownDate).duration,

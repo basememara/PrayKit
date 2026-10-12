@@ -9,21 +9,18 @@
 import Foundation.NSDate
 import Foundation.NSTimeZone
 
+/// A prayer day runs from its Fajr to the next Fajr: its prayers follow one another with no gap and Isha ends where
+/// the next day's Fajr begins, so midnight is not a boundary and every moment belongs to exactly one day. `tomorrow`
+/// carries the day after, which a countdown past Isha needs.
 public struct PrayerDay: Equatable, Codable, Sendable {
+    /// The start of the calendar day the prayers were calculated for, in the place's time zone.
     public let date: Date
     public let times: [PrayerTime]
-    public let yesterday: [PrayerTime]
     public let tomorrow: [PrayerTime]
 
-    public init(
-        date: Date,
-        times: [PrayerTime],
-        yesterday: [PrayerTime],
-        tomorrow: [PrayerTime]
-    ) {
+    public init(date: Date, times: [PrayerTime], tomorrow: [PrayerTime]) {
         self.date = date
         self.times = times
-        self.yesterday = yesterday
         self.tomorrow = tomorrow
     }
 }
@@ -43,30 +40,26 @@ public extension PrayerDay {
     }
 }
 
+// A day answers from its Fajr through the day after, never for a moment before its Fajr: that moment belongs to the
+// day before, which `PrayerManager.fetch(at:)` returns.
 public extension PrayerDay {
+    /// The essential prayer under way, Isha until the next Fajr.
     func current(at time: Date = .now) -> PrayerTime? {
-        times.first { time.isBetween($0.dateInterval.start, $0.dateInterval.end) && $0.type.isEssential }
-            ?? yesterday[.isha]
+        (times + tomorrow).first { time.isBetween($0.dateInterval.start, $0.dateInterval.end) && $0.type.isEssential }
     }
 
     func next(at time: Date = .now, sunriseAfterIsha: Bool = false) -> PrayerTime? {
-        let predicate: (PrayerTime) -> Bool = { $0.dateInterval.start > time && $0.type.isEssential && (sunriseAfterIsha ? $0.type != .fajr : true) }
-        return times.first(where: predicate) ?? tomorrow.first(where: predicate)
+        (times + tomorrow).first { $0.dateInterval.start > time && $0.type.isEssential && (sunriseAfterIsha ? $0.type != .fajr : true) }
     }
 
-    /// The obligatory prayer whose time began most recently, which before Fajr is yesterday's Isha once it has begun.
+    /// The obligatory prayer whose time began most recently, which between sunrise and Dhuhr is still Fajr.
     func lastObligatory(at time: Date) -> PrayerTime? {
-        (yesterday + times)
-            .filter { $0.type.isObligation && $0.dateInterval.start <= time }
-            .max { $0.dateInterval.start < $1.dateInterval.start }
+        (times + tomorrow).last { $0.type.isObligation && $0.dateInterval.start <= time }
     }
 
-    /// The next obligatory prayer to begin: after Isha, tomorrow's Fajr; after midnight, yesterday's Isha if it
-    /// hasn't begun, as at high latitudes in summer.
+    /// The next obligatory prayer to begin, which after Isha is tomorrow's Fajr.
     func nextObligatory(at time: Date) -> PrayerTime? {
-        (yesterday + times + tomorrow)
-            .filter { $0.type.isObligation && $0.dateInterval.start > time }
-            .min { $0.dateInterval.start < $1.dateInterval.start }
+        (times + tomorrow).first { $0.type.isObligation && $0.dateInterval.start > time }
     }
 }
 

@@ -220,7 +220,6 @@ private extension PrayerManager {
         return PrayerDay(
             date: date.startOfDay(using: calendar),
             times: try await prayerService.calculate(for: date, using: calendar, with: request),
-            yesterday: try await prayerService.calculate(for: date.yesterday(using: calendar), using: calendar, with: request),
             tomorrow: try await prayerService.calculate(for: date.tomorrow(using: calendar), using: calendar, with: request)
         )
     }

@@ -16,7 +16,6 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let timerType: TimerType
     public let prayerDay: PrayerDay
     public let countdownDate: Date
-    public let khutbaTime: Date?
     public let timeRange: ClosedRange<Date>
     public let timeRemaining: TimeInterval
     public let timeDuration: TimeInterval
@@ -34,7 +33,6 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         timerType: PrayerTimer.TimerType,
         prayerDay: PrayerDay,
         countdownDate: Date,
-        khutbaTime: Date?,
         timeRange: ClosedRange<Date>,
         timeRemaining: TimeInterval,
         timeDuration: TimeInterval,
@@ -50,7 +48,6 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.timerType = timerType
         self.prayerDay = prayerDay
         self.countdownDate = countdownDate
-        self.khutbaTime = khutbaTime
         self.timeRange = timeRange
         self.timeRemaining = timeRemaining
         self.timeDuration = timeDuration
@@ -137,10 +134,10 @@ public extension PrayerTimer {
         } else if sunriseAfterIsha,
                   currentPrayer.type == .isha,
                   prayerTime.type != .isha,
-                  let fajrPrayerTime = prayerDay.times[.fajr],
+                  let fajrPrayerTime = (prayerDay.times + prayerDay.tomorrow).first(where: { $0.type == .fajr && $0.dateInterval.start >= currentPrayer.dateInterval.end }),
                   let fajrIqama = iqamaTimes[fajrPrayerTime, using: calendar] {
             prayerTime = fajrPrayerTime
-            countdownDate = fajrIqama < currentPrayer.dateInterval.start ? fajrIqama + .days(1, calendar) : fajrIqama
+            countdownDate = fajrIqama
             currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: countdownDate)
             timerType = .iqama
         }
@@ -149,7 +146,6 @@ public extension PrayerTimer {
         let progressRemaining = 1 - progress
         let dangerZone = min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) // Pre-adhan zone
         let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
-        let khutbaTime = prayerDay.times[.dhuhr].flatMap { $0.dateInterval.start.isJumuah(using: calendar) ? iqamaTimes[$0, using: calendar] : nil }
 
         self.init(
             date: date,
@@ -157,7 +153,6 @@ public extension PrayerTimer {
             timerType: timerType,
             prayerDay: prayerDay,
             countdownDate: countdownDate,
-            khutbaTime: khutbaTime,
             timeRange: min(date, countdownDate)...max(date, countdownDate),
             timeRemaining: countdownDate.timeIntervalSince(date),
             timeDuration: currentDateInterval.duration,

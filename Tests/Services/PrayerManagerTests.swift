@@ -48,7 +48,6 @@ extension PrayerManagerTests {
         for prayerDay in prayerDays {
             #expect(prayerDay.times.contains { $0.type == .fajr })
             #expect(prayerDay.times.contains { $0.type == .maghrib })
-            #expect(!prayerDay.yesterday.isEmpty)
             #expect(!prayerDay.tomorrow.isEmpty)
         }
     }

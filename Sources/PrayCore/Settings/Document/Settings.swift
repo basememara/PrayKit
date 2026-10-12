@@ -76,6 +76,8 @@ public struct Settings: Codable, Equatable, Sendable {
             Prayer.lastThird.rawValue: .off
         ]
     )
+    /// The sound each muted prayer had, so unmuting brings it back.
+    public var soundsBeforeMute = NotificationSounds(rawValue: [:])
     public var reminderSounds = ReminderSounds(
         rawValue: [
             Prayer.fajr.rawValue: .default,
@@ -125,6 +127,7 @@ public enum SettingKey: String, CaseIterable, Codable, Sendable {
     case adhanDuaa
     case notificationAdhan
     case notificationSounds
+    case soundsBeforeMute
     case reminderSounds
     case isPlayOnTapEnabled
     case isPrayerAbbrEnabled

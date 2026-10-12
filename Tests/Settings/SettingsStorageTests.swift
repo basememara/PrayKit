@@ -252,6 +252,7 @@ private extension SettingsStorageTests {
             "preAdhanMinutes": ["dhuhr": 5, "fajr": 30],
             "reminderSounds": ["asr": "beep", "isha": "off"],
             "snoozeMinutes": 10,
+            "soundsBeforeMute": ["maghrib": "beep"],
             "stopwatchMinutes": 15,
             "sunriseAfterIsha": true,
             "theme": "aqua"

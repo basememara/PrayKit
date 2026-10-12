@@ -35,6 +35,7 @@ extension Settings {
         SettingField(.adhanDuaa, \.adhanDuaa, .string),
         SettingField(.notificationAdhan, \.notificationAdhan, .map(.string)),
         SettingField(.notificationSounds, \.notificationSounds, .map(.string)),
+        SettingField(.soundsBeforeMute, \.soundsBeforeMute, .map(.string)),
         SettingField(.reminderSounds, \.reminderSounds, .map(.string)),
         SettingField(.isPlayOnTapEnabled, \.isPlayOnTapEnabled, .bool),
         SettingField(.isPrayerAbbrEnabled, \.isPrayerAbbrEnabled, .bool),

@@ -22,6 +22,7 @@ extension SettingsWireTests {
     func fieldsMatchWhatOlderVersionsWrite() throws {
         var expected = try Self.legacyRecord(of: .everyFieldChanged)
         expected["adhanDuaa"] = .string(AdhanDuaa.wasilahFadilah.rawValue)
+        expected["soundsBeforeMute"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.soundsBeforeMute))
         let fields = SettingsDocument(settings: .everyFieldChanged).wireFields
 
         #expect(Set(fields.keys) == Set(expected.keys))
@@ -33,6 +34,7 @@ extension SettingsWireTests {
         #expect(try Self.decode(DuhaType.self, fields["duhaReminder"]) == Settings.everyFieldChanged.duhaReminder)
         #expect(try Self.decode(NotificationAdhan.self, fields["notificationAdhan"]) == Settings.everyFieldChanged.notificationAdhan)
         #expect(try Self.decode(NotificationSounds.self, fields["notificationSounds"]) == Settings.everyFieldChanged.notificationSounds)
+        #expect(try Self.decode(NotificationSounds.self, fields["soundsBeforeMute"]) == Settings.everyFieldChanged.soundsBeforeMute)
         #expect(try Self.decode(ReminderSounds.self, fields["reminderSounds"]) == Settings.everyFieldChanged.reminderSounds)
     }
 
@@ -47,11 +49,13 @@ extension SettingsWireTests {
 
         var expected = Settings.everyFieldChanged
         expected.adhanDuaa = Settings().adhanDuaa
+        expected.soundsBeforeMute = Settings().soundsBeforeMute
         expected.geofenceRadius = Settings().geofenceRadius
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])
         #expect(document.revision(of: .adhanDuaa) == .legacy)
+        #expect(document.revision(of: .soundsBeforeMute) == .legacy)
         #expect(document.revision(of: .geofenceRadius) == .legacy)
     }
 

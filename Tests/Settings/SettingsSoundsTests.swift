@@ -50,18 +50,40 @@ struct SettingsSoundsTests {
     }
 
     @Test
-    func mutingSilencesAndUnmutingRestoresTheDefaultSound() {
+    func unmutingRestoresTheSoundChosenBeforeMuting() {
         var settings = Settings()
+        settings.notificationSounds[.dhuhr] = .chimes
 
         settings.setMuted(true, for: .dhuhr)
         #expect(settings.isMuted(.dhuhr))
         #expect(settings.notificationSounds[.dhuhr] == .silent)
 
+        settings.setMuted(true, for: .dhuhr)
+        settings.setMuted(false, for: .dhuhr)
+        #expect(settings.notificationSounds[.dhuhr] == .chimes)
+        #expect(settings.soundsBeforeMute[.dhuhr] == nil)
+    }
+
+    @Test
+    func unmutingWithNothingRememberedPicksTheDefaultSound() {
+        var settings = Settings()
+        settings.notificationSounds[.dhuhr] = .off
+
         settings.setMuted(false, for: .dhuhr)
         settings.setMuted(false, for: .sunrise)
+
         #expect(settings.notificationSounds[.dhuhr] == .adhan)
         #expect(settings.notificationSounds[.sunrise] == .tone)
-        #expect(!settings.isMuted(.sunrise))
+    }
+
+    @Test
+    func unmutingAPrayerThatIsNotMutedKeepsItsSound() {
+        var settings = Settings()
+        settings.notificationSounds[.asr] = .beep
+
+        settings.setMuted(false, for: .asr)
+
+        #expect(settings.notificationSounds[.asr] == .beep)
     }
 
     @Test

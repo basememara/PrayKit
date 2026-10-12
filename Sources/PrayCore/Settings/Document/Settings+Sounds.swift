@@ -30,9 +30,18 @@ public extension Settings {
         notificationSounds[prayer].map { [.silent, .off].contains($0) } ?? true
     }
 
-    /// Mutes a prayer to silent, or unmutes it to the adhan for an obligatory prayer and a tone for the rest.
+    /// Mutes a prayer to silent, or unmutes it to the sound it had before; the adhan for an obligatory prayer
+    /// and a tone for the rest when there is none.
     mutating func setMuted(_ isMuted: Bool, for prayer: Prayer) {
-        notificationSounds[prayer] = isMuted ? .silent : prayer.isObligation ? .adhan : .tone
+        guard self.isMuted(prayer) != isMuted else { return }
+
+        if isMuted {
+            soundsBeforeMute[prayer] = notificationSounds[prayer]
+            notificationSounds[prayer] = .silent
+        } else {
+            notificationSounds[prayer] = soundsBeforeMute[prayer] ?? (prayer.isObligation ? .adhan : .tone)
+            soundsBeforeMute[prayer] = nil
+        }
     }
 
     /// The adhan the user chose for a prayer, in the length that prayer uses; Al-Aqsa when none is chosen.

@@ -11,13 +11,13 @@ import PrayCore
 
 extension PrayerTime {
     /// The middle and the last third of the night, which runs from Maghrib to the Fajr actually used, so the last third
-    /// ends where Isha does; `nil` when the night is too short to order them.
-    static func night(from maghrib: Date, to fajr: Date) -> [PrayerTime]? {
+    /// ends where Isha does; none when the night is too short to order them, which leaves the day's prayers whole.
+    static func night(from maghrib: Date, to fajr: Date) -> [PrayerTime] {
         let duration = fajr.timeIntervalSince(maghrib)
         let middle = maghrib.addingTimeInterval(duration / 2).roundedMinute
         let lastThird = maghrib.addingTimeInterval(duration * 2 / 3).roundedMinute
 
-        guard middle < lastThird, lastThird < fajr else { return nil }
+        guard middle < lastThird, lastThird < fajr else { return [] }
 
         return [
             PrayerTime(type: .midnight, dateInterval: DateInterval(start: middle, end: lastThird)),

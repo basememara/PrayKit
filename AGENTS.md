@@ -19,7 +19,7 @@ A prayer day runs from its Fajr to the next Fajr: its essential prayers (Fajr, s
 
 - `PrayerManager.fetch(at:)` is the day holding a moment, `fetch(spanning:)` the days from it, `fetch(for:)` and `fetch(between:)` calendar days for browsing.
 - A `PrayerDay` answers from its Fajr through its `tomorrow`, never for a moment before its Fajr, which belongs to the day before. There is no `yesterday`.
-- The calculators must keep the days tiling: Maghrib ends at the Isha actually used, tomorrow's Fajr takes the same adjustments as the next day's own, and an Isha that would reach the next Fajr throws. The night (its middle and last third) runs from Maghrib to the Fajr actually used (`PrayerTime.night`), so the last third ends with Isha; a short night can put its middle before Isha, so a day's times are kept in time order.
+- The calculators must keep the days tiling: Maghrib ends at the Isha actually used, tomorrow's Fajr takes the same adjustments as the next day's own, and an Isha that would reach the next Fajr throws. The night (its middle and last third) runs from Maghrib to the Fajr actually used (`PrayerTime.night`), so the last third ends with Isha; a short night can put its middle before Isha, so a day's times are kept in time order, and a night too short to order the two leaves them out rather than failing the day.
 - `PrayerDayRuleTests` holds the rule: sweeps over 17 real fixtures (three with Isha or Maghrib after midnight, one with Fajr before it) for days, timelines, notifications and the Hijri date. A change to day logic lands with a case there.
 
 ## Build & test

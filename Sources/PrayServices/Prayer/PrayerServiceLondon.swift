@@ -210,12 +210,7 @@ public extension PrayerServiceLondon {
         ])
 
         if [.all, .sunnah].contains(request.filter) {
-            guard let night = PrayerTime.night(from: magribTime, to: tomorrowFajrTime) else {
-                log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
-                throw PrayError.invalidTimes
-            }
-
-            times.append(contentsOf: night)
+            times.append(contentsOf: PrayerTime.night(from: magribTime, to: tomorrowFajrTime))
         }
 
         return times

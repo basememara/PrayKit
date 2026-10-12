@@ -341,6 +341,25 @@ extension PrayerDayRuleTests {
         #expect(week.count == 8)
     }
 
+    /// A night too short to order its middle and last third keeps its day: the prayers stand, without those two times.
+    @Test
+    func aNightTooShortForItsMarkersKeepsTheDay() async throws {
+        let place = DayFixture(
+            "Reykjavik, Fajr, Maghrib and Isha moved into a two-minute night", 64.1466, -21.9426, "Atlantic/Reykjavik", .moonsightingCommittee,
+            2026, 6, 21,
+            adjustments: PrayerAdjustments(
+                fajr: -22, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 120, isha: 99,
+                isFajrSunriseRelative: false, isIshaMaghribRelative: false, elevation: nil
+            )
+        )
+
+        let day = try await fixture.prayerManager.fetch(for: try place.date(2026, 6, 21), with: try place.request())
+
+        #expect(day.times.filter(\.type.isEssential).map(\.type) == [.fajr, .sunrise, .dhuhr, .asr, .maghrib, .isha])
+        #expect(day.times[.midnight] == nil)
+        #expect(day.times[.lastThird] == nil)
+    }
+
     /// From moments every three hours across two days: names are unique, prayers come in time order, and the next
     /// prayer is always among them.
     @Test(arguments: DayFixture.all)

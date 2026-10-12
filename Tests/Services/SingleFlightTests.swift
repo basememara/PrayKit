@@ -11,63 +11,85 @@ import Testing
 
 struct SingleFlightTests {
     @Test
-    func callsDuringAPassBecomeOneMorePass() async {
+    func callsDuringAPassBecomeOneMorePassThatNeverOverlaps() async {
         let flight = SingleFlight()
-        let passes = Counter()
+        let probe = Probe()
+        let (started, didStart) = AsyncStream.makeStream(of: Void.self)
+        let (release, didRelease) = AsyncStream.makeStream(of: Void.self)
+        let (registered, didRegister) = AsyncStream.makeStream(of: Void.self)
+        let callers = 5
 
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 await flight.run {
-                    await passes.increment()
-                    try? await Task.sleep(for: .milliseconds(300))
+                    let pass = await probe.begin()
+                    if pass == 1 {
+                        didStart.yield()
+                        for await _ in release { break }
+                    }
+                    await probe.end()
                 }
             }
 
-            try? await Task.sleep(for: .milliseconds(100))
+            for await _ in started { break }
 
-            (0..<5).forEach { _ in
+            (0..<callers).forEach { _ in
                 group.addTask {
-                    await flight.run { await passes.increment() }
+                    await call(flight, announcing: didRegister) { await probe.begin(); await probe.end() }
+                    #expect(await probe.finished == 2)
                 }
             }
+
+            var count = 0
+            for await _ in registered {
+                count += 1
+                if count == callers { break }
+            }
+            didRelease.yield()
         }
 
-        #expect(await passes.value == 2)
-    }
-
-    @Test
-    func everyCallerWaitsForTheLastPass() async {
-        let flight = SingleFlight()
-        let passes = Counter()
-
-        async let first: Void = flight.run {
-            try? await Task.sleep(for: .milliseconds(200))
-            await passes.increment()
-        }
-
-        try? await Task.sleep(for: .milliseconds(50))
-        await flight.run { await passes.increment() }
-
-        #expect(await passes.value == 2)
-        await first
+        #expect(await probe.finished == 2)
+        #expect(await probe.maxInFlight == 1)
     }
 
     @Test
     func callsAfterAPassEachRun() async {
         let flight = SingleFlight()
-        let passes = Counter()
+        let probe = Probe()
 
-        await flight.run { await passes.increment() }
-        await flight.run { await passes.increment() }
+        await flight.run { await probe.begin(); await probe.end() }
+        await flight.run { await probe.begin(); await probe.end() }
 
-        #expect(await passes.value == 2)
+        #expect(await probe.finished == 2)
     }
 }
 
-private actor Counter {
-    private(set) var value = 0
+/// Calls `run` on the flight's own executor, so the call is registered before the pass under way can end.
+private func call(
+    _ flight: isolated SingleFlight,
+    announcing didRegister: AsyncStream<Void>.Continuation,
+    _ operation: @escaping @Sendable () async -> Void
+) async {
+    didRegister.yield()
+    await flight.run(operation)
+}
 
-    func increment() {
-        value += 1
+private actor Probe {
+    private(set) var finished = 0
+    private(set) var maxInFlight = 0
+    private var started = 0
+    private var inFlight = 0
+
+    @discardableResult
+    func begin() -> Int {
+        started += 1
+        inFlight += 1
+        maxInFlight = max(maxInFlight, inFlight)
+        return started
+    }
+
+    func end() {
+        inFlight -= 1
+        finished += 1
     }
 }

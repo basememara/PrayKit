@@ -104,17 +104,11 @@ extension HijriServiceStaticTests {
 // MARK: - Helpers
 
 private extension HijriServiceStaticTests {
-    /// A manual address also switches to the time zone's recommended method.
     func saveManualAddress(_ coordinates: Coordinates, timeZone: TimeZone, hijriDayOffset: Int, autoIncrementHijri: Bool) {
-        storage.update { state in
-            DeviceState(
-                document: state.document.editing(at: .now) {
-                    $0.calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee
-                    $0.hijriDayOffset = hijriDayOffset
-                    $0.autoIncrementHijri = autoIncrementHijri
-                },
-                place: Place(coordinates: coordinates, timeZone: timeZone, regionName: nil, fixedAt: .now)
-            )
+        storage.setManualPlace(coordinates, timeZone: timeZone, regionName: nil)
+        storage.edit {
+            $0.hijriDayOffset = hijriDayOffset
+            $0.autoIncrementHijri = autoIncrementHijri
         }
     }
 }

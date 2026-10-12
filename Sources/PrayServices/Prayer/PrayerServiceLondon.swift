@@ -209,33 +209,13 @@ public extension PrayerServiceLondon {
             )
         ])
 
-        // Implementation taken from Adhan lib
         if [.all, .sunnah].contains(request.filter) {
-            let nightDuration = originalTomorrowFajrTime.timeIntervalSince(magribTime)
-            let middleOfTheNight = magribTime.addingTimeInterval(nightDuration / 2).roundedMinute(using: calendar)
-            let lastThirdOfTheNight = magribTime.addingTimeInterval(nightDuration * (2 / 3)).roundedMinute(using: calendar)
-
-            guard middleOfTheNight < lastThirdOfTheNight, lastThirdOfTheNight < originalTomorrowFajrTime else {
+            guard let night = PrayerTime.night(from: magribTime, to: tomorrowFajrTime, using: calendar) else {
                 log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
                 throw PrayError.invalidTimes
             }
 
-            times.append(contentsOf: [
-                PrayerTime(
-                    type: .midnight,
-                    dateInterval: .init(
-                        start: middleOfTheNight,
-                        end: lastThirdOfTheNight
-                    )
-                ),
-                PrayerTime(
-                    type: .lastThird,
-                    dateInterval: .init(
-                        start: lastThirdOfTheNight,
-                        end: originalTomorrowFajrTime
-                    )
-                )
-            ])
+            times.append(contentsOf: night)
         }
 
         return times
@@ -321,17 +301,6 @@ private extension PrayerServiceLondon {
 
     func fileURL(forYear year: Int) -> URL? {
         Bundle.module.url(forResource: "london-\(String(year))", withExtension: "json")
-    }
-}
-
-private extension Date {
-    func roundedMinute(using calendar: Calendar) -> Date {
-        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: self)
-        let minute = Double(components.minute ?? 0)
-        let second = Double(components.second ?? 0)
-        components.minute = Int(minute + round(second / 60))
-        components.second = 0
-        return calendar.date(from: components) ?? self
     }
 }
 

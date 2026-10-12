@@ -32,6 +32,7 @@ extension PrayerDayRuleTests {
             }
 
             #expect(day.times[.isha]?.dateInterval.end == next.times[.fajr]?.dateInterval.start, "Isha ends at the next Fajr")
+            #expect(day.times[.lastThird]?.dateInterval.end == day.times[.isha]?.dateInterval.end, "The night ends with Isha")
         }
     }
 }
@@ -150,15 +151,8 @@ extension PrayerDayRuleTests {
     /// the next calendar day's prayer day.
     @Test
     func aFajrBeforeMidnightStartsTheNextDay() async throws {
-        let place = DayFixture("Edinburgh", 55.9533, -3.1883, "Europe/London", .moonsightingCommittee, 2026, 6, 20, adjustments: .relative(fajr: -300))
-        let fixtureRequest = try place.request()
-        let request = PrayerAPI.Request(
-            coordinates: fixtureRequest.coordinates,
-            timeZone: fixtureRequest.timeZone,
-            method: fixtureRequest.method,
-            adjustments: fixtureRequest.adjustments,
-            filter: .essential
-        )
+        let place = try #require(DayFixture.all.first { $0.name.hasPrefix("Edinburgh") })
+        let request = try place.request()
         let calendar = try place.calendar()
         let june20 = calendar.startOfDay(for: try place.date(2026, 6, 20))
         let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
@@ -234,9 +228,9 @@ extension PrayerDayRuleTests {
             // A reminder is only set when the prayer lasts longer than it, as Reykjavik's Fajr in June doesn't
             let fajrReminders = days
                 .compactMap { $0.times[.fajr] }
-                .filter { $0.dateInterval.duration > 1800 }
+                .filter { $0.dateInterval.duration > 1800 && $0.dateInterval.start < end }
                 .map { $0.dateInterval.start - 1800 }
-                .filter { $0 > start && $0 < end }
+                .filter { $0 > start }
 
             if !zip(timeline, timeline.dropFirst()).allSatisfy({ $0.date < $1.date }) { problems.append("\(start): out of order") }
             if timeline.first(where: { $0.date == start }) == nil { problems.append("\(start): no entry for the moment itself") }
@@ -538,6 +532,10 @@ extension DayFixture {
         DayFixture(
             "Toronto, Fajr 90 minutes before sunrise", 43.6510, -79.3470, "America/Toronto", .moonsightingCommittee, 2026, 10, 12,
             adjustments: .relative(fajr: -90)
+        ),
+        DayFixture(
+            "Edinburgh, Fajr 300 minutes before sunrise, before midnight", 55.9533, -3.1883, "Europe/London", .moonsightingCommittee, 2026, 6, 20,
+            adjustments: .relative(fajr: -300)
         ),
         DayFixture("London timetable", 51.5074, -0.1278, "Europe/London", .london, 2022, 2, 25),
         DayFixture(

@@ -140,30 +140,13 @@ public extension PrayerServiceAdhan {
             )
         ])
 
-        if [.all, .sunnah].contains(request.filter), let sunnahTimes = SunnahTimes(from: prayers) {
-            guard sunnahTimes.middleOfTheNight < sunnahTimes.lastThirdOfTheNight,
-                  sunnahTimes.lastThirdOfTheNight < tomorrowFajrTime
-            else {
+        if [.all, .sunnah].contains(request.filter) {
+            guard let night = PrayerTime.night(from: prayers.maghrib, to: tomorrowFajrTime, using: calendar) else {
                 log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
                 throw PrayError.invalidTimes
             }
 
-            times.append(contentsOf: [
-                PrayerTime(
-                    type: .midnight,
-                    dateInterval: .init(
-                        start: sunnahTimes.middleOfTheNight,
-                        end: sunnahTimes.lastThirdOfTheNight
-                    )
-                ),
-                PrayerTime(
-                    type: .lastThird,
-                    dateInterval: .init(
-                        start: sunnahTimes.lastThirdOfTheNight,
-                        end: tomorrowFajrTime
-                    )
-                )
-            ])
+            times.append(contentsOf: night)
         }
 
         return times

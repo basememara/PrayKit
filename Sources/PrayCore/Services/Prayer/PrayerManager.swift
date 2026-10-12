@@ -216,10 +216,11 @@ private extension PrayerManager {
     func fetch(for date: Date, using calendar: Calendar, with request: PrayerAPI.Request) async throws -> PrayerDay {
         let prayerService = request.method == .london ? londonService : service
 
+        // In time order, since a short night can put its middle before Isha begins
         return PrayerDay(
             date: date.startOfDay(using: calendar),
-            times: try await prayerService.calculate(for: date, using: calendar, with: request),
-            tomorrow: try await prayerService.calculate(for: date.tomorrow(using: calendar), using: calendar, with: request)
+            times: try await prayerService.calculate(for: date, using: calendar, with: request).sorted(by: \.dateInterval.start),
+            tomorrow: try await prayerService.calculate(for: date.tomorrow(using: calendar), using: calendar, with: request).sorted(by: \.dateInterval.start)
         )
     }
 }
@@ -274,7 +275,13 @@ private extension PrayerManager {
             entries.insert(entry, at: entries.firstIndex { $0.date > midnight } ?? entries.endIndex)
         }
 
-        let resultSeed = seed + entries
+        // A short night can put this day's first reminder before the last entries of the day before
+        let resultSeed = (seed + entries)
+            .sorted(by: \.date)
+            .reduce(into: [PrayerTimer]()) { result, entry in
+                guard result.last?.date != entry.date else { return }
+                result.append(entry)
+            }
         guard resultSeed.count < limit else { return resultSeed.prefix(limit).array }
 
         let nextDay: PrayerDay

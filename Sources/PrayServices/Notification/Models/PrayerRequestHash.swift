@@ -13,9 +13,7 @@ import ZamzamCore
 struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let id: String
     let request: PrayerAPI.Request
-    let snoozeMinutes: Int
     let preAdhanMinutes: PreAdhanMinutes
-    let sunriseAfterIsha: Bool
     let notificationAdhan: NotificationAdhan
     let notificationSounds: NotificationSounds
     let reminderSounds: ReminderSounds
@@ -25,19 +23,17 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let isGPSEnabled: Bool
     let geofenceRadius: Double
 
-    init(request: PrayerAPI.Request, dateInterval: DateInterval, preferences: Preferences) {
+    init(request: PrayerAPI.Request, dateInterval: DateInterval, settings: Settings) {
         self.request = request
-        self.snoozeMinutes = preferences.snoozeMinutes
-        self.preAdhanMinutes = preferences.preAdhanMinutes
-        self.sunriseAfterIsha = preferences.sunriseAfterIsha
-        self.notificationAdhan = preferences.notificationAdhan
-        self.notificationSounds = preferences.notificationSounds
-        self.reminderSounds = preferences.reminderSounds
-        self.iqamaTimes = preferences.iqamaTimes
-        self.iqamaReminders = preferences.iqamaReminders
-        self.duhaReminder = preferences.duhaReminder
-        self.isGPSEnabled = preferences.isGPSEnabled
-        self.geofenceRadius = preferences.geofenceRadius
+        self.preAdhanMinutes = settings.preAdhanMinutes
+        self.notificationAdhan = settings.notificationAdhan
+        self.notificationSounds = settings.notificationSounds
+        self.reminderSounds = settings.reminderSounds
+        self.iqamaTimes = settings.iqamaTimes
+        self.iqamaReminders = settings.iqamaReminders
+        self.duhaReminder = settings.duhaReminder
+        self.isGPSEnabled = settings.isGPSEnabled
+        self.geofenceRadius = settings.geofenceRadius
 
         let calendar = Calendar(
             identifier: .gregorian,

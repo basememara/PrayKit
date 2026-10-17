@@ -55,30 +55,31 @@ public extension PrayerAPI {
             self.filter = filter
         }
 
+        /// The request for the place, or `nil` before the device has one.
         public init?(
-            from preferences: Preferences,
-            coordinates: Coordinates? = nil,
+            settings: Settings,
+            place: Place?,
             timeZone: TimeZone? = nil,
             method: CalculationMethod? = nil,
             filter: PrayerFilter = .all
         ) {
-            guard let coordinates = coordinates ?? preferences.prayersCoordinates else {
-                return nil
-            }
+            guard let place else { return nil }
 
-            self.coordinates = coordinates
-            self.timeZone = timeZone ?? preferences.lastTimeZone
-            self.method = method ?? preferences.calculationMethod
-            self.jurisprudence = preferences.juristicMethod
-            self.elevation = preferences.elevationRule
-            self.fajrDegrees = preferences.fajrDegrees
-            self.maghribDegrees = preferences.maghribDegrees
-            self.ishaDegrees = preferences.ishaDegrees
-            self.adjustments = PrayerAdjustments(
-                adjustmentMinutes: preferences.adjustmentMinutes,
-                adjustmentElevation: preferences.adjustmentElevation
+            self.init(
+                coordinates: place.coordinates,
+                timeZone: timeZone ?? place.timeZone,
+                method: method ?? settings.calculationMethod,
+                jurisprudence: settings.juristicMethod,
+                elevation: settings.elevationRule,
+                fajrDegrees: settings.fajrDegrees,
+                maghribDegrees: settings.maghribDegrees,
+                ishaDegrees: settings.ishaDegrees,
+                adjustments: PrayerAdjustments(
+                    adjustmentMinutes: settings.adjustmentMinutes,
+                    adjustmentElevation: settings.adjustmentElevation
+                ),
+                filter: filter
             )
-            self.filter = filter
         }
     }
 }

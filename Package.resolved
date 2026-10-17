@@ -1,5 +1,5 @@
 {
-  "originHash" : "f346215cd705cb39ba715325a89a0745b68765274222b0315a6903c3198896d6",
+  "originHash" : "9683d786e75eff0165917abc25926e759f9add69349eddb56e3635758db6977c",
   "pins" : [
     {
       "identity" : "adhan-swift",
@@ -16,7 +16,7 @@
       "location" : "https://github.com/ZamzamInc/ZamzamKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "2e9becdf54fca900471dfc0e06c853407732a3ab"
+        "revision" : "aca7284ca7c40c4906e7055d2b0d7b61495ad69a"
       }
     }
   ],

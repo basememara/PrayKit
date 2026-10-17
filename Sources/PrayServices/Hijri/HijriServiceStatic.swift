@@ -12,11 +12,11 @@ import ZamzamCore
 
 public struct HijriServiceStatic: HijriService {
     private let prayerManager: PrayerManager
-    private let preferences: Preferences
+    private let storage: SettingsStorage
 
-    public init(prayerManager: PrayerManager, preferences: Preferences) {
+    public init(prayerManager: PrayerManager, storage: SettingsStorage) {
         self.prayerManager = prayerManager
-        self.preferences = preferences
+        self.storage = storage
     }
 }
 
@@ -39,31 +39,37 @@ public extension HijriServiceStatic {
 
 public extension HijriServiceStatic {
     func fetchOffset(for time: Date) async throws -> Int {
-        guard preferences.autoIncrementHijri, let request = PrayerAPI.Request(from: preferences, filter: .obligation) else {
-            return preferences.hijriDayOffset
+        let state = storage.load()
+        let settings = state.document.settings
+
+        guard settings.autoIncrementHijri, let request = PrayerAPI.Request(settings: settings, place: state.place, filter: .obligation) else {
+            return settings.hijriDayOffset
         }
 
         do {
-            let prayerDay = try await prayerManager.fetch(for: time, with: request)
+            let prayerDay = try await prayerManager.fetch(at: time, with: request)
             return time.hijriDayOffset(
                 for: prayerDay,
-                hijriDayOffset: preferences.hijriDayOffset,
-                autoIncrementHijri: preferences.autoIncrementHijri,
+                hijriDayOffset: settings.hijriDayOffset,
+                autoIncrementHijri: settings.autoIncrementHijri,
                 timeZone: request.timeZone
             )
         } catch {
-            return preferences.hijriDayOffset
+            return settings.hijriDayOffset
         }
     }
 }
 
 public extension HijriServiceStatic {
     func fetch(with request: HijriAPI.FetchTimelineRequest) async throws -> [HijriAPI.TimelineEntry] {
-        let startOfDayTimeline: [HijriAPI.TimelineEntry] = await fetch(with: request)
-            .map { HijriAPI.TimelineEntry(date: $0, timeZone: request.timeZone, hijriOffset: preferences.hijriDayOffset) }
+        let state = storage.load()
+        let settings = state.document.settings
 
-        guard preferences.autoIncrementHijri,
-              let prayerRequest = PrayerAPI.Request(from: preferences, timeZone: request.timeZone, filter: .obligation),
+        let startOfDayTimeline: [HijriAPI.TimelineEntry] = await fetch(with: request)
+            .map { HijriAPI.TimelineEntry(date: $0, timeZone: request.timeZone, hijriOffset: settings.hijriDayOffset) }
+
+        guard settings.autoIncrementHijri,
+              let prayerRequest = PrayerAPI.Request(settings: settings, place: state.place, timeZone: request.timeZone, filter: .obligation),
               let startDate = startOfDayTimeline.first?.date,
               let endDate = startOfDayTimeline.prefix(request.limit / 2).last?.date, // Leave room to interlace maghrib dates
               startDate <= endDate
@@ -72,11 +78,30 @@ public extension HijriServiceStatic {
         }
 
         do {
-            let dateInterval = DateInterval(start: startDate, end: endDate)
-            let maghribTimeline = try await prayerManager.fetch(between: dateInterval, with: prayerRequest)
+            // From the day before, which holds the first midnight until its Fajr
+            let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone)
+            let dateInterval = DateInterval(start: startDate.yesterday(using: calendar), end: endDate)
+            let prayerDays = try await prayerManager.fetch(between: dateInterval, with: prayerRequest)
+            let maghribs = prayerDays
                 .compactMap { $0.times[.maghrib]?.dateInterval.start }
-                .map { HijriAPI.TimelineEntry(date: $0, timeZone: request.timeZone, hijriOffset: preferences.hijriDayOffset + 1) }
-            return (startOfDayTimeline + maghribTimeline).sorted(by: \.date).prefix(request.limit).array
+                .filter { $0 >= startDate }
+
+            return (startOfDayTimeline.map(\.date) + maghribs)
+                .sorted()
+                .map { date in
+                    HijriAPI.TimelineEntry(
+                        date: date,
+                        timeZone: request.timeZone,
+                        hijriOffset: date.hijriDayOffset(
+                            for: prayerDays.first { $0.contains(date) },
+                            hijriDayOffset: settings.hijriDayOffset,
+                            autoIncrementHijri: true,
+                            timeZone: request.timeZone
+                        )
+                    )
+                }
+                .prefix(request.limit)
+                .array
         } catch {
             return startOfDayTimeline
         }

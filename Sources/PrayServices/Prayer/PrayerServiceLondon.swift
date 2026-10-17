@@ -16,7 +16,9 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
-    private let lastDate = Date(year: 2026, month: 12, day: 31)
+
+    /// The last day the bundled timetables cover.
+    private static let lastDay = DateComponents(year: 2026, month: 12, day: 31)
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager
@@ -37,8 +39,7 @@ public extension PrayerServiceLondon {
         let dateFormatter = DateFormatter(dateFormat: "yyyy-MM-dd", calendar: calendar)
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
-        // Validate does not go beyond available dates
-        guard date <= lastDate ?? .now.endOfYear(using: calendar) else {
+        guard let lastDate = calendar.date(from: Self.lastDay), calendar.startOfDay(for: date) <= lastDate else {
             log.warning("London prayers not available for '\(date.formatted())'")
             return []
         }
@@ -72,24 +73,23 @@ public extension PrayerServiceLondon {
         }
 
         guard let tomorrowPrayers,
-              let originalTomorrowFajrTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.fajr].joined(separator: " ")),
-              let tomorrowSunriseTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.sunrise].joined(separator: " "))
+              var tomorrowFajrTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.fajr].joined(separator: " ")),
+              var tomorrowSunriseTime = timeFormatter.date(from: [tomorrowKey, tomorrowPrayers.sunrise].joined(separator: " "))
         else {
             log.error("Could not initialize tomorrow prayer times from London prayer response.")
             throw PrayError.invalidTimes
         }
 
-        var tomorrowFajrTime = originalTomorrowFajrTime
-
-        // Apply user adjustments if applicable
+        // Apply user adjustments if applicable; tomorrow's are applied the same way, so Isha ends where its Fajr begins
         if let adjustments = request.adjustments, request.adjustments?.isEmpty == false {
             if adjustments.sunrise != 0 {
-                sunriseTime = (sunriseTime + .minutes(adjustments.sunrise)).roundedMinute(using: calendar)
+                sunriseTime = (sunriseTime + .minutes(adjustments.sunrise)).roundedMinute
+                tomorrowSunriseTime = (tomorrowSunriseTime + .minutes(adjustments.sunrise)).roundedMinute
             }
 
             if adjustments.fajr != 0 {
-                fajrTime = (fajrTime + .minutes(adjustments.fajr)).roundedMinute(using: calendar)
-                tomorrowFajrTime = (tomorrowFajrTime + .minutes(adjustments.fajr)).roundedMinute(using: calendar)
+                fajrTime = (fajrTime + .minutes(adjustments.fajr)).roundedMinute
+                tomorrowFajrTime = (tomorrowFajrTime + .minutes(adjustments.fajr)).roundedMinute
 
                 if adjustments.isFajrSunriseRelative {
                     let fajr = sunriseTime + .minutes(adjustments.fajr)
@@ -101,19 +101,19 @@ public extension PrayerServiceLondon {
             }
 
             if adjustments.dhuhr != 0 {
-                dhuhrTime = (dhuhrTime + .minutes(adjustments.dhuhr)).roundedMinute(using: calendar)
+                dhuhrTime = (dhuhrTime + .minutes(adjustments.dhuhr)).roundedMinute
             }
 
             if adjustments.asr != 0 {
-                asrTime = (asrTime + .minutes(adjustments.asr)).roundedMinute(using: calendar)
+                asrTime = (asrTime + .minutes(adjustments.asr)).roundedMinute
             }
 
             if adjustments.maghrib != 0 {
-                magribTime = (magribTime + .minutes(adjustments.maghrib)).roundedMinute(using: calendar)
+                magribTime = (magribTime + .minutes(adjustments.maghrib)).roundedMinute
             }
 
             if adjustments.isha != 0 {
-                ishaTime = (ishaTime + .minutes(adjustments.isha)).roundedMinute(using: calendar)
+                ishaTime = (ishaTime + .minutes(adjustments.isha)).roundedMinute
 
                 if adjustments.isIshaMaghribRelative {
                     let isha = magribTime + .minutes(adjustments.isha)
@@ -207,33 +207,8 @@ public extension PrayerServiceLondon {
             )
         ])
 
-        // Implementation taken from Adhan lib
         if [.all, .sunnah].contains(request.filter) {
-            let nightDuration = originalTomorrowFajrTime.timeIntervalSince(magribTime)
-            let middleOfTheNight = magribTime.addingTimeInterval(nightDuration / 2).roundedMinute(using: calendar)
-            let lastThirdOfTheNight = magribTime.addingTimeInterval(nightDuration * (2 / 3)).roundedMinute(using: calendar)
-
-            guard middleOfTheNight < lastThirdOfTheNight, lastThirdOfTheNight < originalTomorrowFajrTime else {
-                log.error("Sunnah prayers were invalid due to resulting after tomorrow's fajr.")
-                throw PrayError.invalidTimes
-            }
-
-            times.append(contentsOf: [
-                PrayerTime(
-                    type: .midnight,
-                    dateInterval: .init(
-                        start: middleOfTheNight,
-                        end: lastThirdOfTheNight
-                    )
-                ),
-                PrayerTime(
-                    type: .lastThird,
-                    dateInterval: .init(
-                        start: lastThirdOfTheNight,
-                        end: originalTomorrowFajrTime
-                    )
-                )
-            ])
+            times.append(contentsOf: PrayerTime.night(from: magribTime, to: tomorrowFajrTime))
         }
 
         return times
@@ -319,17 +294,6 @@ private extension PrayerServiceLondon {
 
     func fileURL(forYear year: Int) -> URL? {
         Bundle.module.url(forResource: "london-\(String(year))", withExtension: "json")
-    }
-}
-
-private extension Date {
-    func roundedMinute(using calendar: Calendar) -> Date {
-        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: self)
-        let minute = Double(components.minute ?? 0)
-        let second = Double(components.second ?? 0)
-        components.minute = Int(minute + round(second / 60))
-        components.second = 0
-        return calendar.date(from: components) ?? self
     }
 }
 

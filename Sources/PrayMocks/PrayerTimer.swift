@@ -12,7 +12,7 @@ import ZamzamCore
 
 public extension PrayerTimer {
     static func mock(
-        at date: Date? = nil,
+        at date: Date = .now,
         prayerDay: PrayerDay = .mock(),
         iqamaTimes: IqamaTimes? = nil,
         isIqamaTimerEnabled: Bool = true,
@@ -21,7 +21,7 @@ public extension PrayerTimer {
         sunriseAfterIsha: Bool = false
     ) -> PrayerTimer? {
         PrayerTimer(
-            at: date ?? prayerDay.date,
+            at: date,
             using: prayerDay,
             iqamaTimes: iqamaTimes ?? IqamaTimes(
                 fajr: .minutes(26),
@@ -62,7 +62,6 @@ public extension PrayerTimer {
                 timerType: .countdown,
                 prayerDay: prayerDay,
                 countdownDate: countdownDate,
-                khutbaTime: nil,
                 timeRange: date...countdownDate,
                 timeRemaining: countdownDate.timeIntervalSince(date),
                 timeDuration: DateInterval(start: date, end: countdownDate).duration,
@@ -70,7 +69,6 @@ public extension PrayerTimer {
                 dangerZone: 0.25,
                 isDangerZone: false,
                 isJumuah: false,
-                localizeAt: nil,
                 isPlaceholder: true
             )
         }

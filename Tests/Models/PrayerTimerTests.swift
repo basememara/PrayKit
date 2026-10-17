@@ -33,7 +33,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 20)
     }
 
@@ -46,7 +46,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -5)
     }
 
@@ -59,7 +59,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 55, lastAdhanTime: today(hour: 18, minute: 15))
     }
 
@@ -72,7 +72,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 10 * 60 + 7)
     }
 
@@ -85,7 +85,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 12)
     }
 
@@ -98,7 +98,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -8)
     }
 
@@ -111,7 +111,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 3, lastAdhanTime: today(hour: 5, minute: 52))
     }
 
@@ -124,7 +124,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 50)
     }
 
@@ -137,7 +137,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15)
     }
 
@@ -150,7 +150,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 
@@ -163,7 +163,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 25)
     }
 
@@ -176,7 +176,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -10)
     }
 
@@ -189,7 +189,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 12, minute: 10))
     }
 
@@ -202,7 +202,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 85)
     }
 
@@ -215,7 +215,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 10)
     }
 
@@ -228,7 +228,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -15)
     }
 
@@ -241,7 +241,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 14, minute: 25))
     }
 
@@ -254,7 +254,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 95)
     }
 
@@ -267,7 +267,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 10)
     }
 
@@ -280,7 +280,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 5, lastAdhanTime: today(hour: 16, minute: 50))
     }
 
@@ -293,7 +293,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 65)
     }
 }
@@ -310,7 +310,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 6 * 60, lastAdhanTime: friday(hour: 7, minute: 20))
     }
 
@@ -323,7 +323,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 1 * 60 + 45, lastAdhanTime: friday(hour: 7, minute: 20))
     }
 
@@ -336,7 +336,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt == nil)
+        #expect(!prayerTimer.isNamedJumuah)
         assertCalculations(for: prayerTimer, minutes: -10)
     }
 
@@ -349,7 +349,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 60, lastAdhanTime: friday(hour: 12, minute: 10))
     }
 
@@ -362,7 +362,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -15)
     }
 
@@ -375,7 +375,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 10)
     }
 
@@ -388,7 +388,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -15)
     }
 
@@ -401,7 +401,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: friday(hour: 14, minute: 25))
     }
 
@@ -414,7 +414,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 95)
     }
 }
@@ -431,7 +431,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 
@@ -444,7 +444,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15)
     }
 
@@ -457,7 +457,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -10)
     }
 
@@ -470,7 +470,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 60 + 55)
     }
 }
@@ -487,7 +487,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -5)
     }
 
@@ -500,7 +500,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 55, lastAdhanTime: today(hour: 18, minute: 15))
     }
 
@@ -513,7 +513,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 10 * 60 + 30, lastAdhanTime: today(hour: 18, minute: 15))
     }
 
@@ -526,7 +526,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 35, lastAdhanTime: today(hour: 18, minute: 15) - .days(1, calendar))
     }
 
@@ -539,7 +539,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -8)
     }
 
@@ -552,7 +552,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 3, lastAdhanTime: today(hour: 5, minute: 52))
     }
 
@@ -565,7 +565,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 50)
     }
 
@@ -578,7 +578,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(prayerTimer.isDangerZone)
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 15)
     }
 
@@ -591,7 +591,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 }
@@ -608,7 +608,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 11 * 60 + 17)
     }
 
@@ -621,7 +621,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 
@@ -634,7 +634,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 6 * 60, lastAdhanTime: friday(hour: 7, minute: 20))
     }
 
@@ -647,7 +647,7 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.localizeAt != nil)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 }

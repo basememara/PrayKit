@@ -37,8 +37,9 @@ extension PrayerDayAdhanTests {
         #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2021, month: 1, day: 3, hour: 1, minute: 54, timeZone: timeZone))
 
         let startDate = (prayerDay.times[.fajr]?.dateInterval.start ?? .now) - 60
-        #expect(prayerDay.current(at: startDate)?.type == .isha)
-        #expect(prayerDay.current(at: startDate)?.dateInterval.start == prayerDay.yesterday[.isha]?.dateInterval.start)
+        // The minute before Fajr belongs to the day before, so this day has no prayer under way yet
+        #expect(!prayerDay.contains(startDate))
+        #expect(prayerDay.current(at: startDate) == nil)
         #expect(prayerDay.next(at: startDate)?.type == .fajr)
         #expect(prayerDay.next(at: startDate)?.dateInterval.start == prayerDay.times[.fajr]?.dateInterval.start)
 
@@ -107,8 +108,9 @@ extension PrayerDayAdhanTests {
         #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2022, month: 2, day: 26, hour: 1, minute: 20, timeZone: timeZone))
 
         let startDate = (prayerDay.times[.fajr]?.dateInterval.start ?? .now) - 60
-        #expect(prayerDay.current(at: startDate)?.type == .isha)
-        #expect(prayerDay.current(at: startDate)?.dateInterval.start == prayerDay.yesterday[.isha]?.dateInterval.start)
+        // The minute before Fajr belongs to the day before, so this day has no prayer under way yet
+        #expect(!prayerDay.contains(startDate))
+        #expect(prayerDay.current(at: startDate) == nil)
         #expect(prayerDay.next(at: startDate)?.type == .fajr)
         #expect(prayerDay.next(at: startDate)?.dateInterval.start == prayerDay.times[.fajr]?.dateInterval.start)
 

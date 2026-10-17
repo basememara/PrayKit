@@ -70,6 +70,16 @@ public extension SettingsDocument {
             }
     }
 
+    /// The settings changed from their defaults here that `fields` has no value for, such as one an earlier app
+    /// version never synced, so only this copy can supply them. A missing optional setting is a `nil` value.
+    func keysMissing(from fields: [String: WireValue]) -> [SettingKey] {
+        let defaults = Settings()
+
+        return Settings.fields
+            .filter { $0.isSynced && !$0.isOptional && fields[$0.key.rawValue] == nil && !$0.isEqual(settings, defaults) }
+            .map(\.key)
+    }
+
     /// Reads a copy that arrived over the wire.
     ///
     /// - Parameters:

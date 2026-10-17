@@ -99,6 +99,15 @@ extension SettingsWireTests {
     }
 
     @Test
+    func onlyThisCopyCanSupplyTheChangedSettingsAnOlderVersionNeverSynced() throws {
+        let record = try Self.legacyRecord(of: .everyFieldChanged)
+
+        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute])
+        #expect(SettingsDocument().keysMissing(from: record).isEmpty)
+        #expect(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: Self.revised.wireFields).isEmpty)
+    }
+
+    @Test
     func anOlderVersionsChangeOutranksTheRevisionItReplaced() {
         // A newer device with a fast clock stamped the setting after the moment the older version saved
         let stampedAhead = saved + 30

@@ -287,6 +287,29 @@ extension PrayerTimelineAdhanTests {
     }
 }
 
+extension PrayerTimelineAdhanTests {
+    @Test
+    func hourlyCountsTheLastHourDownInFiveMinuteSteps() async throws {
+        let (timeline, _, date) = try await fetchPrayerDay(
+            settings: Settings(),
+            date: "2022/04/01 06:00",
+            expanded: .hourly,
+            limit: 200,
+            timeZoneIdentifier: "America/New_York",
+            latitude: 43.651070,
+            longitude: -79.347015,
+            method: .northAmerica
+        )
+
+        let dates = Set(timeline.map(\.date))
+        try [Prayer.dhuhr, .asr, .maghrib, .isha].forEach {
+            let start = try #require(timeline[dayOf: date, $0]).dateInterval.start
+            let steps = stride(from: 60, to: 0, by: -5).map { start - .minutes($0) }
+            #expect(steps.allSatisfy(dates.contains), "\($0) is missing a five-minute step in its last hour")
+        }
+    }
+}
+
 // MARK: - Helpers
 
 private extension PrayerTimelineAdhanTests {

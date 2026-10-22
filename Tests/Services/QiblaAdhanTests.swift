@@ -29,4 +29,21 @@ struct QiblaAdhanTests {
         // Then
         #expect(abs(qibla.direction - 124) <= 1)
     }
+
+    /// About 4,508 km on a sphere; the ellipsoid the device measures on moves it by a few kilometres.
+    @Test
+    func distanceForAntwerp() {
+        let request = QiblaAPI.DirectionRequest(coordinate: CLLocationCoordinate2D(latitude: 51.2901, longitude: 4.4916))
+        let qibla = qiblaService.fetch(with: request)
+
+        #expect(abs(qibla.distance / 1000 - 4508) <= 25)
+    }
+
+    @Test
+    func noDistanceAtTheKaaba() {
+        let request = QiblaAPI.DirectionRequest(coordinate: Coordinates.kaaba.location)
+        let qibla = qiblaService.fetch(with: request)
+
+        #expect(qibla.distance < 100)
+    }
 }

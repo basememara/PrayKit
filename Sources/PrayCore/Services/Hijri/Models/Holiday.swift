@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import ZamzamCore
 
 public struct Holiday: Identifiable, Equatable, Sendable {
     public let id: String
@@ -26,11 +25,8 @@ public struct Holiday: Identifiable, Equatable, Sendable {
 }
 
 public extension Holiday {
-    /// The day the holiday falls on in a Hijri year, as dated with the user's Hijri day offset: an offset that shows
-    /// the Hijri date a day ahead brings the holiday a day sooner.
+    /// The day the holiday falls on in a Hijri year, as dated with the user's Hijri day offset.
     func date(inYear year: Int, offset: Int) -> Date? {
-        let calendar = Date.islamicCalendar
-        return DateComponents(calendar: calendar, year: year, month: month, day: day).date
-            .flatMap { calendar.date(byAdding: .day, value: -offset, to: $0) }
+        Date(hijriYear: year, month: month, day: day, offset: offset)
     }
 }

@@ -54,3 +54,14 @@ public extension Date {
         return hijriDayOffset + (hasMaghribBegun ? 1 : 0) - daysPastPrayerDay
     }
 }
+
+public extension Date {
+    /// The day a Hijri date falls on as the app shows it: the app shows the Hijri date of the day `offset` days on,
+    /// so each Hijri day comes `offset` days before its Umm al-Qura day.
+    init?(hijriYear year: Int, month: Int, day: Int, offset: Int) {
+        let calendar = Date.islamicCalendar
+        guard let date = DateComponents(calendar: calendar, year: year, month: month, day: day).date
+            .flatMap({ calendar.date(byAdding: .day, value: -offset, to: $0) }) else { return nil }
+        self = date
+    }
+}

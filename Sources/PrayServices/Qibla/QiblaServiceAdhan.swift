@@ -21,10 +21,9 @@ public extension QiblaServiceAdhan {
             longitude: request.coordinate.longitude
         )
 
-        let model = PrayCore.Qibla(
-            direction: Adhan.Qibla(coordinates: coordinates).direction
+        return PrayCore.Qibla(
+            direction: Adhan.Qibla(coordinates: coordinates).direction,
+            distance: request.coordinate.distance(from: PrayCore.Coordinates.kaaba.location)
         )
-
-        return model
     }
 }

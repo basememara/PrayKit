@@ -67,6 +67,7 @@ public extension PrayerManager {
 public extension PrayerManager {
     enum Expanded: Sendable {
         case finalHour
+        /// Every hour of each prayer, then every five minutes in its last hour.
         case hourly
         case intervals(TimeInterval)
         case none
@@ -385,6 +386,16 @@ private extension Array where Element == PrayerTimer {
                 from: currentPrayer.dateInterval.start.timeIntervalSince1970,
                 to: currentPrayer.dateInterval.end.timeIntervalSince1970,
                 by: 3600
+            ).compactMap { timeInterval in
+                context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
+            }
+
+            // The last hour in five-minute steps, for a face too small for a live timer that shows the minutes left
+            let finalHour = Swift.max(currentPrayer.dateInterval.start, currentPrayer.dateInterval.end - .hours(1))
+            result += stride(
+                from: finalHour.timeIntervalSince1970,
+                to: currentPrayer.dateInterval.end.timeIntervalSince1970,
+                by: 300
             ).compactMap { timeInterval in
                 context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }

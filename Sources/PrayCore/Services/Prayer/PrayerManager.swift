@@ -296,7 +296,9 @@ private extension PrayerManager {
                 guard result.last?.date != entry.date else { return }
                 result.append(entry)
             }
-        guard resultSeed.count < limit else { return resultSeed.prefix(limit).array }
+        if let capped = resultSeed.capped(at: limit) {
+            return capped
+        }
 
         let nextDay: PrayerDay
 
@@ -325,6 +327,17 @@ private extension PrayerManager {
 }
 
 // MARK: - Extensions
+
+private extension Array where Element == PrayerTimer {
+    /// The first `limit` timers, then on to the one at the moment the last of them counts to: a face left on a
+    /// countdown with nothing after it freezes at zero. `nil` while the timers don't reach that far yet.
+    func capped(at limit: Int) -> Self? {
+        guard limit > 0, count >= limit else { return nil }
+        let target = self[limit - 1].countdownDate
+        guard let end = self[(limit - 1)...].firstIndex(where: { $0.date >= target }) else { return nil }
+        return Array(self[...end])
+    }
+}
 
 private extension Array where Element == PrayerTimer {
     func expanded(using context: TimerContext, in days: [PrayerDay], calendar: Calendar, progressIntervals: TimeInterval) -> Self {

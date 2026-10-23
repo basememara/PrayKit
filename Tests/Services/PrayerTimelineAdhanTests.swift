@@ -84,7 +84,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 112)
+        #expect(timeline.count == 113)
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:46"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("07:05"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("12:32"))
@@ -261,7 +261,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 31)
+        #expect(timeline.count == 33)
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:38"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("06:59"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("13:22"))
@@ -307,6 +307,31 @@ extension PrayerTimelineAdhanTests {
             let steps = stride(from: 60, to: 0, by: -5).map { start - .minutes($0) }
             #expect(steps.allSatisfy(dates.contains), "\($0) is missing a five-minute step in its last hour")
         }
+    }
+}
+
+extension PrayerTimelineAdhanTests {
+    /// A face shows a countdown until the entry at its prayer replaces it; a timeline cut short of that entry left the
+    /// watch's complications frozen at zero (28.1.0, five-minute steps filling the widget's 15-entry limit).
+    @Test
+    func aCappedTimelineRunsOnToTheMomentItsCountdownsReach() async throws {
+        let (timeline, _, date) = try await fetchPrayerDay(
+            settings: Settings(),
+            date: "2022/04/01 07:30",
+            expanded: .hourly,
+            limit: 15,
+            timeZoneIdentifier: "America/New_York",
+            latitude: 43.651070,
+            longitude: -79.347015,
+            method: .northAmerica
+        )
+
+        let last = try #require(timeline.last)
+        let dhuhr = try #require(timeline[dayOf: date, .dhuhr]).dateInterval.start
+
+        #expect(timeline.count >= 15)
+        #expect(timeline.contains { $0.date == dhuhr })
+        #expect(timeline.dropLast().allSatisfy { $0.countdownDate <= last.date })
     }
 }
 

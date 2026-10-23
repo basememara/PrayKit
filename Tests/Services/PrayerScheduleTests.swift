@@ -290,6 +290,9 @@ private extension RecordedTimeline {
                 "2022/02/26 12:31:00 dhuhr stopwatch",
                 "2022/02/26 12:43:00 dhuhr stopwatch",
                 "2022/02/26 12:49:00 asr countdown",
+                "2022/02/26 14:33:00 asr countdown",
+                "2022/02/26 15:17:00 asr countdown",
+                "2022/02/26 15:33:00 asr stopwatch",
             ]
         )
     ]

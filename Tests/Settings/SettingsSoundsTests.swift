@@ -121,4 +121,38 @@ struct SettingsSoundsTests {
         #expect(settings.adhanURL(at: start + 9 * 3600, in: day) == sunrise)
         #expect(settings.adhanURL(at: start + 9 * 3600, in: nil) == settings.adhanURL(for: .maghrib))
     }
+
+    @Test
+    func theDefaultsPlayTheBundledAdhanAndTone() {
+        #expect(Settings().notificationSoundFiles == ["al.aqsa-short.m4a", "tone.m4a"])
+    }
+
+    @Test
+    func aPrayersNotificationPlaysItsShortAdhanOrItsTone() {
+        var settings = Settings()
+        settings.notificationAdhan[.dhuhr] = .makkah
+        settings.setSound(.alert, for: .asr)
+
+        #expect(settings.notificationSoundFile(for: .dhuhr) == "makkah-short.m4a")
+        #expect(settings.notificationSoundFile(for: .asr) == "alert.m4a")
+        #expect(settings.notificationSoundFile(for: .sunrise) == nil)
+    }
+
+    @Test
+    func aShuffledAdhanCountsEveryAdhanItPicksFrom() {
+        var settings = Settings()
+        settings.notificationAdhan[.fajr] = .shuffle
+
+        let shortAdhans = Set(AdhanSound.shuffleChoices.map { $0.file(for: .short) })
+        #expect(shortAdhans.isSubset(of: settings.notificationSoundFiles))
+    }
+
+    @Test
+    func theIqamaSoundCountsOnlyWithIqamaTimes() {
+        var settings = Settings()
+        #expect(!settings.notificationSoundFiles.contains("iqama.m4a"))
+
+        settings.iqamaTimes = IqamaTimes(fajr: .minutes(20), dhuhr: nil, asr: nil, maghrib: nil, isha: nil, jumuah: nil)
+        #expect(settings.notificationSoundFiles.contains("iqama.m4a"))
+    }
 }

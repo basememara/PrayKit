@@ -80,14 +80,12 @@ public extension AdhanSound {
 public extension AdhanSound {
     static var `default`: Self { .alAqsa }
 
+    /// The adhans a shuffle picks from: every one but the shuffle itself.
+    static var shuffleChoices: [Self] { allCases.filter { $0 != .shuffle } }
+
     private var selectedCase: Self {
-        var value = self
-
-        if case .shuffle = self, let element = Self.allCases.randomElement() {
-            value = element
-        }
-
-        return value
+        guard case .shuffle = self, let choice = Self.shuffleChoices.randomElement() else { return self }
+        return choice
     }
 
     var hasFajr: Bool {
@@ -116,7 +114,7 @@ public extension AdhanSound {
         case .long:
             name = "\(value.rawValue).mp3"
         case .fajr:
-            name = hasFajr
+            name = value.hasFajr
                 ? "\(value.rawValue)-fajr.mp3"
                 : "\(value.rawValue).mp3"
         }
@@ -130,9 +128,6 @@ public extension AdhanSound {
 
         return value == .default
             ? Bundle.main.url(forResource: file, withExtension: nil)
-            : FileManager.default
-                .urls(for: .libraryDirectory, in: .userDomainMask).first?
-                .appendingPathComponent("Sounds")
-                .appendingPathComponent(file)
+            : URL.soundsDirectory.appending(path: file)
     }
 }

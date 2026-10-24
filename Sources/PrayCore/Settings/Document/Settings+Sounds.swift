@@ -51,6 +51,29 @@ public extension Settings {
         soundsBeforeMute[prayer] = nil
     }
 
+    /// The sound file a prayer's notification plays, by name: the short adhan when it plays the adhan (a random one
+    /// for a shuffle), `nil` when it makes no sound.
+    func notificationSoundFile(for prayer: Prayer) -> String? {
+        let sound = notificationSounds[prayer] ?? .off
+        guard case .adhan = sound else { return sound.file }
+        return (notificationAdhan[prayer] ?? .alAqsa).file(for: .short)
+    }
+
+    /// Every sound file the notifications can play without the app, by name, so a device can have them on hand;
+    /// a shuffled adhan counts every adhan it picks from.
+    var notificationSoundFiles: Set<String> {
+        let prayers = Prayer.allCases.flatMap { prayer in
+            notificationSounds[prayer] == .adhan && notificationAdhan[prayer] == .shuffle
+                ? AdhanSound.shuffleChoices.map { $0.file(for: .short) }
+                : [notificationSoundFile(for: prayer)].compactMap(\.self)
+        }
+
+        let reminders = Prayer.allCases.compactMap { reminderSounds[$0]?.file }
+        let iqama = iqamaTimes.isEmpty ? nil : iqamaReminders.sound.file
+
+        return Set(prayers + reminders + [iqama].compactMap(\.self))
+    }
+
     /// The adhan the user chose for a prayer, in the length that prayer uses; Al-Aqsa when none is chosen.
     func adhanURL(for prayer: Prayer) -> URL? {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)

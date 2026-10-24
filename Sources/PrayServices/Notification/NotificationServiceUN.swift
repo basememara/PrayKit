@@ -499,16 +499,9 @@ private extension NotificationServiceUN {
         settings.notificationSounds[prayer] ?? .off
     }
 
-    func soundFile(for prayer: Prayer, in settings: Settings) -> String? {
-        let sound = sound(for: prayer, in: settings)
-
-        guard case .adhan = sound else { return sound.file }
-        return (settings.notificationAdhan[prayer] ?? .alAqsa).file(for: .short)
-    }
-
     func notificationSound(for prayer: Prayer, in settings: Settings) -> UNNotificationSound? {
         #if os(iOS)
-        guard let file = soundFile(for: prayer, in: settings) else { return nil }
+        guard let file = settings.notificationSoundFile(for: prayer) else { return nil }
         return UNNotificationSound(named: UNNotificationSoundName(file))
         #else
         return .default

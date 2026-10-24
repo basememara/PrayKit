@@ -110,10 +110,56 @@ public extension NotificationSound {
         guard let file else { return nil }
         return [.default, .vibrate].contains(self)
             ? Bundle.main.url(forResource: file, withExtension: nil)
-            : FileManager.default
-                .urls(for: .libraryDirectory, in: .userDomainMask).first?
-                .appendingPathComponent("Sounds")
-                .appendingPathComponent(file)
+            : URL.soundsDirectory.appending(path: file)
+    }
+
+    /// The prayer an announcement names and whether it says the prayer is near or has come; `nil` for other sounds.
+    var announcement: Announcement? {
+        switch self {
+        case .announceFajrSoon:
+            Announcement(prayer: .fajr, timing: .soon)
+        case .announceFajrTime:
+            Announcement(prayer: .fajr, timing: .time)
+        case .announceDhuhrSoon:
+            Announcement(prayer: .dhuhr, timing: .soon)
+        case .announceDhuhrTime:
+            Announcement(prayer: .dhuhr, timing: .time)
+        case .announceAsrSoon:
+            Announcement(prayer: .asr, timing: .soon)
+        case .announceAsrTime:
+            Announcement(prayer: .asr, timing: .time)
+        case .announceMaghribSoon:
+            Announcement(prayer: .maghrib, timing: .soon)
+        case .announceMaghribTime:
+            Announcement(prayer: .maghrib, timing: .time)
+        case .announceIshaSoon:
+            Announcement(prayer: .isha, timing: .soon)
+        case .announceIshaTime:
+            Announcement(prayer: .isha, timing: .time)
+        default:
+            nil
+        }
+    }
+}
+
+// MARK: - Types
+
+public extension NotificationSound {
+    struct Announcement: Equatable, Sendable {
+        public enum Timing: Sendable {
+            /// The prayer is near, for a reminder.
+            case soon
+            /// The prayer has come, for its notification.
+            case time
+        }
+
+        public let prayer: Prayer
+        public let timing: Timing
+
+        public init(prayer: Prayer, timing: Timing) {
+            self.prayer = prayer
+            self.timing = timing
+        }
     }
 }
 

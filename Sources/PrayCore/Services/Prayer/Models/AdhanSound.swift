@@ -123,11 +123,6 @@ public extension AdhanSound {
     }
 
     func fileURL(for length: Length) -> URL? {
-        let value = selectedCase
-        let file = value.file(for: length)
-
-        return value == .default
-            ? Bundle.main.url(forResource: file, withExtension: nil)
-            : URL.soundsDirectory.appending(path: file)
+        URL.sound(named: selectedCase.file(for: length))
     }
 }

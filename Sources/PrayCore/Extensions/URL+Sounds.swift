@@ -13,4 +13,9 @@ public extension URL {
     static var soundsDirectory: URL {
         libraryDirectory.appending(path: "Sounds", directoryHint: .isDirectory)
     }
+
+    /// A sound file: the app's own copy when it ships in the bundle, otherwise where its download lands.
+    static func sound(named file: String) -> URL {
+        Bundle.main.url(forResource: file, withExtension: nil) ?? soundsDirectory.appending(path: file)
+    }
 }

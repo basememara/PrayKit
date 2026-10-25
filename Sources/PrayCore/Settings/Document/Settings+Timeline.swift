@@ -23,7 +23,7 @@ public extension Settings {
             isIqamaTimerEnabled ? iqamaTimes[prayerTime, using: calendar] : nil,
             stopwatchMinutes > 0 && duration > Double(stopwatchMinutes) * 60 ? start + .minutes(stopwatchMinutes) : nil
         ]
-        .compactMap { $0 }
+        .compactMap(\.self)
         .removeDuplicates()
         .sorted()
     }

@@ -182,7 +182,7 @@ extension SettingsWireTests {
         expected.geofenceRadius = Settings().geofenceRadius
 
         #expect(document.settings == expected)
-        #expect(document.revisions == Self.revised.revisions.filter { $0.key.isSynced })
+        #expect(document.revisions == Self.revised.revisions.filter(\.key.isSynced))
     }
 
     @Test

@@ -251,7 +251,7 @@ private extension PrayerManager {
         context: TimerContext,
         seed: [PrayerTimer]
     ) async throws -> [PrayerTimer] {
-        let days = [previousDay, prayerDay].compactMap { $0 }
+        let days = [previousDay, prayerDay].compactMap(\.self)
 
         guard let currentPrayer = prayerDay.current(at: date) else {
             log.error("Could not retrieve current prayer from prayer day for \(date, formatter: .zuluFormatter)")
@@ -374,7 +374,7 @@ private extension Array where Element == PrayerTimer {
             result += [
                 context.timer(currentPrayer.dateInterval.start, in: days),
                 context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap { $0 }
+            ].compactMap(\.self)
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)
@@ -393,7 +393,7 @@ private extension Array where Element == PrayerTimer {
             result += [
                 context.timer(currentPrayer.dateInterval.start, in: days),
                 context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap { $0 }
+            ].compactMap(\.self)
 
             result += stride(
                 from: currentPrayer.dateInterval.start.timeIntervalSince1970,

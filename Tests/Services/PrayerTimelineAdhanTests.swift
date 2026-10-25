@@ -75,7 +75,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }
@@ -172,7 +172,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }
@@ -252,7 +252,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }

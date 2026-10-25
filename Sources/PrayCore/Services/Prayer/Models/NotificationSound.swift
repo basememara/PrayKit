@@ -107,10 +107,7 @@ public extension NotificationSound {
     }
 
     var fileURL: URL? {
-        guard let file else { return nil }
-        return [.default, .vibrate].contains(self)
-            ? Bundle.main.url(forResource: file, withExtension: nil)
-            : URL.soundsDirectory.appending(path: file)
+        file.map(URL.sound(named:))
     }
 
     /// The prayer an announcement names and whether it says the prayer is near or has come; `nil` for other sounds.

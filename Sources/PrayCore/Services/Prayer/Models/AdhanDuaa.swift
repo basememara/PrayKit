@@ -34,9 +34,6 @@ public extension AdhanDuaa {
     }
 
     var fileURL: URL? {
-        guard let file else { return nil }
-        return self == .default
-            ? Bundle.main.url(forResource: file, withExtension: nil)
-            : URL.soundsDirectory.appending(path: file)
+        file.map(URL.sound(named:))
     }
 }

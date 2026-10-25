@@ -18,8 +18,8 @@ struct SoundTests {
     }
 
     @Test(arguments: AdhanSound.Length.allCases)
-    func aShuffleWithNothingDownloadedPlaysTheDefaultAdhan(length: AdhanSound.Length) {
-        // The test runner has no sounds in its bundle or its sounds folder
+    func aShuffleThatCantSeeTheAppsSoundsPlaysTheDefaultAdhan(length: AdhanSound.Length) {
+        // The test runner, like an extension, has no sounds in its bundle or its sounds folder
         #expect(AdhanSound.shuffle.file(for: length) == AdhanSound.default.file(for: length))
     }
 

@@ -86,7 +86,8 @@ public extension AdhanSound {
     static var shuffleChoices: [Self] { allCases.filter { ![.shuffle, .kareemMansouryShia].contains($0) } }
 
     /// A shuffle draws only from the adhans already on the device, so it never downloads one and never names a file
-    /// a notification would replace with the system sound; the default adhan ships in the app.
+    /// a notification would replace with the system sound. A process that can't see the app's sounds, such as an
+    /// extension that reschedules, finds none and takes the default adhan, the one that ships in the app.
     private var selectedCase: Self {
         guard case .shuffle = self else { return self }
 

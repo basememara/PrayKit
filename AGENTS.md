@@ -35,6 +35,8 @@ Tests live in `Tests/`, grouped in `Models/`, `Services/` and `Settings/` like t
 
 Settings live in `SettingsStorage` (PrayCore): values in the App Group suite under the keys every app version has used, a revision beside each, and `SettingsStorageTests` pins that on-disk format with a golden fixture, so a codec change that would strand older installs fails a test. `LocationRule` is the one rule for saving GPS fixes.
 
+SwiftLint (`.swiftlint.yml`, the rules PrayWatch and ZamzamKit share) has no build phase in a package, so run `swiftlint` from the package root before a push. `swiftlint --fix` rewrites from the source text alone, so a fix can compile and still change behavior (a protocol's `@escaping` stripped, a double optional's `?? nil` removed): run it one rule at a time with `--only-rule`, read every hunk, and make declaration changes (access, `final`, attributes, initializers) by hand.
+
 ## Consumers
 
 PrayWatch consumes this package as a **remote branch dep** (`branch: main`) — pushing to `main` here is effectively publishing to the app. Keep `main` green: `swift test` must pass before any push. Breaking API changes need a matching PrayWatch change in the same sitting.

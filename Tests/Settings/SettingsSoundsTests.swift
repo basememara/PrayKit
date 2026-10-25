@@ -143,7 +143,8 @@ struct SettingsSoundsTests {
         var settings = Settings()
         Prayer.allCases.forEach { settings.notificationAdhan[$0] = .shuffle }
 
-        #expect(!settings.notificationSoundFiles.contains { $0.hasSuffix("-short.m4a") })
+        let shortAdhans = Set(AdhanSound.shuffleChoices.map { $0.file(for: .short) })
+        #expect(settings.notificationSoundFiles.isDisjoint(with: shortAdhans))
     }
 
     @Test

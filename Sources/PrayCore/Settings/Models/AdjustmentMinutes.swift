@@ -6,12 +6,12 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
+/// Minutes added to each prayer, with Fajr optionally counted back from sunrise and Isha on from Maghrib. The engine
+/// ignores a relative choice with zero minutes and keeps the prayer on its angle, so one saved that way reads as off.
 public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: Int]
 
-    /// Fajr counted back from sunrise, so its minutes are at least one before it. The engine ignores a relative choice
-    /// with zero minutes and keeps fajr on its angle, so one saved that way reads as off. Turning it off puts fajr back
-    /// on its method.
+    /// Fajr counted back from sunrise, at least a minute before it; off puts fajr back on its method.
     public var isFajrSunriseRelative: Bool {
         get { rawValue["is_fajr_sunrise_relative"] == 1 && self[.fajr] != 0 }
         set {
@@ -25,9 +25,7 @@ public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable 
         }
     }
 
-    /// Isha counted on from Maghrib, so its minutes are at least one after it. The engine ignores a relative choice
-    /// with zero minutes and keeps isha on its angle, so one saved that way reads as off. Turning it off puts isha back
-    /// on its method.
+    /// Isha counted on from Maghrib, at least a minute after it; off puts isha back on its method.
     public var isIshaMaghribRelative: Bool {
         get { rawValue["is_isha_maghrib_relative"] == 1 && self[.isha] != 0 }
         set {

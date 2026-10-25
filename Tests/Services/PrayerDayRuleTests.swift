@@ -631,7 +631,7 @@ extension DayFixture {
     ]
 }
 
-private extension PrayerAdjustments {
+extension PrayerAdjustments {
     static func absolute(fajr: Int) -> PrayerAdjustments {
         PrayerAdjustments(
             fajr: fajr,

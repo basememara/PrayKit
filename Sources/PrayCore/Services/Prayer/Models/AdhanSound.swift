@@ -91,9 +91,10 @@ public extension AdhanSound {
     private var selectedCase: Self {
         guard case .shuffle = self else { return self }
 
+        // Shuffled first, so each adhan on the device is as likely as any other and the check stops at the first
         return Self.shuffleChoices
-            .filter { FileManager.default.fileExists(atPath: URL.sound(named: $0.file(for: .short)).path) }
-            .randomElement() ?? .default
+            .shuffled()
+            .first { FileManager.default.fileExists(atPath: URL.sound(named: $0.file(for: .short)).path) } ?? .default
     }
 
     var hasFajr: Bool {

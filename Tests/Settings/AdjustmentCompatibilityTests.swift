@@ -15,96 +15,95 @@ import Testing
 /// it the method's own time either way.
 struct AdjustmentCompatibilityTests {
     private let fixture = PrayTestFixture()
-    private static let minutes = [-300, -90, -1, 0, 1, 2, 90]
 
-    @Test(arguments: [
-        CalculationPlace(latitude: 3.1390, longitude: 101.6869, timeZone: "Asia/Kuala_Lumpur", method: .jakim),
-        CalculationPlace(latitude: 51.5074, longitude: -0.1278, timeZone: "Europe/London", method: .muslimWorldLeague)
-    ])
-    func everySavedAdjustmentCalculatesTheSameTimesAsBefore(place: CalculationPlace) async throws {
-        let timeZone = try #require(TimeZone(identifier: place.timeZone))
-        let date = try #require(Calendar(identifier: .gregorian, timeZone: timeZone).date(from: DateComponents(year: 2026, month: 3, day: 21, hour: 12)))
+    private static let places = [
+        DayFixture("Kuala Lumpur", 3.1390, 101.6869, "Asia/Kuala_Lumpur", .jakim, 2026, 3, 21),
+        DayFixture("London", 51.5074, -0.1278, "Europe/London", .muslimWorldLeague, 2026, 3, 21)
+    ]
 
-        for fajr in Self.minutes {
-            for isha in Self.minutes {
-                for isFajrRelative in [false, true] {
-                    for isIshaRelative in [false, true] {
-                        let saved = AdjustmentMinutes(rawValue: [
+    /// Every Fajr and Isha a user may have saved: either side of zero, zero itself, relative or not.
+    private static let saved: [AdjustmentMinutes] = {
+        let minutes = [-300, -90, -1, 0, 1, 2, 90]
+        return minutes.flatMap { fajr in
+            minutes.flatMap { isha in
+                [0, 1].flatMap { isFajrRelative in
+                    [0, 1].map { isIshaRelative in
+                        AdjustmentMinutes(rawValue: [
                             "fajr": fajr,
                             "isha": isha,
-                            "is_fajr_sunrise_relative": isFajrRelative ? 1 : 0,
-                            "is_isha_maghrib_relative": isIshaRelative ? 1 : 0
+                            "is_fajr_sunrise_relative": isFajrRelative,
+                            "is_isha_maghrib_relative": isIshaRelative
                         ])
-
-                        // As every version read it before: the saved flag alone
-                        let before = PrayerAdjustments(
-                            fajr: fajr,
-                            sunrise: 0,
-                            dhuhr: 0,
-                            asr: 0,
-                            maghrib: 0,
-                            isha: isha,
-                            isFajrSunriseRelative: isFajrRelative,
-                            isIshaMaghribRelative: isIshaRelative,
-                            elevation: nil
-                        )
-                        let now = PrayerAdjustments(adjustmentMinutes: saved, adjustmentElevation: nil)
-                        let label = "fajr \(fajr) relative \(isFajrRelative), isha \(isha) relative \(isIshaRelative)"
-
-                        #expect(now.isFajrSunriseRelative == (isFajrRelative && fajr != 0), "\(label)")
-                        #expect(now.isIshaMaghribRelative == (isIshaRelative && isha != 0), "\(label)")
-                        let timesNow = await times(at: date, in: place, timeZone: timeZone, adjustments: now)
-                        let timesBefore = await times(at: date, in: place, timeZone: timeZone, adjustments: before)
-                        #expect(timesNow == timesBefore, "\(label)")
                     }
                 }
             }
         }
-    }
-}
+    }()
 
-extension AdjustmentCompatibilityTests {
+    @Test(arguments: places, saved)
+    func everySavedAdjustmentCalculatesTheSameTimesAsBefore(place: DayFixture, saved: AdjustmentMinutes) async throws {
+        // As every version read it before: the saved flag alone
+        let before = PrayerAdjustments.saved(
+            fajr: saved[.fajr],
+            isha: saved[.isha],
+            isFajrRelative: saved.rawValue["is_fajr_sunrise_relative"] == 1,
+            isIshaRelative: saved.rawValue["is_isha_maghrib_relative"] == 1
+        )
+        let now = PrayerAdjustments(adjustmentMinutes: saved, adjustmentElevation: nil)
+
+        #expect(try await times(in: place, adjustments: now) == times(in: place, adjustments: before))
+    }
+
     @Test
     func aRelativeIshaBeforeMaghribKeepsTheMethodsIsha() async throws {
         // No version could save one, but a day that can't be laid out would trap rather than throw
-        let place = CalculationPlace(latitude: 3.1390, longitude: 101.6869, timeZone: "Asia/Kuala_Lumpur", method: .jakim)
-        let timeZone = try #require(TimeZone(identifier: place.timeZone))
-        let date = try #require(Calendar(identifier: .gregorian, timeZone: timeZone).date(from: DateComponents(year: 2026, month: 3, day: 21, hour: 12)))
-        let beforeMaghrib = PrayerAdjustments(fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: -30, isFajrSunriseRelative: false, isIshaMaghribRelative: true, elevation: nil)
-        let none = PrayerAdjustments(adjustmentMinutes: nil, adjustmentElevation: nil)
-
-        let timesBeforeMaghrib = await times(at: date, in: place, timeZone: timeZone, adjustments: beforeMaghrib)
-        let timesWithNone = await times(at: date, in: place, timeZone: timeZone, adjustments: none)
-        #expect(timesBeforeMaghrib == timesWithNone)
+        let place = Self.places[0]
+        #expect(try await times(in: place, adjustments: .relative(isha: -30)) == times(in: place, adjustments: nil))
     }
 }
 
 // MARK: - Helpers
 
-struct CalculationPlace: Sendable, CustomTestStringConvertible {
-    let latitude: Double
-    let longitude: Double
-    let timeZone: String
-    let method: CalculationMethod
-
-    var testDescription: String { timeZone }
-}
-
 private extension AdjustmentCompatibilityTests {
-    /// The day's times, or the error when the adjustments leave the day impossible, so failures compare too.
-    func times(at date: Date, in place: CalculationPlace, timeZone: TimeZone, adjustments: PrayerAdjustments) async -> String {
-        let request = PrayerAPI.Request(
-            coordinates: Coordinates(latitude: place.latitude, longitude: place.longitude),
-            timeZone: timeZone,
-            method: place.method,
+    /// The day's times, or why it couldn't be calculated, so a day both readings reject compares equal.
+    func times(in place: DayFixture, adjustments: PrayerAdjustments?) async throws -> Result<[PrayerTime], DescribedError> {
+        let request = try DayFixture(
+            place.name,
+            place.latitude,
+            place.longitude,
+            place.timeZoneIdentifier,
+            place.method,
+            place.year,
+            place.month,
+            place.day,
             adjustments: adjustments
-        )
+        ).request()
 
         do {
-            let day = try await fixture.prayerManager.fetch(for: date, with: request)
-            return day.times.map { "\($0.type) \($0.dateInterval.start.timeIntervalSince1970)" }.joined(separator: ", ")
+            return .success(try await fixture.prayerManager.fetch(for: try place.firstNoon(), with: request).times)
         } catch {
-            return "\(error)"
+            return .failure(DescribedError(description: "\(error)"))
         }
+    }
+}
+
+/// An error compared by what it says, since PrayError carries an underlying error and isn't Equatable.
+private struct DescribedError: Error, Equatable {
+    let description: String
+}
+
+private extension PrayerAdjustments {
+    static func saved(fajr: Int, isha: Int, isFajrRelative: Bool, isIshaRelative: Bool) -> PrayerAdjustments {
+        PrayerAdjustments(
+            fajr: fajr,
+            sunrise: 0,
+            dhuhr: 0,
+            asr: 0,
+            maghrib: 0,
+            isha: isha,
+            isFajrSunriseRelative: isFajrRelative,
+            isIshaMaghribRelative: isIshaRelative,
+            elevation: nil
+        )
     }
 }

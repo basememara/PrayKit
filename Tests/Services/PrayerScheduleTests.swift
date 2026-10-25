@@ -109,7 +109,7 @@ private extension RecordedTimeline {
                 "2022/03/01 05:35:00 fajr stopwatch",
                 "2022/03/01 06:54:00 dhuhr countdown",
                 "2022/03/01 12:31:00 dhuhr stopwatch",
-                "2022/03/01 15:36:00 asr stopwatch",
+                "2022/03/01 15:36:00 asr stopwatch"
             ]
         ),
         RecordedTimeline(
@@ -154,7 +154,7 @@ private extension RecordedTimeline {
                 "2022/02/26 16:38:00 maghrib countdown",
                 "2022/02/26 17:40:00 maghrib countdown",
                 "2022/02/26 18:02:00 maghrib iqama",
-                "2022/02/26 18:10:00 maghrib stopwatch",
+                "2022/02/26 18:10:00 maghrib stopwatch"
             ]
         ),
         RecordedTimeline(
@@ -199,7 +199,7 @@ private extension RecordedTimeline {
                 "2022/02/25 18:48:24 isha countdown",
                 "2022/02/25 19:04:12 isha countdown",
                 "2022/02/25 19:11:00 isha countdown",
-                "2022/02/25 19:20:00 isha stopwatch",
+                "2022/02/25 19:20:00 isha stopwatch"
             ]
         ),
         RecordedTimeline(
@@ -244,7 +244,7 @@ private extension RecordedTimeline {
                 "2022/02/25 12:31:00 dhuhr stopwatch",
                 "2022/02/25 12:49:00 dhuhr iqama",
                 "2022/02/25 13:30:00 dhuhr stopwatch",
-                "2022/02/25 13:31:00 dhuhr stopwatch",
+                "2022/02/25 13:31:00 dhuhr stopwatch"
             ]
         ),
         RecordedTimeline(
@@ -292,7 +292,7 @@ private extension RecordedTimeline {
                 "2022/02/26 12:49:00 asr countdown",
                 "2022/02/26 14:33:00 asr countdown",
                 "2022/02/26 15:17:00 asr countdown",
-                "2022/02/26 15:33:00 asr stopwatch",
+                "2022/02/26 15:33:00 asr stopwatch"
             ]
         )
     ]

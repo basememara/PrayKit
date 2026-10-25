@@ -6,11 +6,11 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-import Foundation
-import Testing
 import CoreLocation
+import Foundation
 import PrayCore
 import PrayServices
+import Testing
 import ZamzamCore
 
 struct PrayerTimelineAdhanTests {

@@ -114,7 +114,7 @@ public extension PrayerManager {
         var prayerDays = [PrayerDay]()
 
         try await withThrowingTaskGroup(of: PrayerDay.self) { group in
-            calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { (date, _, stop) in
+            calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { date, _, stop in
                 guard let date else { return }
 
                 guard date <= dateInterval.end else {

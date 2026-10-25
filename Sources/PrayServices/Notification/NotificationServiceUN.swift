@@ -14,8 +14,8 @@ import UserNotifications
 import ZamzamCore
 import ZamzamNotification
 #if os(iOS)
-import CoreSpotlight
 import BackgroundTasks
+import CoreSpotlight
 #endif
 
 /// `UNUserNotificationCenter` is documented as thread-safe, hence the unchecked conformance.

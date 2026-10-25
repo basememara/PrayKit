@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import Testing
 import PrayCore
+import Testing
 
 struct PrayerDayAdhanTests {
     private let prayerManager = PrayTestFixture().prayerManager

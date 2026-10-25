@@ -115,8 +115,7 @@ public extension PrayerTimer {
         // Jumuah is Friday's Dhuhr, judged by that prayer's own date rather than the moment's
         if let dhuhr = [currentPrayer, nextPrayer].first(where: { $0.type == .dhuhr }),
            dhuhr.dateInterval.start.isJumuah(using: calendar),
-           let khutbaIqama = iqamaTimes[dhuhr, using: calendar]
-        {
+           let khutbaIqama = iqamaTimes[dhuhr, using: calendar] {
             if isStopwatchTimer && currentPrayer.type == .dhuhr {
                 currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: khutbaIqama)
                 isDhuhrStopwatchOnFriday = true

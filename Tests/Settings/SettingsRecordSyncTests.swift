@@ -32,7 +32,7 @@ struct SettingsRecordSyncTests {
 
         var phoneDevice = Device(document: phone, lastRecord: firstSave)
         phoneDevice.receive(record)
-        #expect(phoneDevice.keysToSend(over: record) == [])
+        #expect(phoneDevice.keysToSend(over: record).isEmpty)
 
         mac.edit(at: start + 10) { $0.duhaReminder = .minutes(20) }
         record = record.saving(mac.document, at: start + 11)
@@ -40,8 +40,8 @@ struct SettingsRecordSyncTests {
 
         phoneDevice.receive(record)
         #expect(phoneDevice.document.settings.duhaReminder == .minutes(20))
-        #expect(phoneDevice.keysToSend(over: record) == [])
-        #expect(mac.keysToSend(over: record) == [])
+        #expect(phoneDevice.keysToSend(over: record).isEmpty)
+        #expect(mac.keysToSend(over: record).isEmpty)
         #expect(phoneDevice.document.settings.theme == .aqua)
     }
 }

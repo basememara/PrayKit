@@ -25,13 +25,13 @@ public extension PrayerDay {
 }
 
 private extension PrayerDay {
+    // swiftlint:disable:next function_body_length
     static func mock(
         on date: Date,
         times: [(hour: Int, minute: Int)],
         calendar: Calendar,
         filter: PrayerFilter
     ) -> PrayerDay {
-        // swiftlint:disable:previous function_body_length
         PrayerDay(
             date: date.startOfDay(using: calendar),
             times: [

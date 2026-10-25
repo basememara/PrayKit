@@ -241,7 +241,7 @@ extension PrayerDayRuleTests {
                 .filter { $0 > start }
 
             if !zip(timeline, timeline.dropFirst()).allSatisfy({ $0.date < $1.date }) { problems.append("\(start): out of order") }
-            if timeline.first(where: { $0.date == start }) == nil { problems.append("\(start): no entry for the moment itself") }
+            if !timeline.contains(where: { $0.date == start }) { problems.append("\(start): no entry for the moment itself") }
             problems += timeline.filter { !$0.prayerDay.contains($0.date) }.map { "\(start): \($0.date) from a day that doesn't hold it" }
             problems += fajrReminders.filter { reminder in !timeline.contains { $0.date == reminder } }.map { "\(start): no reminder at \($0)" }
         }

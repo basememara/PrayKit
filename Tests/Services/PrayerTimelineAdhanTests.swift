@@ -18,7 +18,6 @@ struct PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func toronto() async throws {
         // Given
@@ -116,7 +115,6 @@ extension PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func london() async throws {
         // Given
@@ -208,7 +206,6 @@ extension PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func finalHour() async throws {
         // Given

@@ -70,7 +70,7 @@ public extension PrayerManager {
         /// Every hour of each prayer, then every five minutes in its last hour.
         case hourly
         case intervals(TimeInterval)
-        case none
+        case none // swiftlint:disable:this discouraged_none_name
     }
 
     /// The timeline built from settings, with timers counting in the place's time zone.

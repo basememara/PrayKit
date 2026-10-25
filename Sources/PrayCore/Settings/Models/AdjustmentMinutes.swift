@@ -10,20 +10,32 @@ public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable 
     public var rawValue: [String: Int]
 
     /// Fajr counted back from sunrise, so its minutes are at least one before it; zero would leave fajr on its angle.
+    /// Turning it off puts fajr back on its method.
     public var isFajrSunriseRelative: Bool {
         get { (rawValue["is_fajr_sunrise_relative"] ?? 0) == 1 }
         set {
+            let wasRelative = isFajrSunriseRelative
             rawValue["is_fajr_sunrise_relative"] = newValue ? 1 : 0
-            if newValue { self[.fajr] = -max(abs(self[.fajr]), 1) }
+            if newValue {
+                self[.fajr] = -max(abs(self[.fajr]), 1)
+            } else if wasRelative {
+                self[.fajr] = 0
+            }
         }
     }
 
     /// Isha counted on from Maghrib, so its minutes are at least one after it; zero would leave isha on its angle.
+    /// Turning it off puts isha back on its method.
     public var isIshaMaghribRelative: Bool {
         get { (rawValue["is_isha_maghrib_relative"] ?? 0) == 1 }
         set {
+            let wasRelative = isIshaMaghribRelative
             rawValue["is_isha_maghrib_relative"] = newValue ? 1 : 0
-            if newValue { self[.isha] = max(abs(self[.isha]), 1) }
+            if newValue {
+                self[.isha] = max(abs(self[.isha]), 1)
+            } else if wasRelative {
+                self[.isha] = 0
+            }
         }
     }
 

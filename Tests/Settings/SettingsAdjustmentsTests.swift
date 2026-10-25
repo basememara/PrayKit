@@ -50,6 +50,34 @@ struct SettingsAdjustmentsTests {
     }
 
     @Test
+    func turningRelativeOffAgainLeavesNoAdjustment() {
+        var settings = Settings()
+        settings.editAdjustments { $0.isFajrSunriseRelative = true }
+        settings.editAdjustments { $0.isFajrSunriseRelative = false }
+
+        #expect(settings.adjustmentMinutes == nil)
+    }
+
+    @Test
+    func turningRelativeOffReturnsThePrayerToItsMethod() {
+        var settings = Settings()
+        settings.adjustments[.isha] = 90
+        settings.adjustments.isIshaMaghribRelative = true
+        settings.adjustments.isIshaMaghribRelative = false
+
+        #expect(settings.adjustments[.isha] == 0)
+    }
+
+    @Test
+    func turningRelativeOffWhenItIsOffKeepsTheMinutes() {
+        var settings = Settings()
+        settings.adjustments[.fajr] = 5
+        settings.adjustments.isFajrSunriseRelative = false
+
+        #expect(settings.adjustments[.fajr] == 5)
+    }
+
+    @Test
     func countingFajrFromSunriseMovesItBeforeSunrise() {
         var settings = Settings()
         settings.adjustments[.fajr] = 10

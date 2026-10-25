@@ -180,13 +180,7 @@ private extension NotificationServiceUN {
                     try await userNotification.add(
                         date: iqamaReminderDate,
                         body: localized.iqamaNotificationBody(for: prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
-                        sound: iqamaSound.file.map {
-                            #if os(iOS)
-                            return UNNotificationSound(named: UNNotificationSoundName($0))
-                            #else
-                            return .default
-                            #endif
-                        },
+                        sound: iqamaSound.file.map(Self.sound(named:)),
                         interruptionLevel: .timeSensitive,
                         identifier: iqamaIdentifier,
                         category: NotificationCategory.reminder.rawValue,
@@ -227,13 +221,7 @@ private extension NotificationServiceUN {
                     try await userNotification.add(
                         date: reminderDate,
                         body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes, using: calendar),
-                        sound: reminderSound.file.map {
-                            #if os(iOS)
-                            return UNNotificationSound(named: UNNotificationSoundName($0))
-                            #else
-                            return .default
-                            #endif
-                        },
+                        sound: reminderSound.file.map(Self.sound(named:)),
                         interruptionLevel: .timeSensitive,
                         identifier: reminderIdentifier,
                         category: NotificationCategory.reminder.rawValue,
@@ -258,13 +246,7 @@ private extension NotificationServiceUN {
                         try await userNotification.add(
                             date: reminderDate,
                             body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes, using: calendar),
-                            sound: reminderSound.file.map {
-                                #if os(iOS)
-                                return UNNotificationSound(named: UNNotificationSoundName($0))
-                                #else
-                                return .default
-                                #endif
-                            },
+                            sound: reminderSound.file.map(Self.sound(named:)),
                             interruptionLevel: .timeSensitive,
                             identifier: reminderIdentifier,
                             category: NotificationCategory.reminder.rawValue,
@@ -289,13 +271,7 @@ private extension NotificationServiceUN {
                         try await userNotification.add(
                             date: reminderTime,
                             body: localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle)),
-                            sound: reminderSound.file.map {
-                                #if os(iOS)
-                                return UNNotificationSound(named: UNNotificationSoundName($0))
-                                #else
-                                return .default
-                                #endif
-                            },
+                            sound: reminderSound.file.map(Self.sound(named:)),
                             interruptionLevel: .timeSensitive,
                             identifier: reminderIdentifier,
                             category: NotificationCategory.reminder.rawValue,
@@ -462,13 +438,7 @@ public extension NotificationServiceUN {
             try await userNotification.add(
                 timeInterval: timeInterval,
                 body: localized.prayerNotificationReminder(for: prayerTime, using: calendar),
-                sound: sound.file.map {
-                    #if os(iOS)
-                    return UNNotificationSound(named: UNNotificationSoundName($0))
-                    #else
-                    return .default
-                    #endif
-                },
+                sound: sound.file.map(Self.sound(named:)),
                 interruptionLevel: .timeSensitive,
                 identifier: identifier,
                 category: NotificationCategory.snooze.rawValue,
@@ -500,11 +470,15 @@ private extension NotificationServiceUN {
     }
 
     func notificationSound(for prayer: Prayer, in settings: Settings) -> UNNotificationSound? {
-        #if os(iOS)
-        guard let file = settings.notificationSoundFile(for: prayer) else { return nil }
-        return UNNotificationSound(named: UNNotificationSoundName(file))
+        settings.notificationSoundFile(for: prayer).map(Self.sound(named:))
+    }
+
+    /// A sound file the app keeps in its bundle or its sounds folder, by name; the watch plays the default sound.
+    static func sound(named file: String) -> UNNotificationSound {
+        #if os(watchOS)
+        .default
         #else
-        return .default
+        UNNotificationSound(named: UNNotificationSoundName(file))
         #endif
     }
 }

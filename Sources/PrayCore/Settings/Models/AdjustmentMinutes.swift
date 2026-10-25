@@ -9,21 +9,33 @@
 public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: Int]
 
-    /// Fajr counted back from sunrise, so its minutes can only be before it.
+    /// Fajr counted back from sunrise, so its minutes are at least one before it; zero would leave fajr on its angle.
+    /// Turning it off puts fajr back on its method.
     public var isFajrSunriseRelative: Bool {
         get { (rawValue["is_fajr_sunrise_relative"] ?? 0) == 1 }
         set {
+            let wasRelative = isFajrSunriseRelative
             rawValue["is_fajr_sunrise_relative"] = newValue ? 1 : 0
-            if newValue, self[.fajr] > 0 { self[.fajr].negate() }
+            if newValue {
+                self[.fajr] = -max(abs(self[.fajr]), 1)
+            } else if wasRelative {
+                self[.fajr] = 0
+            }
         }
     }
 
-    /// Isha counted on from Maghrib, so its minutes can only be after it.
+    /// Isha counted on from Maghrib, so its minutes are at least one after it; zero would leave isha on its angle.
+    /// Turning it off puts isha back on its method.
     public var isIshaMaghribRelative: Bool {
         get { (rawValue["is_isha_maghrib_relative"] ?? 0) == 1 }
         set {
+            let wasRelative = isIshaMaghribRelative
             rawValue["is_isha_maghrib_relative"] = newValue ? 1 : 0
-            if newValue, self[.isha] < 0 { self[.isha].negate() }
+            if newValue {
+                self[.isha] = max(abs(self[.isha]), 1)
+            } else if wasRelative {
+                self[.isha] = 0
+            }
         }
     }
 
@@ -36,13 +48,13 @@ public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable 
         set { rawValue[prayer.rawValue] = newValue }
     }
 
-    /// The minutes a prayer may move: up to five hours on the relative side of Fajr and Isha, two hours otherwise.
+    /// The minutes a prayer may move: a minute to five hours on the relative side of Fajr and Isha, up to two hours otherwise.
     public func range(for prayer: Prayer) -> ClosedRange<Int> {
         switch prayer {
         case .fajr where isFajrSunriseRelative:
-            -300...0
+            -300...(-1)
         case .isha where isIshaMaghribRelative:
-            0...300
+            1...300
         default:
             -120...120
         }

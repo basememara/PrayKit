@@ -28,17 +28,53 @@ struct SettingsAdjustmentsTests {
         #expect(settings.adjustmentMinutes == nil)
     }
 
+    /// Zero minutes from sunrise would leave fajr on its angle, so counting from sunrise starts a minute before it.
     @Test
-    func aRelativeChoiceStaysBeforeAnyMinutesAreSet() throws {
+    func countingFajrFromSunriseStartsAMinuteBeforeIt() throws {
         var settings = Settings()
         settings.editAdjustments { $0.isFajrSunriseRelative = true }
 
         let adjustments = try #require(settings.adjustmentMinutes)
         #expect(adjustments.isFajrSunriseRelative)
-        #expect(adjustments[.fajr] == 0)
+        #expect(adjustments[.fajr] == -1)
+    }
 
+    @Test
+    func countingIshaFromMaghribStartsAMinuteAfterIt() throws {
+        var settings = Settings()
+        settings.editAdjustments { $0.isIshaMaghribRelative = true }
+
+        let adjustments = try #require(settings.adjustmentMinutes)
+        #expect(adjustments.isIshaMaghribRelative)
+        #expect(adjustments[.isha] == 1)
+    }
+
+    @Test
+    func turningRelativeOffAgainLeavesNoAdjustment() {
+        var settings = Settings()
+        settings.editAdjustments { $0.isFajrSunriseRelative = true }
         settings.editAdjustments { $0.isFajrSunriseRelative = false }
+
         #expect(settings.adjustmentMinutes == nil)
+    }
+
+    @Test
+    func turningRelativeOffReturnsThePrayerToItsMethod() {
+        var settings = Settings()
+        settings.adjustments[.isha] = 90
+        settings.adjustments.isIshaMaghribRelative = true
+        settings.adjustments.isIshaMaghribRelative = false
+
+        #expect(settings.adjustments[.isha] == 0)
+    }
+
+    @Test
+    func turningRelativeOffWhenItIsOffKeepsTheMinutes() {
+        var settings = Settings()
+        settings.adjustments[.fajr] = 5
+        settings.adjustments.isFajrSunriseRelative = false
+
+        #expect(settings.adjustments[.fajr] == 5)
     }
 
     @Test
@@ -48,7 +84,7 @@ struct SettingsAdjustmentsTests {
         settings.adjustments.isFajrSunriseRelative = true
 
         #expect(settings.adjustments[.fajr] == -10)
-        #expect(settings.adjustments.range(for: .fajr) == -300...0)
+        #expect(settings.adjustments.range(for: .fajr) == -300...(-1))
     }
 
     @Test
@@ -58,7 +94,7 @@ struct SettingsAdjustmentsTests {
         settings.adjustments.isIshaMaghribRelative = true
 
         #expect(settings.adjustments[.isha] == 15)
-        #expect(settings.adjustments.range(for: .isha) == 0...300)
+        #expect(settings.adjustments.range(for: .isha) == 1...300)
     }
 
     @Test

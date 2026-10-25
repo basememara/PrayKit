@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import Testing
 import PrayCore
+import Testing
 
 struct PrayerDayTests {
     private let start = Date(timeIntervalSince1970: 1_800_000_000)

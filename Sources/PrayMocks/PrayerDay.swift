@@ -6,8 +6,8 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-import Foundation.NSDate
 import Foundation.NSCalendar
+import Foundation.NSDate
 import PrayCore
 import ZamzamCore
 
@@ -25,13 +25,13 @@ public extension PrayerDay {
 }
 
 private extension PrayerDay {
+    // swiftlint:disable:next function_body_length
     static func mock(
         on date: Date,
         times: [(hour: Int, minute: Int)],
         calendar: Calendar,
         filter: PrayerFilter
     ) -> PrayerDay {
-        // swiftlint:disable:previous function_body_length
         PrayerDay(
             date: date.startOfDay(using: calendar),
             times: [

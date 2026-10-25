@@ -70,7 +70,7 @@ public extension PrayerManager {
         /// Every hour of each prayer, then every five minutes in its last hour.
         case hourly
         case intervals(TimeInterval)
-        case none
+        case none // swiftlint:disable:this discouraged_none_name
     }
 
     /// The timeline built from settings, with timers counting in the place's time zone.
@@ -114,7 +114,7 @@ public extension PrayerManager {
         var prayerDays = [PrayerDay]()
 
         try await withThrowingTaskGroup(of: PrayerDay.self) { group in
-            calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { (date, _, stop) in
+            calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { date, _, stop in
                 guard let date else { return }
 
                 guard date <= dateInterval.end else {
@@ -251,7 +251,7 @@ private extension PrayerManager {
         context: TimerContext,
         seed: [PrayerTimer]
     ) async throws -> [PrayerTimer] {
-        let days = [previousDay, prayerDay].compactMap { $0 }
+        let days = [previousDay, prayerDay].compactMap(\.self)
 
         guard let currentPrayer = prayerDay.current(at: date) else {
             log.error("Could not retrieve current prayer from prayer day for \(date, formatter: .zuluFormatter)")
@@ -374,7 +374,7 @@ private extension Array where Element == PrayerTimer {
             result += [
                 context.timer(currentPrayer.dateInterval.start, in: days),
                 context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap { $0 }
+            ].compactMap(\.self)
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)
@@ -393,7 +393,7 @@ private extension Array where Element == PrayerTimer {
             result += [
                 context.timer(currentPrayer.dateInterval.start, in: days),
                 context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap { $0 }
+            ].compactMap(\.self)
 
             result += stride(
                 from: currentPrayer.dateInterval.start.timeIntervalSince1970,

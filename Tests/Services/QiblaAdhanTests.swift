@@ -6,9 +6,9 @@
 //
 
 import CoreLocation
+import Foundation
 import PrayCore
 import PrayServices
-import Foundation
 import Testing
 
 struct QiblaAdhanTests {

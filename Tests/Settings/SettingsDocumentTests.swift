@@ -202,4 +202,3 @@ extension SettingsDocumentTests {
         #expect(merged.revision(of: .notificationAdhan) == edited.revision(of: .notificationAdhan))
     }
 }
-

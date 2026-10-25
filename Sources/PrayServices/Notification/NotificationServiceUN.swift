@@ -14,8 +14,8 @@ import UserNotifications
 import ZamzamCore
 import ZamzamNotification
 #if os(iOS)
-import CoreSpotlight
 import BackgroundTasks
+import CoreSpotlight
 #endif
 
 /// `UNUserNotificationCenter` is documented as thread-safe, hence the unchecked conformance.
@@ -146,7 +146,7 @@ private extension NotificationServiceUN {
 
             // Add prayer notifications; the system silently drops calendar triggers already in the past,
             // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
-            if sound != .off && counter > 0 && prayerTime.dateInterval.start > now && !(isJumuah && hasIqamaReminder) {
+            if sound != .off, counter > 0, prayerTime.dateInterval.start > now, !(isJumuah && hasIqamaReminder) {
                 pendingAdds.append((identifier, {
                     try await userNotification.add(
                         date: prayerTime.dateInterval.start,
@@ -175,7 +175,7 @@ private extension NotificationServiceUN {
             // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
             let iqamaIdentifier = "\(identifier)-iqama-reminder"
 
-            if let iqamaReminderDate, hasIqamaReminder && counter > 0 {
+            if let iqamaReminderDate, hasIqamaReminder, counter > 0 {
                 pendingAdds.append((iqamaIdentifier, {
                     try await userNotification.add(
                         date: iqamaReminderDate,
@@ -216,7 +216,7 @@ private extension NotificationServiceUN {
             let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
                 - .minutes(reminderMinutes)
 
-            if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
+            if reminderSound != .off, reminderMinutes > 0, counter > 0, reminderDate > now {
                 pendingAdds.append((reminderIdentifier, {
                     try await userNotification.add(
                         date: reminderDate,
@@ -241,7 +241,7 @@ private extension NotificationServiceUN {
                 let reminderMinutes = settings.preAdhanMinutes.imsak
                 let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
 
-                if reminderSound != .off && reminderMinutes > 0 && counter > 0 && reminderDate > now {
+                if reminderSound != .off, reminderMinutes > 0, counter > 0, reminderDate > now {
                     pendingAdds.append((reminderIdentifier, {
                         try await userNotification.add(
                             date: reminderDate,
@@ -266,7 +266,7 @@ private extension NotificationServiceUN {
                 let reminderIdentifier = "\(identifier)-duha-reminder"
                 let reminderTime = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
-                if let reminderTime, reminderSound != .off && counter > 0 && reminderTime > now {
+                if let reminderTime, reminderSound != .off, counter > 0, reminderTime > now {
                     pendingAdds.append((reminderIdentifier, {
                         try await userNotification.add(
                             date: reminderTime,
@@ -344,7 +344,7 @@ private extension NotificationServiceUN {
         }))
 
         #if os(iOS)
-        if settings.isGPSEnabled && settings.geofenceRadius > 0 {
+        if settings.isGPSEnabled, settings.geofenceRadius > 0 {
             let region = CLCircularRegion(
                 center: request.coordinates.location,
                 radius: settings.geofenceRadius,

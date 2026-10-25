@@ -6,8 +6,8 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-import Foundation.NSLocale
 import Foundation.NSDateFormatter
+import Foundation.NSLocale
 import ZamzamCore
 
 public extension DateFormatter {

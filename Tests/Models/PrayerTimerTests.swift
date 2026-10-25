@@ -7,9 +7,9 @@
 //
 
 import Foundation
-import Testing
 import PrayCore
 import PrayMocks
+import Testing
 import ZamzamCore
 
 struct PrayerTimerTests {

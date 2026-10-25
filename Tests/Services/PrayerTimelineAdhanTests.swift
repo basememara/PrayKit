@@ -6,11 +6,11 @@
 //  Copyright © 2022 Zamzam Inc. All rights reserved.
 //
 
-import Foundation
-import Testing
 import CoreLocation
+import Foundation
 import PrayCore
 import PrayServices
+import Testing
 import ZamzamCore
 
 struct PrayerTimelineAdhanTests {
@@ -18,7 +18,6 @@ struct PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func toronto() async throws {
         // Given
@@ -75,7 +74,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }
@@ -116,7 +115,6 @@ extension PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func london() async throws {
         // Given
@@ -172,7 +170,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }
@@ -208,7 +206,6 @@ extension PrayerTimelineAdhanTests {
 }
 
 extension PrayerTimelineAdhanTests {
-    // swiftlint:disable:next function_body_length
     @Test
     func finalHour() async throws {
         // Given
@@ -252,7 +249,7 @@ extension PrayerTimelineAdhanTests {
                     try #require(entry.prayerDay.current(at: entry.date)).type.rawValue,
                     timeFormatter.string(for: try #require(entry.prayerDay.current(at: entry.date)).dateInterval.start)
                 ]
-                .compactMap { $0 }
+                .compactMap(\.self)
                 .joined(separator: " ")
             )
         }

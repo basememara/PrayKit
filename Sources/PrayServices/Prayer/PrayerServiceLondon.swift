@@ -117,7 +117,7 @@ public extension PrayerServiceLondon {
 
                 if adjustments.isIshaMaghribRelative {
                     let isha = magribTime + .minutes(adjustments.isha)
-                    ishaTime = isha < tomorrowFajrTime ? isha : ishaTime
+                    ishaTime = magribTime < isha && isha < tomorrowFajrTime ? isha : ishaTime
                 }
             }
         }

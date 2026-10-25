@@ -20,6 +20,19 @@ struct SettingsAdjustmentsTests {
     }
 
     @Test
+    func aRelativeChoiceSavedWithoutMinutesReadsAsTheEngineUsesIt() {
+        // Saved before relative minutes were kept at least one away, or by an older version: the engine uses the angle
+        var settings = Settings()
+        settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["is_fajr_sunrise_relative": 1, "is_isha_maghrib_relative": 1])
+
+        #expect(!settings.adjustments.isFajrSunriseRelative)
+        #expect(!settings.adjustments.isIshaMaghribRelative)
+
+        settings.editAdjustments { $0[.asr] = 0 }
+        #expect(settings.adjustmentMinutes == nil)
+    }
+
+    @Test
     func adjustmentsBackToZeroSaveNone() {
         var settings = Settings()
         settings.editAdjustments { $0[.fajr] = -10 }

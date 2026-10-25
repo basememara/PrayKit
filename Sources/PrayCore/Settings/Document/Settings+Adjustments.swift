@@ -13,13 +13,11 @@ public extension Settings {
         set { editAdjustments { $0 = newValue } }
     }
 
-    /// Edits the prayer time adjustments, saving none at all once every adjustment is back to zero and
-    /// neither prayer counts from sunrise or Maghrib; a relative choice stays while its minutes are zero.
+    /// Edits the prayer time adjustments, saving none at all once every adjustment is back to zero; a relative
+    /// choice always has minutes, so it keeps them saved.
     mutating func editAdjustments(_ edit: (inout AdjustmentMinutes) -> Void) {
         var adjustments = adjustmentMinutes ?? AdjustmentMinutes(rawValue: [:])
         edit(&adjustments)
-
-        let isRelative = adjustments.isFajrSunriseRelative || adjustments.isIshaMaghribRelative
-        adjustmentMinutes = adjustments.isEmpty && !isRelative ? nil : adjustments
+        adjustmentMinutes = adjustments.isEmpty ? nil : adjustments
     }
 }

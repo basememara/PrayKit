@@ -9,10 +9,10 @@
 public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable {
     public var rawValue: [String: Int]
 
-    /// Fajr counted back from sunrise, so its minutes are at least one before it; zero would leave fajr on its angle.
-    /// Turning it off puts fajr back on its method.
+    /// Fajr counted back from sunrise, so its minutes are at least one before it; zero would leave fajr on its angle,
+    /// so a choice saved without minutes reads as off, as the engine treats it. Turning it off puts fajr back on its method.
     public var isFajrSunriseRelative: Bool {
-        get { (rawValue["is_fajr_sunrise_relative"] ?? 0) == 1 }
+        get { rawValue["is_fajr_sunrise_relative"] == 1 && self[.fajr] < 0 }
         set {
             let wasRelative = isFajrSunriseRelative
             rawValue["is_fajr_sunrise_relative"] = newValue ? 1 : 0
@@ -24,10 +24,10 @@ public struct AdjustmentMinutes: RawRepresentable, Equatable, Codable, Sendable 
         }
     }
 
-    /// Isha counted on from Maghrib, so its minutes are at least one after it; zero would leave isha on its angle.
-    /// Turning it off puts isha back on its method.
+    /// Isha counted on from Maghrib, so its minutes are at least one after it; zero would leave isha on its angle,
+    /// so a choice saved without minutes reads as off, as the engine treats it. Turning it off puts isha back on its method.
     public var isIshaMaghribRelative: Bool {
-        get { (rawValue["is_isha_maghrib_relative"] ?? 0) == 1 }
+        get { rawValue["is_isha_maghrib_relative"] == 1 && self[.isha] > 0 }
         set {
             let wasRelative = isIshaMaghribRelative
             rawValue["is_isha_maghrib_relative"] = newValue ? 1 : 0

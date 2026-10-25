@@ -6,6 +6,7 @@
 //  Copyright © 2019 Zamzam Inc. All rights reserved.
 //
 
+import Foundation.NSFileManager
 import Foundation.NSURL
 
 public enum AdhanSound: String, CaseIterable, Codable, Sendable {
@@ -80,12 +81,18 @@ public extension AdhanSound {
 public extension AdhanSound {
     static var `default`: Self { .alAqsa }
 
-    /// The adhans a shuffle picks from: every one but the shuffle itself.
-    static var shuffleChoices: [Self] { allCases.filter { $0 != .shuffle } }
+    /// The adhans a shuffle draws from: every one but the shuffle itself and the Shia adhan, which a user hears only
+    /// by choosing it.
+    static var shuffleChoices: [Self] { allCases.filter { ![.shuffle, .kareemMansouryShia].contains($0) } }
 
+    /// A shuffle draws only from the adhans already on the device, so it never downloads one and never names a file
+    /// a notification would replace with the system sound; the default adhan ships in the app.
     private var selectedCase: Self {
-        guard case .shuffle = self, let choice = Self.shuffleChoices.randomElement() else { return self }
-        return choice
+        guard case .shuffle = self else { return self }
+
+        return Self.shuffleChoices
+            .filter { FileManager.default.fileExists(atPath: URL.sound(named: $0.file(for: .short)).path) }
+            .randomElement() ?? .default
     }
 
     var hasFajr: Bool {
@@ -123,6 +130,6 @@ public extension AdhanSound {
     }
 
     func fileURL(for length: Length) -> URL? {
-        URL.sound(named: selectedCase.file(for: length))
+        URL.sound(named: file(for: length))
     }
 }

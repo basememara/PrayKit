@@ -48,4 +48,44 @@ struct SoundTests {
             #expect(sound.announcement == expected, "\(sound)")
         }
     }
+
+    @Test
+    func aPrayersNotificationFileMatchesTheRuleTheSchedulerShippedWith() {
+        // The scheduler's private rule before it moved to Settings, kept here so the move can't change a sound
+        func shippedFile(for prayer: Prayer, in settings: Settings) -> String? {
+            let sound = settings.notificationSounds[prayer] ?? .off
+            guard case .adhan = sound else { return sound.file }
+            return (settings.notificationAdhan[prayer] ?? .alAqsa).file(for: .short)
+        }
+
+        Prayer.allCases.forEach { prayer in
+            NotificationSound.allCases.forEach { sound in
+                AdhanSound.shuffleChoices.forEach { adhan in
+                    var settings = Settings()
+                    settings.setSound(sound, for: prayer)
+                    settings.notificationAdhan[prayer] = adhan
+
+                    #expect(settings.notificationSoundFile(for: prayer) == shippedFile(for: prayer, in: settings), "\(prayer) \(sound) \(adhan)")
+                }
+            }
+        }
+    }
+
+    @Test
+    func aDownloadedSoundIsWhereTheShippedPathPutIt() throws {
+        let library = try #require(FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first)
+        let shipped = { (file: String) in library.appendingPathComponent("Sounds").appendingPathComponent(file) }
+
+        try AdhanSound.shuffleChoices.filter { $0 != .default }.forEach { adhan in
+            try AdhanSound.Length.allCases.forEach { length in
+                let url = try #require(adhan.fileURL(for: length))
+                #expect(url.path == shipped(adhan.file(for: length)).path, "\(adhan) \(length)")
+            }
+        }
+
+        try NotificationSound.allCases.filter { $0.file != nil && ![.default, .vibrate].contains($0) }.forEach { sound in
+            let url = try #require(sound.fileURL)
+            #expect(url.path == shipped(try #require(sound.file)).path, "\(sound)")
+        }
+    }
 }

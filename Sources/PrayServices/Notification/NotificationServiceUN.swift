@@ -133,7 +133,7 @@ private extension NotificationServiceUN {
 
             // Schedule local notification for each prayer
             let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
-            let sound = sound(for: prayerTime.type, in: settings)
+            let sound = settings.notificationSounds[prayerTime.type] ?? .off
             var userInfo: [String: Any] = [:]
 
             // Encode prayer time for later retrieval
@@ -155,7 +155,7 @@ private extension NotificationServiceUN {
                             at: prayerTime.dateInterval.start.formatted(timeFormatStyle),
                             using: calendar
                         ),
-                        sound: notificationSound(for: prayerTime.type, in: settings),
+                        sound: settings.notificationSoundFile(for: prayerTime.type).map(Self.sound(named:)),
                         interruptionLevel: .timeSensitive,
                         identifier: identifier,
                         category: (isObligation ? NotificationCategory.main : .reminder).rawValue,
@@ -465,14 +465,6 @@ public extension NotificationServiceUN {
 // MARK: - Helpers
 
 private extension NotificationServiceUN {
-    func sound(for prayer: Prayer, in settings: Settings) -> NotificationSound {
-        settings.notificationSounds[prayer] ?? .off
-    }
-
-    func notificationSound(for prayer: Prayer, in settings: Settings) -> UNNotificationSound? {
-        settings.notificationSoundFile(for: prayer).map(Self.sound(named:))
-    }
-
     /// A sound file the app keeps in its bundle or its sounds folder, by name; the watch plays the default sound.
     static func sound(named file: String) -> UNNotificationSound {
         #if os(watchOS)

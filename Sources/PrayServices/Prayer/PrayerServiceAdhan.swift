@@ -94,8 +94,9 @@ public extension PrayerServiceAdhan {
 
         let ishaTime: Date = {
             if let adjustments = request.adjustments, adjustments.isha != 0, adjustments.isIshaMaghribRelative {
+                // Like a relative Fajr past sunrise, one outside Maghrib to the next Fajr keeps the method's time
                 let isha = prayers.maghrib + .minutes(adjustments.isha)
-                return isha < tomorrowFajrTime ? isha : prayers.isha
+                return prayers.maghrib < isha && isha < tomorrowFajrTime ? isha : prayers.isha
             }
 
             guard request.method == .ummAlQuraRamadan,

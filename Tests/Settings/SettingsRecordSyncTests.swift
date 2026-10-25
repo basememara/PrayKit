@@ -18,18 +18,19 @@ struct SettingsRecordSyncTests {
 
     @Test
     func aDeviceThatTookTheRecordHasNothingToSendBack() throws {
-        var phone = SettingsDocument().editing(at: start) {
+        let phone = SettingsDocument().editing(at: start) {
             $0.theme = .aqua
             $0.calculationMethod = .muslimWorldLeague
         }
-        var record = Record.firstSave(of: phone, at: start + 1)
+        let firstSave = Record.firstSave(of: phone, at: start + 1)
+        var record = firstSave
 
         var mac = Device(document: SettingsDocument())
         mac.receive(record)
         record = record.saving(mac.document, at: start + 2)
         mac.saw(record)
 
-        var phoneDevice = Device(document: phone, lastRecord: Record.firstSave(of: phone, at: start + 1))
+        var phoneDevice = Device(document: phone, lastRecord: firstSave)
         phoneDevice.receive(record)
         #expect(phoneDevice.keysToSend(over: record) == [])
 
@@ -41,9 +42,7 @@ struct SettingsRecordSyncTests {
         #expect(phoneDevice.document.settings.duhaReminder == .minutes(20))
         #expect(phoneDevice.keysToSend(over: record) == [])
         #expect(mac.keysToSend(over: record) == [])
-
-        phone = phoneDevice.document
-        #expect(phone.settings.theme == .aqua)
+        #expect(phoneDevice.document.settings.theme == .aqua)
     }
 }
 

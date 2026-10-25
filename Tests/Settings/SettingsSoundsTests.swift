@@ -139,12 +139,12 @@ struct SettingsSoundsTests {
     }
 
     @Test
-    func aShuffledAdhanCountsEveryAdhanItPicksFrom() {
+    func aShuffledAdhanNeedsNoDownload() {
         var settings = Settings()
-        settings.notificationAdhan[.fajr] = .shuffle
+        Prayer.allCases.forEach { settings.notificationAdhan[$0] = .shuffle }
 
         let shortAdhans = Set(AdhanSound.shuffleChoices.map { $0.file(for: .short) })
-        #expect(shortAdhans.isSubset(of: settings.notificationSoundFiles))
+        #expect(settings.notificationSoundFiles.isDisjoint(with: shortAdhans))
     }
 
     @Test

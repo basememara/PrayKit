@@ -60,13 +60,11 @@ public extension Settings {
     }
 
     /// Every sound file the notifications can play without the app, by name, so a device can have them on hand;
-    /// a shuffled adhan counts every adhan it picks from.
+    /// a shuffled adhan adds none, since it draws only from the adhans already on the device.
     var notificationSoundFiles: Set<String> {
-        let prayers = Prayer.allCases.flatMap { prayer in
-            notificationSounds[prayer] == .adhan && notificationAdhan[prayer] == .shuffle
-                ? AdhanSound.shuffleChoices.map { $0.file(for: .short) }
-                : [notificationSoundFile(for: prayer)].compactMap(\.self)
-        }
+        let prayers = Prayer.allCases
+            .filter { notificationSounds[$0] != .adhan || notificationAdhan[$0] != .shuffle }
+            .compactMap(notificationSoundFile(for:))
 
         let reminders = Prayer.allCases.compactMap { reminderSounds[$0]?.file }
         let iqama = iqamaTimes.isEmpty ? nil : iqamaReminders.sound.file

@@ -27,7 +27,8 @@ struct PrayTestFixture {
             londonService: PrayerServiceLondon(
                 networkManager: NetworkManager(service: NetworkServiceFoundation()),
                 apiKey: "{{your api key}}",
-                log: log
+                log: log,
+                defaults: .makeTest()
             ),
             log: log
         )

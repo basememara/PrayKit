@@ -193,7 +193,7 @@ extension PrayerDayRuleTests {
 
     @Test
     func aDayWithoutTimesIsNeverChosen() async throws {
-        let place = DayFixture("London timetable after its last day", 51.5074, -0.1278, "Europe/London", .london, 2027, 6, 1)
+        let place = DayFixture("London timetable after its last day", 51.5074, -0.1278, "Europe/London", .london, 2100, 6, 1)
 
         let error = await #expect(throws: PrayError.self) {
             try await fixture.prayerManager.fetch(at: try place.firstNoon(), with: try place.request())

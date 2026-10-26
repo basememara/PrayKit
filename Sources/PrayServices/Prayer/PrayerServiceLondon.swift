@@ -17,12 +17,24 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let apiKey: String
     private let log: LogManager
 
-    /// The last day the bundled timetables cover.
-    private static let lastDay = DateComponents(year: 2026, month: 12, day: 31)
+    private static let filePrefix = "london-"
 
-    public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
+    /// The last year the bundled timetables cover, from the newest `london-<year>.json`.
+    static let lastYear = Bundle.module.urls(forResourcesWithExtension: "json", subdirectory: nil)?
+        .compactMap { url in
+            let name = url.deletingPathExtension().lastPathComponent
+            return name.hasPrefix(filePrefix) ? Int(name.dropFirst(filePrefix.count)) : nil
+        }
+        .max()
+
+    public init(
+        networkManager: NetworkManager,
+        apiKey: String,
+        log: LogManager,
+        defaults: UserDefaults = UserDefaults(suiteName: "PrayerServiceLondon") ?? .standard
+    ) {
         self.networkManager = networkManager
-        self.defaults = UserDefaults(suiteName: "PrayerServiceLondon") ?? .standard
+        self.defaults = defaults
         self.apiKey = apiKey
         self.log = log
     }
@@ -39,12 +51,13 @@ public extension PrayerServiceLondon {
         let dateFormatter = DateFormatter(dateFormat: "yyyy-MM-dd", calendar: calendar)
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
-        guard let lastDate = calendar.date(from: Self.lastDay), calendar.startOfDay(for: date) <= lastDate else {
+        let year = calendar.component(.year, from: date)
+
+        guard let lastYear = Self.lastYear, year <= lastYear else {
             log.warning("London prayers not available for '\(date.formatted())'")
             return []
         }
 
-        let year = calendar.component(.year, from: date)
         let prayerDays = try await fetch(for: year)
 
         let dateKey = dateFormatter.string(from: date)
@@ -245,15 +258,16 @@ private extension PrayerServiceLondon {
         // Construct data
         let data: Data
 
-        if let value = defaults.data(forKey: key) {
-            // Retrieve from user defaults
-            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
-            data = value
-        } else if let url = fileURL(forYear: year),
+        // The bundle comes first, so a copy saved from the network never hides a year the app ships
+        if let url = fileURL(forYear: year),
             let contents = try? Data(contentsOf: url) {
             // Retrieve from embedded file
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from bundle")
             data = contents
+        } else if let value = defaults.data(forKey: key) {
+            // Retrieve from user defaults
+            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
+            data = value
         } else {
             // Retrieve remotely from endpoint
             log.warning("Fetching Unified London Prayer Timetable for '\(key)' from network...")
@@ -280,6 +294,13 @@ private extension PrayerServiceLondon {
             throw error
         }
 
+        // The API answers a year it hasn't published with no days, so it's asked again next time
+        guard !decoded.times.isEmpty else {
+            log.warning("Unified London Prayer Timetable for '\(key)' has no days yet, so it isn't kept")
+            defaults.removeObject(forKey: key)
+            return [:]
+        }
+
         await LondonPrayerTimetableCache.shared.set(decoded.times, for: key) // Store in-memory
 
         // Persist in user preferences
@@ -293,7 +314,7 @@ private extension PrayerServiceLondon {
     }
 
     func fileURL(forYear year: Int) -> URL? {
-        Bundle.module.url(forResource: "london-\(String(year))", withExtension: "json")
+        Bundle.module.url(forResource: Self.filePrefix + String(year), withExtension: "json")
     }
 }
 

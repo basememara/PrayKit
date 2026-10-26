@@ -1,5 +1,5 @@
 {
-  "originHash" : "9683d786e75eff0165917abc25926e759f9add69349eddb56e3635758db6977c",
+  "originHash" : "ebbb67ecf976f657b3da2b648457d93d1abc2c8a76f815a4744659ec9e69c1b9",
   "pins" : [
     {
       "identity" : "adhan-swift",
@@ -13,10 +13,10 @@
     {
       "identity" : "zamzamkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ZamzamInc/ZamzamKit.git",
+      "location" : "https://github.com/basememara/ZamzamKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "95825181c28c75e780d9b1f07d5f432d8c9f1208"
+        "revision" : "e6471b4e71c891da56d41ce34c28c8edf13d5c8a"
       }
     }
   ],

@@ -18,7 +18,7 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/ZamzamInc/ZamzamKit.git",
+            url: "https://github.com/basememara/ZamzamKit.git",
             branch: "main"
         ),
         .package(

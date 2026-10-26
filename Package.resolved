@@ -7,7 +7,7 @@
       "location" : "https://github.com/batoulapps/adhan-swift.git",
       "state" : {
         "branch" : "develop",
-        "revision" : "fe8381795e65dc00ca0a584a2e82058f05e371d0"
+        "revision" : "e2d3c195bbfc42bf3c17984debaa246d7d5d3b80"
       }
     },
     {
@@ -16,7 +16,7 @@
       "location" : "https://github.com/ZamzamInc/ZamzamKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "aca7284ca7c40c4906e7055d2b0d7b61495ad69a"
+        "revision" : "95825181c28c75e780d9b1f07d5f432d8c9f1208"
       }
     }
   ],

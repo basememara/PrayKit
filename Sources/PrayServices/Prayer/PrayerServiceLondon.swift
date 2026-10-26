@@ -17,8 +17,15 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let apiKey: String
     private let log: LogManager
 
-    /// The last day the bundled timetables cover.
-    private static let lastDay = DateComponents(year: 2026, month: 12, day: 31)
+    private static let filePrefix = "london-"
+
+    /// The last year the bundled timetables cover, from the newest `london-<year>.json`.
+    static let lastYear = Bundle.module.urls(forResourcesWithExtension: "json", subdirectory: nil)?
+        .compactMap { url in
+            let name = url.deletingPathExtension().lastPathComponent
+            return name.hasPrefix(filePrefix) ? Int(name.dropFirst(filePrefix.count)) : nil
+        }
+        .max()
 
     public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
         self.networkManager = networkManager
@@ -39,12 +46,13 @@ public extension PrayerServiceLondon {
         let dateFormatter = DateFormatter(dateFormat: "yyyy-MM-dd", calendar: calendar)
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
-        guard let lastDate = calendar.date(from: Self.lastDay), calendar.startOfDay(for: date) <= lastDate else {
+        let year = calendar.component(.year, from: date)
+
+        guard let lastYear = Self.lastYear, year <= lastYear else {
             log.warning("London prayers not available for '\(date.formatted())'")
             return []
         }
 
-        let year = calendar.component(.year, from: date)
         let prayerDays = try await fetch(for: year)
 
         let dateKey = dateFormatter.string(from: date)
@@ -293,7 +301,7 @@ private extension PrayerServiceLondon {
     }
 
     func fileURL(forYear year: Int) -> URL? {
-        Bundle.module.url(forResource: "london-\(String(year))", withExtension: "json")
+        Bundle.module.url(forResource: Self.filePrefix + String(year), withExtension: "json")
     }
 }
 

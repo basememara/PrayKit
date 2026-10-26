@@ -27,9 +27,14 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
         }
         .max()
 
-    public init(networkManager: NetworkManager, apiKey: String, log: LogManager) {
+    public init(
+        networkManager: NetworkManager,
+        apiKey: String,
+        log: LogManager,
+        defaults: UserDefaults = UserDefaults(suiteName: "PrayerServiceLondon") ?? .standard
+    ) {
         self.networkManager = networkManager
-        self.defaults = UserDefaults(suiteName: "PrayerServiceLondon") ?? .standard
+        self.defaults = defaults
         self.apiKey = apiKey
         self.log = log
     }
@@ -253,15 +258,16 @@ private extension PrayerServiceLondon {
         // Construct data
         let data: Data
 
-        if let value = defaults.data(forKey: key) {
-            // Retrieve from user defaults
-            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
-            data = value
-        } else if let url = fileURL(forYear: year),
+        // The bundle comes first, so a copy saved from the network never hides a year the app ships
+        if let url = fileURL(forYear: year),
             let contents = try? Data(contentsOf: url) {
             // Retrieve from embedded file
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from bundle")
             data = contents
+        } else if let value = defaults.data(forKey: key) {
+            // Retrieve from user defaults
+            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
+            data = value
         } else {
             // Retrieve remotely from endpoint
             log.warning("Fetching Unified London Prayer Timetable for '\(key)' from network...")
@@ -286,6 +292,13 @@ private extension PrayerServiceLondon {
         } catch {
             log.error("An error occured while storing Unified London Prayer Timetable for '\(key)' into cache", error: error)
             throw error
+        }
+
+        // The API answers a year it hasn't published with no days, so it's asked again next time
+        guard !decoded.times.isEmpty else {
+            log.warning("Unified London Prayer Timetable for '\(key)' has no days yet, so it isn't kept")
+            defaults.removeObject(forKey: key)
+            return [:]
         }
 
         await LondonPrayerTimetableCache.shared.set(decoded.times, for: key) // Store in-memory

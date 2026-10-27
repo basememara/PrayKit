@@ -395,9 +395,9 @@ private extension Array where Element == PrayerTimer {
                 context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
             ].compactMap(\.self)
 
-            // Whole hours counted back from the next prayer, so a face showing the hours left turns as they change
+            // Half hours counted back from the next prayer, so a face showing the nearest hour left turns as it changes
             result += stride(
-                from: (currentPrayer.dateInterval.end - .hours(1)).timeIntervalSince1970,
+                from: (currentPrayer.dateInterval.end - .hours(1) - .minutes(30)).timeIntervalSince1970,
                 to: currentPrayer.dateInterval.start.timeIntervalSince1970,
                 by: -3600
             ).compactMap { timeInterval in

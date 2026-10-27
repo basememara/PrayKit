@@ -305,6 +305,30 @@ extension PrayerTimelineAdhanTests {
             #expect(steps.allSatisfy(dates.contains), "\($0) is missing a five-minute step in its last hour")
         }
     }
+
+    /// A face too small for a live timer shows the whole hours left, so a step on each hour before the prayer turns it
+    /// as it changes; steps counted from the prayer before left "2h" up for most of an hour once under two hours.
+    @Test
+    func hourlyStepsOnEachWholeHourBeforeThePrayer() async throws {
+        let (timeline, _, date) = try await fetchPrayerDay(
+            settings: Settings(),
+            date: "2022/04/01 06:00",
+            expanded: .hourly,
+            limit: 200,
+            timeZoneIdentifier: "America/New_York",
+            latitude: 43.651070,
+            longitude: -79.347015,
+            method: .northAmerica
+        )
+
+        let dates = Set(timeline.map(\.date))
+        try zip([Prayer.sunrise, .dhuhr, .asr, .maghrib], [Prayer.dhuhr, .asr, .maghrib, .isha]).forEach { previous, prayer in
+            let windowStart = try #require(timeline[dayOf: date, previous]).dateInterval.start
+            let start = try #require(timeline[dayOf: date, prayer]).dateInterval.start
+            let steps = (2...12).map { start - .hours($0) }.filter { $0 > max(windowStart, date) }
+            #expect(steps.allSatisfy(dates.contains), "\(prayer) is missing a step on a whole hour before it")
+        }
+    }
 }
 
 extension PrayerTimelineAdhanTests {

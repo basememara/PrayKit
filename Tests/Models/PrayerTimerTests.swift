@@ -207,6 +207,22 @@ extension PrayerTimerTests {
     }
 
     @Test
+    func theRingCountsDownToTheIqama() throws {
+        let prayerTimer = try prayerTimer(at: today(hour: 12, minute: 30))
+        #expect(prayerTimer.timerType == .iqama)
+        #expect(abs(prayerTimer.progressRemaining - 15.0 / 35) <= 0.0001)
+        #expect(!(prayerTimer.isDangerZone))
+    }
+
+    @Test
+    func afterTheIqamaTheRingCountsFromItToTheNextPrayer() throws {
+        let prayerTimer = try prayerTimer(at: today(hour: 13, minute: 0))
+        #expect(prayerTimer.timerType == .countdown)
+        #expect(abs(prayerTimer.progressRemaining - 85.0 / 100) <= 0.0001)
+        #expect(!(prayerTimer.isDangerZone))
+    }
+
+    @Test
     func beforeAsrAdhanWithIqama() async throws {
         let date = today(hour: 14, minute: 15)
         let prayerTimer = try prayerTimer(at: date)

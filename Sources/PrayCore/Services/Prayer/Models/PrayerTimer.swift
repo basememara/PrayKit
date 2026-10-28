@@ -111,6 +111,7 @@ public extension PrayerTimer {
         var countdownDate = timerType == .iqama ? iqamaTime ?? .now : prayerTime.dateInterval.start
         var currentDateInterval = currentPrayer.dateInterval
         var isDhuhrStopwatchOnFriday = false
+        var hasPreAdhanZone = true
 
         // Jumuah is Friday's Dhuhr, judged by that prayer's own date rather than the moment's
         if let dhuhr = [currentPrayer, nextPrayer].first(where: { $0.type == .dhuhr }),
@@ -140,11 +141,21 @@ public extension PrayerTimer {
             countdownDate = fajrIqama
             currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: countdownDate)
             timerType = .iqama
+        } else if isIqamaTimerEnabled,
+                  let currentIqama = iqamaTimes[currentPrayer, using: calendar],
+                  currentIqama > currentPrayer.dateInterval.start,
+                  currentIqama < nextPrayer.dateInterval.start {
+            if timerType == .iqama {
+                currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: currentIqama)
+                hasPreAdhanZone = false
+            } else if timerType == .countdown, date >= currentIqama {
+                currentDateInterval = DateInterval(start: currentIqama, end: nextPrayer.dateInterval.start)
+            }
         }
 
         let progress = currentDateInterval.progress(at: date).value
         let progressRemaining = 1 - progress
-        let dangerZone = min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) // Pre-adhan zone
+        let dangerZone = hasPreAdhanZone ? min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) : 0 // Pre-adhan zone
         let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
 
         self.init(

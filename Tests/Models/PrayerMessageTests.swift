@@ -11,7 +11,6 @@ import PrayCore
 import Testing
 
 struct PrayerMessageTests {
-    /// Wednesday 2027-01-13 at 00:00 GMT.
     private let start = Date(timeIntervalSince1970: 1_799_798_400)
 
     /// Fajr 05:00, sunrise 06:30, Dhuhr 12:00, Asr 15:30, Maghrib 18:00, Isha 19:30, the middle of the night 23:30.

@@ -9,14 +9,11 @@
 import Foundation
 import ZamzamCore
 
-/// A prayer moment sent in a conversation. It carries absolute times and the sender's place, so a recipient shows
-/// what the sender saw and never recalculates.
 public struct PrayerMessage: Equatable, Sendable {
     public let content: Content
     public let placeName: String?
     public let timeZone: TimeZone
     public let uses24hTime: Bool
-    /// The days the sender's Hijri date of the message's moment runs ahead of Umm al-Qura's.
     public let hijriDayOffset: Int
 
     public init(content: Content, placeName: String?, timeZone: TimeZone, uses24hTime: Bool, hijriDayOffset: Int) {
@@ -67,7 +64,6 @@ public extension PrayerMessage {
 }
 
 public extension PrayerMessage.Content {
-    /// When to meet, or when the reminded prayer runs out; nil for a timetable.
     var target: Date? {
         switch self {
         case .timetable:
@@ -79,7 +75,6 @@ public extension PrayerMessage.Content {
         }
     }
 
-    /// The instant the message is dated by: the meeting, the reminded prayer's start, or the timetable's first time.
     var datedAt: Date? {
         switch self {
         case let .timetable(times):
@@ -95,13 +90,10 @@ public extension PrayerMessage.Content {
 // MARK: - Building
 
 public extension PrayerDay {
-    /// The day's essential times, sunrise included.
     var timetable: PrayerMessage.Content {
         .timetable(times: times.filter(\.type.isEssential))
     }
 
-    /// The next adhan whose meeting is still ahead (`.after`), or that is itself still ahead (`.before`), even once a
-    /// meeting before it has passed.
     func meeting(
         _ prayer: Prayer,
         minutes: Int,
@@ -117,13 +109,11 @@ public extension PrayerDay {
         return adhan.map { .meet(PrayerMessage.Meeting(prayer: prayer, adhan: $0.dateInterval.start, minutes: minutes, timing: timing, together: together)) }
     }
 
-    /// A reminder to pray before the obligatory prayer under way runs out, if one is.
     func reminder(at time: Date) -> PrayerMessage.Content? {
         deadline(at: time).map { .reminder(prayer: $0.type, starts: $0.dateInterval.start, ends: $0.dateInterval.end) }
     }
 
-    /// The obligatory prayer under way, Isha ending at the middle of the night when the day was fetched with it
-    /// (`PrayerFilter.all`) and it falls after Isha, else at the next Fajr; nil between sunrise and Dhuhr or after it.
+    /// Isha ends at the middle of the night only when the day was fetched with `PrayerFilter.all`.
     func deadline(at time: Date) -> PrayerTime? {
         guard let prayer = lastObligatory(at: time) else { return nil }
         let runsOut = end(of: prayer)
@@ -133,7 +123,6 @@ public extension PrayerDay {
 }
 
 public extension Settings {
-    /// Days to add to `moment` for its Hijri date as the app shows it, turning at Maghrib of whichever day holds it.
     func shownHijriDayOffset(at moment: Date, in prayerDays: [PrayerDay], timeZone: TimeZone) -> Int {
         moment.hijriDayOffset(
             for: prayerDays.first { $0.contains(moment) },
@@ -175,7 +164,6 @@ public extension PrayerMessage {
         return components?.url ?? Self.baseURL
     }
 
-    /// A message read back from its link, or nil when the link is malformed or from a newer version.
     init?(url: URL) {
         guard let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems else { return nil }
         let query = Dictionary(items.compactMap { item in item.value.map { (item.name, $0) } }) { first, _ in first }

@@ -50,7 +50,7 @@ extension Settings {
         settings.sunriseAfterIsha = true
         settings.appearanceMode = .light
         settings.theme = .aqua
-        settings.isPrayerActivityEnabled = true
+        settings.isPrayerActivityEnabled = false
         settings.matchesAppIcon = true
         return settings
     }()

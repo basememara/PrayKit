@@ -368,6 +368,23 @@ extension PrayerDayRuleTests {
         #expect(day.times[.lastThird] == nil)
     }
 
+    @Test(arguments: DayFixture.all)
+    func aPrayerRunsOutAtTheMiddleOfTheNightOrWhereTheNextTimeBegins(place: DayFixture) async throws {
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+
+        for prayer in day.times where prayer.type.isObligation {
+            let deadline = try #require(day.deadline(at: prayer.dateInterval.start + 1), "\(prayer.type) is under way")
+            #expect(deadline.type == prayer.type)
+
+            if prayer.type == .isha, let middle = day.times[.midnight], middle.dateInterval.start > prayer.dateInterval.start {
+                #expect(deadline.dateInterval.end == middle.dateInterval.start)
+                #expect(day.deadline(at: middle.dateInterval.start) == nil)
+            } else {
+                #expect(deadline.dateInterval.end == prayer.dateInterval.end)
+            }
+        }
+    }
+
     /// From moments every three hours across two days: names are unique, prayers come in time order, and the next
     /// prayer is always among them.
     @Test(arguments: DayFixture.all)

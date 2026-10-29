@@ -47,10 +47,9 @@ extension SettingsWireTests {
             previous: nil
         )
 
-        var expected = Settings.everyFieldChanged
+        var expected = Settings.everyFieldChanged.synced
         expected.adhanDuaa = Settings().adhanDuaa
         expected.soundsBeforeMute = Settings().soundsBeforeMute
-        expected.geofenceRadius = Settings().geofenceRadius
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])
@@ -178,10 +177,7 @@ extension SettingsWireTests {
     func revisedSettingsRoundTrip() {
         let document = SettingsDocument(wireFields: Self.revised.wireFields, base: Settings(), modifiedAt: saved, previous: nil)
 
-        var expected = Settings.everyFieldChanged
-        expected.geofenceRadius = Settings().geofenceRadius
-
-        #expect(document.settings == expected)
+        #expect(document.settings == Settings.everyFieldChanged.synced)
         #expect(document.revisions == Self.revised.revisions.filter(\.key.isSynced))
     }
 
@@ -189,8 +185,9 @@ extension SettingsWireTests {
     func aDeviceSettingNeverGoesOnTheWire() {
         let fields = Self.revised.wireFields
 
-        #expect(fields["geofenceRadius"] == nil)
-        #expect(fields["geofenceRadiusAt"] == nil)
+        #expect([SettingKey.geofenceRadius, .isPrayerActivityEnabled, .matchesAppIcon].allSatisfy {
+            fields[$0.rawValue] == nil && fields[$0.revisionKey] == nil
+        })
     }
 
     @Test

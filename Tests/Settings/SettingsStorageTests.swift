@@ -31,8 +31,13 @@ extension SettingsStorageTests {
         let expectedPlace = try Self.goldenPlace()
         Self.golden.forEach { defaults.set($0.value, forKey: $0.key) }
 
+        // Earlier versions had no Live Activity or app icon switch, so those read as their defaults
+        var expected = Settings.everyFieldChanged
+        expected.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
+        expected.matchesAppIcon = Settings().matchesAppIcon
+
         let state = storage.load()
-        #expect(state.document.settings == .everyFieldChanged)
+        #expect(state.document.settings == expected)
         #expect(state.document.revisions.isEmpty)
         #expect(state.place == expectedPlace)
     }

@@ -6,7 +6,8 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
-import Foundation.NSUserDefaults
+import Foundation
+import PrayCore
 
 extension UserDefaults {
     /// Returns a defaults suite private to the caller.
@@ -33,5 +34,17 @@ struct SplitMix64: RandomNumberGenerator {
         value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
         value = (value ^ (value >> 27)) &* 0x94D0_49BB_1331_11EB
         return value ^ (value >> 31)
+    }
+}
+
+extension PrayerTime {
+    /// A synthetic day's essential prayers from `start`, each running until the next begins and Isha until the next
+    /// day's Fajr, 29 hours in.
+    static func day(from start: Date, ishaAt ishaHour: Double = 19.5) -> [PrayerTime] {
+        let hours: [(Prayer, Double)] = [(.fajr, 5), (.sunrise, 6.5), (.dhuhr, 12), (.asr, 15.5), (.maghrib, 18), (.isha, ishaHour)]
+        return hours.enumerated().map { index, entry in
+            let end = index + 1 < hours.count ? hours[index + 1].1 : 29
+            return PrayerTime(type: entry.0, dateInterval: DateInterval(start: start + entry.1 * 3600, end: start + end * 3600))
+        }
     }
 }

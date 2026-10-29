@@ -124,7 +124,7 @@ private extension NotificationServiceUN {
             guard counter > 0 else { return }
 
             let isObligation = prayerTime.type.isObligation
-            let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
+            let isJumuah = prayerTime.isJumuah(using: calendar)
             let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
             let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
             let iqamaSound = settings.iqamaReminders.sound

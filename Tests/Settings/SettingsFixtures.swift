@@ -50,6 +50,17 @@ extension Settings {
         settings.sunriseAfterIsha = true
         settings.appearanceMode = .light
         settings.theme = .aqua
+        settings.isPrayerActivityEnabled = true
+        settings.matchesAppIcon = true
         return settings
     }()
+
+    /// These settings as another device receives them: the ones each device keeps for itself stay at their defaults.
+    var synced: Settings {
+        var settings = self
+        settings.geofenceRadius = Settings().geofenceRadius
+        settings.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
+        settings.matchesAppIcon = Settings().matchesAppIcon
+        return settings
+    }
 }

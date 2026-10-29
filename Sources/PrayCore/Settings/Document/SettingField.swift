@@ -41,7 +41,9 @@ extension Settings {
         SettingField(.isPrayerAbbrEnabled, \.isPrayerAbbrEnabled, .bool),
         SettingField(.sunriseAfterIsha, \.sunriseAfterIsha, .bool),
         SettingField(.appearanceMode, \.appearanceMode, .string),
-        SettingField(.theme, \.theme, .string)
+        SettingField(.theme, \.theme, .string),
+        SettingField(.isPrayerActivityEnabled, \.isPrayerActivityEnabled, .bool, synced: false),
+        SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false)
     ]
 }
 

@@ -14,16 +14,7 @@ struct PrayerDayTests {
     private let start = Date(timeIntervalSince1970: 1_800_000_000)
 
     private var day: PrayerDay {
-        PrayerDay(date: start, times: times(from: 0), tomorrow: times(from: 24 * 3600))
-    }
-
-    /// Each prayer runs until the next begins and Isha until the next day's Fajr, 29 hours after the day's start.
-    private func times(from offset: TimeInterval, ishaAt ishaHour: Double = 19.5) -> [PrayerTime] {
-        let hours: [(Prayer, Double)] = [(.fajr, 5), (.sunrise, 6.5), (.dhuhr, 12), (.asr, 15.5), (.maghrib, 18), (.isha, ishaHour)]
-        return hours.enumerated().map { index, entry in
-            let end = index + 1 < hours.count ? hours[index + 1].1 : 29
-            return PrayerTime(type: entry.0, dateInterval: DateInterval(start: start + offset + entry.1 * 3600, end: start + offset + end * 3600))
-        }
+        PrayerDay(date: start, times: PrayerTime.day(from: start), tomorrow: PrayerTime.day(from: start + 24 * 3600))
     }
 }
 
@@ -70,7 +61,7 @@ extension PrayerDayTests {
     @Test
     func anIshaAfterMidnightIsStillThisDaysUntilItBegins() throws {
         // A summer at high latitude: Isha begins at 00:50, after midnight
-        let day = PrayerDay(date: start, times: times(from: 0, ishaAt: 24 + 50.0 / 60), tomorrow: times(from: 24 * 3600))
+        let day = PrayerDay(date: start, times: PrayerTime.day(from: start, ishaAt: 24 + 50.0 / 60), tomorrow: PrayerTime.day(from: start + 24 * 3600))
         let twenty = start + (24 + 20.0 / 60) * 3600
 
         let current = try #require(day.current(at: twenty))

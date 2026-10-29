@@ -156,7 +156,7 @@ public extension PrayerTimer {
         let progress = currentDateInterval.progress(at: date).value
         let progressRemaining = 1 - progress
         let dangerZone = hasPreAdhanZone ? min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) : 0 // Pre-adhan zone
-        let isJumuah = prayerTime.type == .dhuhr && prayerTime.dateInterval.start.isJumuah(using: calendar)
+        let isJumuah = prayerTime.isJumuah(using: calendar)
 
         self.init(
             date: date,

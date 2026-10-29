@@ -25,6 +25,7 @@ public struct Constants: Distribution, Sendable {
     public let calculationMethodHelpURL: URL
     public let bgRefreshTaskID: String
     public let bgProcessingTaskID: String
+    public let bgActivityCleanupTaskID: String
     public let iCloudContainerID: String
     public let stripePublishableKey: String
     public let stripeApplePayMerchantId: String
@@ -48,6 +49,7 @@ public struct Constants: Distribution, Sendable {
         calculationMethodHelpURL: URL,
         bgRefreshTaskID: String,
         bgProcessingTaskID: String,
+        bgActivityCleanupTaskID: String,
         iCloudContainerID: String,
         stripePublishableKey: String,
         stripeApplePayMerchantId: String,
@@ -69,6 +71,7 @@ public struct Constants: Distribution, Sendable {
         self.calculationMethodHelpURL = calculationMethodHelpURL
         self.bgRefreshTaskID = bgRefreshTaskID
         self.bgProcessingTaskID = bgProcessingTaskID
+        self.bgActivityCleanupTaskID = bgActivityCleanupTaskID
         self.iCloudContainerID = iCloudContainerID
         self.stripePublishableKey = stripePublishableKey
         self.stripeApplePayMerchantId = stripeApplePayMerchantId

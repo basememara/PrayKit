@@ -98,6 +98,10 @@ public struct Settings: Codable, Equatable, Sendable {
     public var appearanceMode: AppearanceMode = .dark
     public var theme: AppTheme = .default
 
+    // Device
+    public var isPrayerActivityEnabled = false
+    public var matchesAppIcon = false
+
     public init() {}
 }
 
@@ -134,6 +138,8 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case sunriseAfterIsha
     case appearanceMode
     case theme
+    case isPrayerActivityEnabled
+    case matchesAppIcon
 }
 
 public extension SettingKey {

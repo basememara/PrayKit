@@ -43,14 +43,30 @@ extension PrayerMessageTests {
     }
 
     @Test
-    func aMeetingAfterStillAheadKeepsThePrayerUnderWay() throws {
+    func aMeetingDuringThePrayersTimeCountsFromNow() throws {
         let content = try #require(day.meeting(.asr, minutes: 30, .after, together: false, at: hour(15.75)))
+        #expect(content == .meet(PrayerMessage.Meeting(prayer: .asr, adhan: hour(15.5), minutes: 45, timing: .during, together: false)))
+        #expect(content.target == hour(16.25))
+    }
+
+    @Test
+    func noMinutesDuringThePrayersTimeIsNow() throws {
+        let content = try #require(day.meeting(.asr, minutes: 0, .before, together: true, at: hour(16)))
         #expect(content.target == hour(16))
     }
 
     @Test
-    func aMeetingAfterThatHasPassedMovesToTomorrow() throws {
-        let content = try #require(day.meeting(.asr, minutes: 30, .after, together: false, at: hour(16)))
+    func ishaAfterMidnightIsStillUnderWay() throws {
+        let content = try #require(day.meeting(.isha, minutes: 10, .before, together: true, at: hour(25)))
+        guard case let .meet(meeting) = content else { throw Failure.wrongCase }
+        #expect(meeting.timing == .during)
+        #expect(meeting.adhan == hour(19.5))
+        #expect(content.target == hour(25) + 600)
+    }
+
+    @Test
+    func aMeetingAfterAPrayerWhoseTimeHasEndedMovesToTomorrow() throws {
+        let content = try #require(day.meeting(.asr, minutes: 30, .after, together: false, at: hour(18.5)))
         #expect(content.target == hour(40))
     }
 
@@ -69,10 +85,19 @@ extension PrayerMessageTests {
     }
 
     @Test
-    func aMeetingBeforeOnceThePrayerHasBegunIsTomorrows() throws {
+    func aMeetingBeforeOnceThePrayerHasBegunCountsFromNow() throws {
         let content = try #require(day.meeting(.asr, minutes: 10, .before, together: true, at: hour(15.5)))
         guard case let .meet(meeting) = content else { throw Failure.wrongCase }
-        #expect(meeting.adhan == hour(39.5))
+        #expect(meeting.timing == .during)
+        #expect(content.target == hour(15.5) + 600)
+    }
+
+    @Test
+    func aMeetingForAPrayerWhoseTimeHasEndedIsTomorrows() throws {
+        let content = try #require(day.meeting(.fajr, minutes: 10, .before, together: true, at: hour(12)))
+        guard case let .meet(meeting) = content else { throw Failure.wrongCase }
+        #expect(meeting.timing == .before)
+        #expect(meeting.adhan == hour(29))
     }
 }
 
@@ -164,6 +189,7 @@ extension PrayerMessageTests {
     @Test(arguments: [
         PrayerMessage.Content.meet(.init(prayer: .asr, adhan: Date(timeIntervalSince1970: 1_799_854_200), minutes: 30, timing: .after, together: false)),
         .meet(.init(prayer: .isha, adhan: Date(timeIntervalSince1970: 1_799_868_600), minutes: 10, timing: .before, together: true)),
+        .meet(.init(prayer: .dhuhr, adhan: Date(timeIntervalSince1970: 1_799_841_600), minutes: 47, timing: .during, together: true)),
         .reminder(prayer: .dhuhr, starts: Date(timeIntervalSince1970: 1_799_841_600), ends: Date(timeIntervalSince1970: 1_799_854_200)),
         .timetable(times: PrayerTime.day(from: Date(timeIntervalSince1970: 1_799_798_400)))
     ])
@@ -187,7 +213,7 @@ extension PrayerMessageTests {
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=reminder&prayer=asr&starts=1799854200&ends=1799841600",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=asr&adhan=soon&minutes=30&timing=after",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=isha&adhan=1799868600&minutes=-5&timing=before",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=isha&adhan=1799868600&minutes=5&timing=during",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=isha&adhan=1799868600&minutes=5&timing=whenever",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=timetable&times=fajr:1:2,sunrise:x:3",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=party"
     ])

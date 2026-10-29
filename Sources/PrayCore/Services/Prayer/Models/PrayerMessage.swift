@@ -36,6 +36,9 @@ public extension PrayerMessage {
         public enum Timing: String, CaseIterable, Sendable {
             case before
             case after
+            /// Counted from the moment it was proposed, while the prayer's time is already under way; the minutes still
+            /// run from the adhan.
+            case during
         }
 
         public let prayer: Prayer
@@ -56,7 +59,7 @@ public extension PrayerMessage {
             switch timing {
             case .before:
                 adhan - .minutes(minutes)
-            case .after:
+            case .after, .during:
                 adhan + .minutes(minutes)
             }
         }
@@ -101,6 +104,12 @@ public extension PrayerDay {
         together: Bool,
         at time: Date
     ) -> PrayerMessage.Content? {
+        if let current = times.first(where: { $0.type == prayer && $0.dateInterval.contains(time) }) {
+            let sinceAdhan = Int(time.timeIntervalSince(current.dateInterval.start) / 60)
+            let meeting = PrayerMessage.Meeting(prayer: prayer, adhan: current.dateInterval.start, minutes: sinceAdhan + minutes, timing: .during, together: together)
+            return .meet(meeting)
+        }
+
         let adhan = (times + tomorrow).first { prayerTime in
             let start = prayerTime.dateInterval.start
             return prayerTime.type == prayer && (timing == .after ? start + .minutes(minutes) : start) > time

@@ -42,14 +42,14 @@ extension SettingsStorageTests {
         #expect(state.place == expectedPlace)
     }
 
-    /// New installs and upgrades get the Live Activity; only a device that turned it off keeps it off.
+    /// New installs and upgrades start without the Live Activity; only a device that turned it on has it.
     @Test
-    func theLiveActivityIsOnUntilTurnedOff() {
+    func theLiveActivityIsOffUntilTurnedOn() {
         Self.golden.forEach { defaults.set($0.value, forKey: $0.key) }
-        #expect(storage.load().document.settings.isPrayerActivityEnabled)
-
-        storage.edit { $0.isPrayerActivityEnabled = false }
         #expect(!storage.load().document.settings.isPrayerActivityEnabled)
+
+        storage.edit { $0.isPrayerActivityEnabled = true }
+        #expect(storage.load().document.settings.isPrayerActivityEnabled)
     }
 
     @Test

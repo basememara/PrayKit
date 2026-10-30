@@ -99,7 +99,7 @@ public struct Settings: Codable, Equatable, Sendable {
     public var theme: AppTheme = .default
 
     // Device
-    public var isPrayerActivityEnabled = true
+    public var isPrayerActivityEnabled = false
     public var matchesAppIcon = false
 
     public init() {}

@@ -102,6 +102,11 @@ public struct DeviceState: Equatable, Sendable {
     }
 }
 
+public extension DeviceState {
+    /// The place's time zone, or this device's while there is no place.
+    var timeZone: TimeZone { place?.timeZone ?? .current }
+}
+
 extension SettingsDocument {
     /// Whether a merge takes this copy's value of `field` over `other`'s: a newer revision, or an equal one
     /// whose different value sorts after.

@@ -7,6 +7,7 @@
 //
 
 import Foundation.NSURL
+import ZamzamCore
 
 public extension Settings {
     /// Whether every prayer sound and reminder is off and no iqama time is set, so nothing is scheduled.
@@ -77,8 +78,16 @@ public extension Settings {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)
     }
 
-    /// The adhan of the prayer under way at `date`: Sunrise's once Fajr ends, and Maghrib's without a day to go by.
-    func adhanURL(at date: Date, in day: PrayerDay?) -> URL? {
-        adhanURL(for: day?.current(at: date)?.type ?? .maghrib)
+    /// The adhan a prayer plays in full, then the duaa after it when chosen and, on Eid, the takbeerat; empty when
+    /// the prayer has no adhan file.
+    func adhanPlaylist(for prayer: Prayer, at date: Date, timeZone: TimeZone) -> [URL] {
+        guard let adhan = adhanURL(for: prayer) else { return [] }
+        let isEid = date.isEid(offSet: hijriDayOffset, timeZone: timeZone)
+        return [adhan] + [adhanDuaa.fileURL, isEid ? NotificationSound.takbeerEid.fileURL : nil].compactMap(\.self)
+    }
+
+    /// The playlist of the prayer under way at `date`: Sunrise's once Fajr ends, and Maghrib's without a day to go by.
+    func adhanPlaylist(at date: Date, in day: PrayerDay?, timeZone: TimeZone) -> [URL] {
+        adhanPlaylist(for: day?.current(at: date)?.type ?? .maghrib, at: date, timeZone: timeZone)
     }
 }

@@ -50,6 +50,26 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func theAdhanPlaysWithTheDuaaAfterItAndTheTakbeeratOnEid() throws {
+        let timeZone = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        let day = try #require(Date(year: 2026, month: 10, day: 31, hour: 12, timeZone: timeZone))
+        // The second day of Eid al-Fitr 1447
+        let eid = try #require(Date(year: 2026, month: 3, day: 21, hour: 12, timeZone: timeZone))
+        var settings = Settings()
+        settings.notificationAdhan[.dhuhr] = .makkah
+        settings.adhanDuaa = .off
+
+        #expect(settings.adhanPlaylist(for: .dhuhr, at: day, timeZone: timeZone).map(\.lastPathComponent) == ["makkah.mp3"])
+
+        settings.adhanDuaa = .wasilahFadilah
+        let duaa = try #require(settings.adhanDuaa.fileURL?.lastPathComponent)
+        let takbeer = try #require(NotificationSound.takbeerEid.fileURL?.lastPathComponent)
+
+        #expect(settings.adhanPlaylist(for: .dhuhr, at: day, timeZone: timeZone).map(\.lastPathComponent) == ["makkah.mp3", duaa])
+        #expect(settings.adhanPlaylist(for: .dhuhr, at: eid, timeZone: timeZone).map(\.lastPathComponent) == ["makkah.mp3", duaa, takbeer])
+    }
+
+    @Test
     func unmutingRestoresTheSoundChosenBeforeMuting() {
         var settings = Settings()
         settings.notificationSounds[.dhuhr] = .chimes
@@ -117,9 +137,9 @@ struct SettingsSoundsTests {
         let fajr = try #require(settings.adhanURL(for: .fajr))
         let sunrise = try #require(settings.adhanURL(for: .sunrise))
 
-        #expect(settings.adhanURL(at: start + 5.5 * 3600, in: day) == fajr)
-        #expect(settings.adhanURL(at: start + 9 * 3600, in: day) == sunrise)
-        #expect(settings.adhanURL(at: start + 9 * 3600, in: nil) == settings.adhanURL(for: .maghrib))
+        #expect(settings.adhanPlaylist(at: start + 5.5 * 3600, in: day, timeZone: .gmt).first == fajr)
+        #expect(settings.adhanPlaylist(at: start + 9 * 3600, in: day, timeZone: .gmt).first == sunrise)
+        #expect(settings.adhanPlaylist(at: start + 9 * 3600, in: nil, timeZone: .gmt).first == settings.adhanURL(for: .maghrib))
     }
 
     @Test

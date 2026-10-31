@@ -9,8 +9,9 @@
 import Foundation
 
 public extension URL {
-    /// Where the sounds that don't ship in the app are downloaded; on the iPhone the notification system finds a sound
-    /// there by name, while a Mac notification plays only a sound in the app bundle.
+    /// Where the sounds that don't ship in the app are downloaded, in the App Group the app names as `BAAppGroupID`, so
+    /// its extensions read them too. An iPhone notification finds a sound there by name; a Mac notification plays only a
+    /// sound in the app bundle.
     static var soundsDirectory: URL {
         soundsLibrary.appending(path: "Sounds", directoryHint: .isDirectory)
     }
@@ -22,15 +23,12 @@ public extension URL {
 }
 
 private extension URL {
-    /// A sandboxed Mac app's `Library/Sounds` is the system's link to `~/Library/Sounds`, which the sandbox can't write,
-    /// so the Mac keeps its sounds in the `Library` of the App Group its Background Assets use.
+    /// A process that names no group, such as the watch or the test runner, keeps its own `Library`.
     static let soundsLibrary: URL = {
-        #if os(macOS)
         if let group = Bundle.main.object(forInfoDictionaryKey: "BAAppGroupID") as? String,
            let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) {
             return container.appending(path: "Library", directoryHint: .isDirectory)
         }
-        #endif
 
         return libraryDirectory
     }()

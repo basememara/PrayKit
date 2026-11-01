@@ -102,6 +102,7 @@ public struct Settings: Codable, Equatable, Sendable {
     public var isPrayerActivityEnabled = false
     public var matchesAppIcon = false
     public var isFullAdhanEnabled = false
+    public var alarms: Set<Prayer> = []
 
     public init() {}
 }
@@ -142,6 +143,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case isPrayerActivityEnabled
     case matchesAppIcon
     case isFullAdhanEnabled
+    case alarms
 }
 
 public extension SettingKey {

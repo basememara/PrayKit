@@ -53,6 +53,7 @@ extension Settings {
         settings.isPrayerActivityEnabled = true
         settings.matchesAppIcon = true
         settings.isFullAdhanEnabled = true
+        settings.alarms = [.fajr, .sunrise]
         return settings
     }()
 
@@ -63,6 +64,7 @@ extension Settings {
         settings.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
         settings.matchesAppIcon = Settings().matchesAppIcon
         settings.isFullAdhanEnabled = Settings().isFullAdhanEnabled
+        settings.alarms = Settings().alarms
         return settings
     }
 }

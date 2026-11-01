@@ -216,12 +216,15 @@ private extension NotificationServiceUN {
             let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
                 - .minutes(reminderMinutes)
 
+            // An alarm rings at the reminder's time, so the reminder still shows but stays silent
+            let isSilenced = settings.ringsAlarm(for: prayerTime.type)
+
             if reminderSound != .off, reminderMinutes > 0, counter > 0, reminderDate > now {
                 pendingAdds.append((reminderIdentifier, {
                     try await userNotification.add(
                         date: reminderDate,
                         body: localized.prayerNotificationReminder(for: prayerTime, minutes: reminderMinutes, using: calendar),
-                        sound: reminderSound.file.map(Self.sound(named:)),
+                        sound: isSilenced ? nil : reminderSound.file.map(Self.sound(named:)),
                         interruptionLevel: .timeSensitive,
                         identifier: reminderIdentifier,
                         category: NotificationCategory.reminder.rawValue,

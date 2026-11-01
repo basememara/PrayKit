@@ -17,6 +17,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let notificationAdhan: NotificationAdhan
     let notificationSounds: NotificationSounds
     let reminderSounds: ReminderSounds
+    let alarms: Set<Prayer>
     let iqamaTimes: IqamaTimes
     let iqamaReminders: IqamaReminders
     let duhaReminder: DuhaType?
@@ -29,6 +30,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
         self.notificationAdhan = settings.notificationAdhan
         self.notificationSounds = settings.notificationSounds
         self.reminderSounds = settings.reminderSounds
+        self.alarms = settings.alarms
         self.iqamaTimes = settings.iqamaTimes
         self.iqamaReminders = settings.iqamaReminders
         self.duhaReminder = settings.duhaReminder

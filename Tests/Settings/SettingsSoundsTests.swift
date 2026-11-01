@@ -184,6 +184,35 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func alarmsRingAtTheirReminderTimeOnlyWithOne() throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let hours: [(Prayer, Double)] = [(.fajr, 5), (.sunrise, 6.5), (.dhuhr, 12), (.asr, 15.5), (.maghrib, 18), (.isha, 19.5)]
+        let days = (0..<2).map { day in
+            PrayerDay(
+                date: start + Double(day) * 86400,
+                times: hours.map { PrayerTime(type: $0.0, dateInterval: DateInterval(start: start + Double(day) * 86400 + $0.1 * 3600, duration: 3600)) },
+                tomorrow: []
+            )
+        }
+
+        var settings = Settings()
+        settings.alarms = [.fajr, .sunrise, .dhuhr]
+        settings.preAdhanMinutes[.fajr] = 45
+        settings.preAdhanMinutes[.sunrise] = 20
+        settings.preAdhanMinutes[.dhuhr] = 0
+
+        let alarms = settings.alarmTimes(in: days, after: start + 5 * 3600)
+
+        #expect(alarms == [
+            PrayerAlarm(prayer: .sunrise, date: start + 6.5 * 3600 - 20 * 60),
+            PrayerAlarm(prayer: .fajr, date: start + 86400 + 5 * 3600 - 45 * 60),
+            PrayerAlarm(prayer: .sunrise, date: start + 86400 + 6.5 * 3600 - 20 * 60)
+        ])
+        #expect(!settings.ringsAlarm(for: .dhuhr))
+        #expect(!settings.ringsAlarm(for: .isha))
+    }
+
+    @Test
     func silencingTheAdhansLeavesTonesOffAndSunriseAlone() {
         var settings = Settings()
         settings.setSound(.alert, for: .asr)

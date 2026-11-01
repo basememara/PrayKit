@@ -96,6 +96,18 @@ public extension Settings {
             .min { $0.dateInterval.start < $1.dateInterval.start }
     }
 
+    /// An alarm rings at a prayer's reminder time, so it needs one.
+    func ringsAlarm(for prayer: Prayer) -> Bool {
+        alarms.contains(prayer) && preAdhanMinutes[prayer] > 0
+    }
+
+    func alarmTimes(in days: [PrayerDay], after date: Date) -> [PrayerAlarm] {
+        days.flatMap(\.times)
+            .filter { ringsAlarm(for: $0.type) }
+            .map { PrayerAlarm(prayer: $0.type, date: $0.dateInterval.start - .minutes(preAdhanMinutes[$0.type])) }
+            .filter { $0.date > date }
+    }
+
     /// The adhan a prayer plays in full, then the duaa after it when chosen and, on Eid, the takbeerat; empty when
     /// the prayer has no adhan file.
     func adhanPlaylist(for prayer: Prayer, at date: Date, timeZone: TimeZone) -> [URL] {

@@ -185,7 +185,7 @@ extension SettingsWireTests {
     func aDeviceSettingNeverGoesOnTheWire() {
         let fields = Self.revised.wireFields
 
-        #expect([SettingKey.geofenceRadius, .isPrayerActivityEnabled, .matchesAppIcon].allSatisfy {
+        #expect([SettingKey.geofenceRadius, .isPrayerActivityEnabled, .matchesAppIcon, .isFullAdhanEnabled].allSatisfy {
             fields[$0.rawValue] == nil && fields[$0.revisionKey] == nil
         })
     }

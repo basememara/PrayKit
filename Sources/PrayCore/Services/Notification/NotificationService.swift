@@ -9,7 +9,7 @@
 import Foundation.NSDateInterval
 
 public protocol NotificationService: Sendable {
-    func schedulePrayers() async
+    func schedulePrayers(silencingAdhans: Bool) async
 
     @discardableResult
     func addSnooze(for prayerTime: PrayerTime, in timeInterval: TimeInterval?) async -> Date
@@ -19,6 +19,10 @@ public protocol NotificationService: Sendable {
 }
 
 public extension NotificationService {
+    func schedulePrayers() async {
+        await schedulePrayers(silencingAdhans: false)
+    }
+
     @discardableResult
     func addSnooze(for prayerTime: PrayerTime) async -> Date {
         await addSnooze(for: prayerTime, in: nil)

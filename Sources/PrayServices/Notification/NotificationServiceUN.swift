@@ -48,8 +48,8 @@ public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
 public extension NotificationServiceUN {
     /// Schedules local notifications for prayers, one run at a time: a call during a run waits for it and
     /// one more run, so the last call always schedules from the latest settings.
-    func schedulePrayers() async {
-        await flight.run { await scheduleOnce() }
+    func schedulePrayers(silencingAdhans: Bool) async {
+        await flight.run { await scheduleOnce(silencingAdhans: silencingAdhans) }
     }
 }
 
@@ -66,10 +66,10 @@ extension NotificationServiceUN {
 }
 
 private extension NotificationServiceUN {
-    func scheduleOnce() async {
+    func scheduleOnce(silencingAdhans: Bool) async {
         // swiftlint:disable:previous function_body_length cyclomatic_complexity
         let state = storage.load()
-        let settings = state.document.settings
+        let settings = silencingAdhans ? state.document.settings.silencingAdhans() : state.document.settings
 
         guard let request = PrayerAPI.Request(settings: settings, place: state.place) else {
             log.error("Could not schedule prayer notifications without a place")

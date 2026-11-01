@@ -6,17 +6,16 @@
 //  Copyright © 2026 Zamzam Inc. All rights reserved.
 //
 
-/// Runs an operation one pass at a time. Calls during a pass ask for exactly one more pass after it, and
-/// every caller waits until the passes settle, so no request is lost and two passes never overlap.
-///
-/// Meant for callers repeating the same operation: the extra pass reruns the operation that started them.
+/// Runs an operation one pass at a time. Calls during a pass ask for exactly one more pass after it, which runs the
+/// latest call's operation, and every caller waits until the passes settle, so no request is lost and two passes
+/// never overlap.
 actor SingleFlight {
     private var passes: Task<Void, Never>?
-    private var isRequested = false
+    private var requested: (@Sendable () async -> Void)?
 
     func run(_ operation: @escaping @Sendable () async -> Void) async {
         if let passes {
-            isRequested = true
+            requested = operation
             await passes.value
             return
         }
@@ -27,10 +26,13 @@ actor SingleFlight {
     }
 
     private func drain(_ operation: @escaping @Sendable () async -> Void) async {
-        repeat {
-            isRequested = false
-            await operation()
-        } while isRequested
+        var next: (@Sendable () async -> Void)? = operation
+
+        while let pass = next {
+            requested = nil
+            await pass()
+            next = requested
+        }
 
         // Cleared without suspending after the last check, so a later call always starts a new pass
         passes = nil

@@ -52,6 +52,7 @@ extension Settings {
         settings.theme = .aqua
         settings.isPrayerActivityEnabled = true
         settings.matchesAppIcon = true
+        settings.isFullAdhanEnabled = true
         return settings
     }()
 
@@ -61,6 +62,7 @@ extension Settings {
         settings.geofenceRadius = Settings().geofenceRadius
         settings.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
         settings.matchesAppIcon = Settings().matchesAppIcon
+        settings.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         return settings
     }
 }

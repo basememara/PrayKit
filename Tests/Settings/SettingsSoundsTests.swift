@@ -159,6 +159,48 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func theNextAdhanSkipsSunriseAndPrayersWithoutTheAdhanThenRollsIntoTomorrow() throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let hours: [(Prayer, Double)] = [(.fajr, 5), (.sunrise, 6.5), (.dhuhr, 12), (.asr, 15.5), (.maghrib, 18), (.isha, 19.5)]
+        let times = hours.map { PrayerTime(type: $0.0, dateInterval: DateInterval(start: start + $0.1 * 3600, duration: 3600)) }
+        let tomorrow = hours.map { PrayerTime(type: $0.0, dateInterval: DateInterval(start: start + ($0.1 + 24) * 3600, duration: 3600)) }
+        let day = PrayerDay(date: start, times: times, tomorrow: tomorrow)
+
+        var settings = Settings()
+        settings.notificationSounds[.sunrise] = .adhan
+        settings.setSound(.alert, for: .asr)
+        settings.notificationSounds[.maghrib] = .silent
+
+        #expect(settings.nextAdhan(after: start + 4 * 3600, in: day)?.type == .fajr)
+        #expect(settings.nextAdhan(after: start + 5 * 3600, in: day)?.type == .dhuhr)
+        #expect(settings.nextAdhan(after: start + 12 * 3600, in: day)?.type == .isha)
+
+        let nextFajr = try #require(settings.nextAdhan(after: start + 20 * 3600, in: day))
+        #expect(nextFajr.type == .fajr)
+        #expect(nextFajr.dateInterval.start == start + 29 * 3600)
+
+        settings.notificationSounds = NotificationSounds(rawValue: [:])
+        #expect(settings.nextAdhan(after: start, in: day) == nil)
+    }
+
+    @Test
+    func silencingTheAdhansLeavesTonesOffAndSunriseAlone() {
+        var settings = Settings()
+        settings.setSound(.alert, for: .asr)
+        settings.notificationSounds[.isha] = .off
+        settings.notificationSounds[.sunrise] = .adhan
+
+        let silenced = settings.silencingAdhans()
+
+        #expect([Prayer.fajr, .dhuhr, .maghrib].allSatisfy { silenced.notificationSounds[$0] == .silent })
+        #expect([Prayer.fajr, .dhuhr, .maghrib].allSatisfy { silenced.notificationSoundFile(for: $0) == nil })
+        #expect(silenced.notificationSounds[.asr] == .alert)
+        #expect(silenced.notificationSounds[.isha] == .off)
+        #expect(silenced.notificationSounds[.sunrise] == .adhan)
+        #expect(silenced.notificationAdhan == settings.notificationAdhan)
+    }
+
+    @Test
     func aShuffledAdhanNeedsNoDownload() {
         var settings = Settings()
         Prayer.allCases.forEach { settings.notificationAdhan[$0] = .shuffle }

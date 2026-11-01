@@ -53,6 +53,36 @@ struct SingleFlightTests {
     }
 
     @Test
+    func theExtraPassRunsTheLatestCallsOperation() async {
+        let flight = SingleFlight()
+        let probe = Probe()
+        let (started, didStart) = AsyncStream.makeStream(of: Void.self)
+        let (release, didRelease) = AsyncStream.makeStream(of: Void.self)
+        let (second, didRegisterSecond) = AsyncStream.makeStream(of: Void.self)
+        let (latest, didRegisterLatest) = AsyncStream.makeStream(of: Void.self)
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await flight.run {
+                    await probe.record("first")
+                    didStart.yield()
+                    for await _ in release { break }
+                }
+            }
+
+            for await _ in started { break }
+
+            group.addTask { await call(flight, announcing: didRegisterSecond) { await probe.record("second") } }
+            for await _ in second { break }
+            group.addTask { await call(flight, announcing: didRegisterLatest) { await probe.record("latest") } }
+            for await _ in latest { break }
+            didRelease.yield()
+        }
+
+        #expect(await probe.passes == ["first", "latest"])
+    }
+
+    @Test
     func callsAfterAPassEachRun() async {
         let flight = SingleFlight()
         let probe = Probe()
@@ -77,6 +107,7 @@ private func call(
 private actor Probe {
     private(set) var finished = 0
     private(set) var maxInFlight = 0
+    private(set) var passes: [String] = []
     private var started = 0
     private var inFlight = 0
 
@@ -91,5 +122,9 @@ private actor Probe {
     func end() {
         inFlight -= 1
         finished += 1
+    }
+
+    func record(_ pass: String) {
+        passes.append(pass)
     }
 }

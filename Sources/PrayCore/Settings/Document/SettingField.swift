@@ -43,7 +43,8 @@ extension Settings {
         SettingField(.appearanceMode, \.appearanceMode, .string),
         SettingField(.theme, \.theme, .string),
         SettingField(.isPrayerActivityEnabled, \.isPrayerActivityEnabled, .bool, synced: false),
-        SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false)
+        SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false),
+        SettingField(.isFullAdhanEnabled, \.isFullAdhanEnabled, .bool, synced: false)
     ]
 }
 

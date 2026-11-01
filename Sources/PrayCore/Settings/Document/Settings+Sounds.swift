@@ -78,6 +78,24 @@ public extension Settings {
         (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)
     }
 
+    /// Only an obligatory prayer whose sound is the adhan.
+    func playsFullAdhan(for prayer: Prayer) -> Bool {
+        prayer.isObligation && notificationSounds[prayer] == .adhan
+    }
+
+    func silencingAdhans() -> Settings {
+        var settings = self
+        Prayer.allCases.filter(playsFullAdhan).forEach { settings.notificationSounds[$0] = .silent }
+        return settings
+    }
+
+    /// Looks through the next day's prayers too, so after Isha it finds tomorrow's Fajr.
+    func nextAdhan(after date: Date, in day: PrayerDay) -> PrayerTime? {
+        (day.times + day.tomorrow)
+            .filter { playsFullAdhan(for: $0.type) && $0.dateInterval.start > date }
+            .min { $0.dateInterval.start < $1.dateInterval.start }
+    }
+
     /// The adhan a prayer plays in full, then the duaa after it when chosen and, on Eid, the takbeerat; empty when
     /// the prayer has no adhan file.
     func adhanPlaylist(for prayer: Prayer, at date: Date, timeZone: TimeZone) -> [URL] {

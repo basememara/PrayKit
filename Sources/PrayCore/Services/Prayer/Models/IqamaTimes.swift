@@ -91,15 +91,13 @@ public extension IqamaTimes {
     }
 
     subscript(_ prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
-        let startTime = prayerTime.dateInterval.start
-        let endTime = prayerTime.dateInterval.end
         let iqamaType: IqamaType?
 
         switch prayerTime.type {
         case .fajr:
             iqamaType = fajr
         case .dhuhr:
-            iqamaType = startTime.isJumuah(using: calendar) ? jumuah : dhuhr
+            iqamaType = prayerTime.isJumuah(using: calendar) ? jumuah : dhuhr
         case .asr:
             iqamaType = asr
         case .maghrib:
@@ -110,7 +108,36 @@ public extension IqamaTimes {
             return nil
         }
 
-        switch iqamaType {
+        return iqamaType?.date(for: prayerTime, using: calendar)
+    }
+
+    /// The soonest iqama still ahead of `date` among the day's prayers, today's and tomorrow's, that `matches` accepts.
+    func next(
+        in day: PrayerDay,
+        after date: Date,
+        using calendar: Calendar,
+        where matches: (PrayerTime) -> Bool
+    ) -> (prayerTime: PrayerTime, date: Date)? {
+        (day.times + day.tomorrow)
+            .filter(matches)
+            .compactMap { prayerTime in self[prayerTime, using: calendar].map { (prayerTime: prayerTime, date: $0) } }
+            .filter { $0.date > date }
+            .min { $0.date < $1.date }
+    }
+}
+
+public extension IqamaTimes.IqamaType {
+    /// The time of day `date` reads in `calendar`.
+    init(date: Date, using calendar: Calendar) {
+        self = .time(hour: calendar.component(.hour, from: date), minutes: calendar.component(.minute, from: date))
+    }
+
+    /// Where this iqama falls in a prayer's time, whichever prayer's setting it is: nil when that time can't hold it.
+    func date(for prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
+        let startTime = prayerTime.dateInterval.start
+        let endTime = prayerTime.dateInterval.end
+
+        switch self {
         case let .time(hour, minutes):
             guard var iqamaTime = calendar.date(bySettingHour: hour, minute: minutes, second: 0, of: startTime) else { return nil }
 

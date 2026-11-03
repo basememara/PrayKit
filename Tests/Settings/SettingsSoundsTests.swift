@@ -98,6 +98,27 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func onlyAPrayerMutedWithTheSwitchIsMutedForNow() {
+        var settings = Settings()
+        settings.notificationSounds[.dhuhr] = .adhan
+        settings.notificationSounds[.asr] = .adhan
+        settings.setSound(.silent, for: .maghrib)
+        settings.notificationSounds[.isha] = .off
+
+        settings.setMuted(true, for: .dhuhr)
+        settings.setMuted(true, for: .asr)
+        settings.setSound(.silent, for: .asr)
+
+        #expect(settings.isMutedForNow(.dhuhr))
+        #expect(!settings.isMutedForNow(.asr))
+        #expect(!settings.isMutedForNow(.maghrib))
+        #expect(!settings.isMutedForNow(.isha))
+
+        settings.setMuted(false, for: .dhuhr)
+        #expect(!settings.isMutedForNow(.dhuhr))
+    }
+
+    @Test
     func unmutingWithNothingRememberedPicksTheDefaultSound() {
         var settings = Settings()
         settings.notificationSounds[.dhuhr] = .off

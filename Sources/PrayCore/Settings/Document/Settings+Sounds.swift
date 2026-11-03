@@ -31,6 +31,11 @@ public extension Settings {
         notificationSounds[prayer].map { [.silent, .off].contains($0) } ?? true
     }
 
+    /// Muted with the mute switch, which remembers the sound to bring back, rather than set silent in a picker.
+    func isMutedForNow(_ prayer: Prayer) -> Bool {
+        isMuted(prayer) && soundsBeforeMute[prayer] != nil
+    }
+
     /// Mutes a prayer to silent, or unmutes it to the sound it had before; the adhan for an obligatory prayer
     /// and a tone for the rest when there is none.
     mutating func setMuted(_ isMuted: Bool, for prayer: Prayer) {

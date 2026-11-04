@@ -133,3 +133,48 @@ extension PrayerWindowTests {
         #expect(dhuhr.iqama == friday + 13 * 3600)
     }
 }
+
+extension PrayerWindowTests {
+    @Test
+    func eachWindowNamesThePrayerAfterIt() {
+        let windows = Settings().prayerWindows(in: [day], from: hour(0), using: calendar)
+
+        #expect(windows.map(\.next.prayer) == [.dhuhr, .asr, .maghrib, .isha, .fajr])
+        #expect(windows.map(\.next.time) == [hour(12), hour(15.5), hour(18), hour(19.5), hour(29)])
+    }
+
+    @Test
+    func ishaPointsToTomorrowsFajrWhichHasNoWindowOfItsOwn() throws {
+        let windows = Settings().prayerWindows(in: [day], from: hour(0), using: calendar)
+        let isha = try #require(windows.first { $0.prayer == .isha })
+
+        #expect(isha.next.prayer == .fajr)
+        #expect(isha.next.time == hour(29))
+        let othersHaveWindows = windows.filter { $0.prayer != .isha }.allSatisfy(\.next.hasWindow)
+
+        #expect(!isha.next.hasWindow)
+        #expect(othersHaveWindows)
+    }
+
+    @Test
+    func anIshaAfterMidnightStillPointsToTheFajrAfterIt() throws {
+        let day = PrayerDay(date: start, times: PrayerTime.day(from: start, ishaAt: 24.5), tomorrow: PrayerTime.day(from: start + 24 * 3600))
+        let windows = Settings().prayerWindows(in: [day], from: hour(0), using: calendar)
+        let isha = try #require(windows.first { $0.prayer == .isha })
+
+        #expect(isha.time == hour(24.5))
+        #expect(isha.next.prayer == .fajr)
+        #expect(isha.next.time == hour(29))
+    }
+
+    @Test
+    func sunrisePointsToJumuahOnAFriday() throws {
+        let friday = start + 2 * 24 * 3600
+        let day = PrayerDay(date: friday, times: PrayerTime.day(from: friday), tomorrow: PrayerTime.day(from: friday + 24 * 3600))
+        let windows = Settings().prayerWindows(in: [day], from: friday, using: calendar)
+        let sunrise = try #require(windows.first { $0.prayer == .sunrise })
+
+        #expect(sunrise.next.prayer == .dhuhr)
+        #expect(sunrise.next.isJumuah)
+    }
+}

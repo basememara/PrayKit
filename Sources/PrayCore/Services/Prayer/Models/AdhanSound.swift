@@ -14,6 +14,7 @@ public enum AdhanSound: String, CaseIterable, Codable, Sendable {
     case abdulGhaffar = "abdul.ghaffar"
     case abdulHakam = "abdul.hakam"
     case abdulNasirHarak = "abdul.nasir.harak"
+    case abdulazizBinMajid = "abdulaziz.bin.majid"
     case abdulrahmanAlHindi = "abdulrahman.al.hindi"
     case ahmadAlBatal = "ahmad.al.batal"
     case ahmedAlNufais = "ahmed.al.nufais"
@@ -100,6 +101,7 @@ public extension AdhanSound {
     var hasFajr: Bool {
         [
             .alAqsa,
+            .alSurayhi,
             .bakirBash,
             .cairo,
             .ibrahimJabar,

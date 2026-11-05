@@ -69,6 +69,7 @@ public extension PrayerTimer {
                 dangerZone: 0.25,
                 isDangerZone: false,
                 isJumuah: false,
+                timeZone: .current,
                 isPlaceholder: true
             )
         }

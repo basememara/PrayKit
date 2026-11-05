@@ -23,6 +23,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let dangerZone: Double
     public let isDangerZone: Bool
     public let isJumuah: Bool
+    /// The place's zone, which its times read in, rather than the device's
+    public let timeZone: TimeZone
     /// Whether the face names the prayer Jumuah: Friday's Dhuhr, except while its stopwatch runs before the khutba.
     public let isNamedJumuah: Bool
     /// Sample or fallback data that widget views must render redacted, never as real times
@@ -41,6 +43,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         dangerZone: Double,
         isDangerZone: Bool,
         isJumuah: Bool,
+        timeZone: TimeZone,
         isNamedJumuah: Bool = false,
         isPlaceholder: Bool = false
     ) {
@@ -56,6 +59,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.dangerZone = dangerZone
         self.isDangerZone = isDangerZone
         self.isJumuah = isJumuah
+        self.timeZone = timeZone
         self.isNamedJumuah = isNamedJumuah
         self.isPlaceholder = isPlaceholder
     }
@@ -171,6 +175,7 @@ public extension PrayerTimer {
             dangerZone: dangerZone,
             isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
             isJumuah: isJumuah,
+            timeZone: timeZone,
             isNamedJumuah: isJumuah && !isDhuhrStopwatchOnFriday,
             isPlaceholder: isPlaceholder
         )

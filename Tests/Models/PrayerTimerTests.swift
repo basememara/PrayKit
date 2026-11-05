@@ -25,6 +25,12 @@ struct PrayerTimerTests {
 
 extension PrayerTimerTests {
     @Test
+    func theTimerKeepsThePlacesZone() throws {
+        let prayerTimer = try prayerTimer(at: today(hour: 17, minute: 55))
+        #expect(prayerTimer.timeZone == timeZone)
+    }
+
+    @Test
     func beforeIshaAdhanWithIqama() async throws {
         let date = today(hour: 17, minute: 55)
         let prayerTimer = try prayerTimer(at: date)

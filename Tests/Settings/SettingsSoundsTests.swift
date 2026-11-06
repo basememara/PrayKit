@@ -260,6 +260,26 @@ struct SettingsSoundsTests {
     }
 
     @Test
+    func theFullAdhanCountsWhatItPlaysOnlyWhenItIsOn() {
+        var settings = Settings()
+        settings.notificationAdhan[.fajr] = .makkah
+        settings.adhanDuaa = .wasilahFadilah
+        #expect(settings.fullAdhanSoundFiles.isEmpty)
+
+        settings.isFullAdhanEnabled = true
+        #expect(settings.fullAdhanSoundFiles == ["makkah-fajr.mp3", "al.aqsa.mp3", "wasilah.fadilah.mp3", "takbeer-eid.m4a"])
+    }
+
+    @Test
+    func aShuffledFullAdhanNeedsNoDownload() {
+        var settings = Settings()
+        settings.isFullAdhanEnabled = true
+        Prayer.allCases.forEach { settings.notificationAdhan[$0] = .shuffle }
+
+        #expect(settings.fullAdhanSoundFiles == ["takbeer-eid.m4a"])
+    }
+
+    @Test
     func theIqamaSoundCountsOnlyWithIqamaTimes() {
         var settings = Settings()
         #expect(!settings.notificationSoundFiles.contains("iqama.m4a"))

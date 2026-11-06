@@ -78,9 +78,25 @@ public extension Settings {
         return Set(prayers + reminders + [iqama].compactMap(\.self))
     }
 
+    /// Every sound file an app playing the full adhan by itself plays at prayer time, by name, so a device can have
+    /// them on hand; a shuffled adhan adds none, as with the notifications.
+    var fullAdhanSoundFiles: Set<String> {
+        guard isFullAdhanEnabled else { return [] }
+
+        let adhans = Prayer.allCases
+            .filter { playsFullAdhan(for: $0) && notificationAdhan[$0] != .shuffle }
+            .map(adhanFile(for:))
+
+        return Set(adhans + [adhanDuaa.file, NotificationSound.takbeerEid.file].compactMap(\.self))
+    }
+
     /// The adhan the user chose for a prayer, in the length that prayer uses; Al-Aqsa when none is chosen.
     func adhanURL(for prayer: Prayer) -> URL? {
-        (notificationAdhan[prayer] ?? .alAqsa).fileURL(for: prayer == .fajr ? .fajr : .long)
+        URL.sound(named: adhanFile(for: prayer))
+    }
+
+    private func adhanFile(for prayer: Prayer) -> String {
+        (notificationAdhan[prayer] ?? .alAqsa).file(for: prayer == .fajr ? .fajr : .long)
     }
 
     /// Only an obligatory prayer whose sound is the adhan.

@@ -107,13 +107,14 @@ public extension PrayerManager {
     }
 
     /// The prayer days of each calendar day from the interval's start to its end.
+    ///
+    /// - Throws: the first day's error when it can't be calculated. A later day that can't ends the range there.
     func fetch(between dateInterval: DateInterval, with request: PrayerAPI.Request) async throws -> [PrayerDay] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         let startAfterDate = dateInterval.start - .days(1, calendar)
         let dateComponent = calendar.dateComponents([.hour, .minute, .second], from: startAfterDate)
-        var prayerDays = [PrayerDay]()
 
-        try await withThrowingTaskGroup(of: PrayerDay.self) { group in
+        let results = await withTaskGroup(of: (date: Date, result: Result<PrayerDay, any Error>).self) { group in
             calendar.enumerateDates(startingAfter: startAfterDate, matching: dateComponent, matchingPolicy: .nextTime) { date, _, stop in
                 guard let date else { return }
 
@@ -123,16 +124,30 @@ public extension PrayerManager {
                 }
 
                 group.addTask {
-                    try await fetch(for: date, with: request)
+                    do {
+                        return (date, .success(try await fetch(for: date, with: request)))
+                    } catch {
+                        return (date, .failure(error))
+                    }
                 }
             }
 
-            for try await element in group {
-                prayerDays.append(element)
+            return await group.reduce(into: []) { $0.append($1) }
+        }
+        .sorted { $0.date < $1.date }
+
+        // A timetable that runs out mid-range ends it there, so the days before it still count
+        var prayerDays = [PrayerDay]()
+
+        do {
+            for element in results {
+                prayerDays.append(try element.result.get())
             }
+        } catch where !prayerDays.isEmpty {
+            log.error("Could not fetch a prayer day the range reaches, so it ends at the day before", error: error)
         }
 
-        return prayerDays.sorted(by: \.date)
+        return prayerDays
     }
 }
 

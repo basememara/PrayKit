@@ -101,9 +101,47 @@ extension PrayerManagerTests {
             #expect(prayerDay.times.contains { $0.type == .maghrib }, "Missing times on \(prayerDay.date)")
         }
     }
+
+    /// May 26 puts Fajr past sunrise, so May 25, whose Isha ends at May 26's Fajr, can't be calculated.
+    @Test
+    func aDayThatCantBeCalculatedEndsTheRangeThere() async throws {
+        // Given
+        let place = edinburghFajrPastSunriseByMay26()
+        let start = try place.date(2026, 5, 20)
+        let end = try place.date(2026, 5, 30)
+
+        // When
+        let prayerDays = try await prayerManager.fetch(between: DateInterval(start: start, end: end), with: try place.request())
+
+        // Then
+        let calendar = try place.calendar()
+        #expect(prayerDays.map { calendar.component(.day, from: $0.date) } == [20, 21, 22, 23, 24])
+    }
+
+    @Test
+    func aRangeWhoseFirstDayCantBeCalculatedThrows() async throws {
+        // Given
+        let place = edinburghFajrPastSunriseByMay26()
+        let start = try place.date(2026, 5, 25)
+        let end = try place.date(2026, 5, 30)
+
+        // Then
+        await #expect(throws: PrayError.self) {
+            try await prayerManager.fetch(between: DateInterval(start: start, end: end), with: try place.request())
+        }
+    }
 }
 
 // MARK: - Helpers
+
+private extension PrayerManagerTests {
+    func edinburghFajrPastSunriseByMay26() -> DayFixture {
+        DayFixture(
+            "Edinburgh, Fajr 60 minutes later, past sunrise by May 26", 55.9533, -3.1883, "Europe/London", .muslimWorldLeague, 2026, 5, 17,
+            adjustments: .absolute(fajr: 60)
+        )
+    }
+}
 
 private extension PrayerAPI.Request {
     static func toronto(timeZone: TimeZone) -> Self {

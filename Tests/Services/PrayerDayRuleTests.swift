@@ -280,6 +280,35 @@ extension PrayerDayRuleTests {
     }
 }
 
+// MARK: - Stages
+
+extension PrayerDayRuleTests {
+    @Test
+    func anIshaAfterMidnightIsStillTheDaysCurrentPrayer() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let now = try place.date(2026, 6, 22, 0, 25)
+        let day = try await fixture.prayerManager.fetch(at: now, with: try place.request())
+        let isha = try #require(day.times[.isha])
+        let maghrib = try #require(day.times[.maghrib])
+        let tomorrowsFajr = try #require(day.tomorrow[.fajr])
+
+        #expect(day.stage(of: isha, at: now) == .current)
+        #expect(day.stage(of: maghrib, at: now) == .passed)
+        #expect(day.stage(of: tomorrowsFajr, at: now) == .upcoming)
+    }
+
+    @Test
+    func aDayWhoseIshaHasEndedPicksOutNoPrayer() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let day = try await fixture.prayerManager.fetch(at: try place.date(2026, 6, 22, 0, 25), with: try place.request())
+        let isha = try #require(day.times[.isha])
+        let later = isha.dateInterval.end + 60
+
+        #expect(day.stage(of: isha, at: later) == .passed)
+        #expect(day.times.allSatisfy { day.stage(of: $0, at: later) == .passed })
+    }
+}
+
 // MARK: - Notifications
 
 extension PrayerDayRuleTests {

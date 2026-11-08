@@ -52,6 +52,13 @@ public extension PrayerDay {
         (times + tomorrow).first { $0.dateInterval.start > time && $0.type.isEssential && (sunriseAfterIsha ? $0.type != .fajr : true) }
     }
 
+    /// Where a prayer stands at a moment. Only the prayer under way is current, and only while this day holds the
+    /// moment, so a day shown after its Isha has ended picks out none.
+    func stage(of prayerTime: PrayerTime, at time: Date) -> PrayerStage {
+        guard prayerTime.dateInterval.start <= time else { return .upcoming }
+        return contains(time) && current(at: time) == prayerTime ? .current : .passed
+    }
+
     /// The obligatory prayer whose time began most recently, which between sunrise and Dhuhr is still Fajr.
     func lastObligatory(at time: Date) -> PrayerTime? {
         (times + tomorrow).last { $0.type.isObligation && $0.dateInterval.start <= time }
@@ -74,4 +81,10 @@ public extension PrayerTime {
     func acceptsSnooze(of interval: TimeInterval, at date: Date) -> Bool {
         date + interval < dateInterval.end
     }
+}
+
+public enum PrayerStage: Equatable, Sendable {
+    case passed
+    case current
+    case upcoming
 }

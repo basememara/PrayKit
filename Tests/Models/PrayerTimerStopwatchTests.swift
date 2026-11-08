@@ -42,6 +42,24 @@ extension PrayerTimerTests {
     }
 }
 
+// MARK: - Stopwatch End
+
+extension PrayerTimerTests {
+    @Test
+    func theCountUpEndsItsMinutesAfterTheAdhan() throws {
+        let prayerTimer = try prayerTimer(at: today(hour: 12, minute: 20), isIqamaTimerEnabled: false, stopwatchMinutes: 20)
+        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.stopwatchEnd == today(hour: 12, minute: 30))
+    }
+
+    @Test
+    func aCountdownHasNoCountUpEnd() throws {
+        let prayerTimer = try prayerTimer(at: today(hour: 11, minute: 0))
+        #expect(prayerTimer.timerType == .countdown)
+        #expect(prayerTimer.stopwatchEnd == nil)
+    }
+}
+
 // MARK: - Stopwatch without an Iqama
 
 extension PrayerTimerTests {

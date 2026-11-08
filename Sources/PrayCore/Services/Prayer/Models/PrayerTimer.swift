@@ -27,6 +27,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let timeZone: TimeZone
     /// Whether the face names the prayer Jumuah: Friday's Dhuhr, except while its stopwatch runs before the khutba.
     public let isNamedJumuah: Bool
+    /// When the count-up after the adhan stops, while it runs.
+    public let stopwatchEnd: Date?
     /// Sample or fallback data that widget views must render redacted, never as real times
     public let isPlaceholder: Bool
 
@@ -45,6 +47,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         isJumuah: Bool,
         timeZone: TimeZone,
         isNamedJumuah: Bool = false,
+        stopwatchEnd: Date? = nil,
         isPlaceholder: Bool = false
     ) {
         self.date = date
@@ -61,6 +64,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.isJumuah = isJumuah
         self.timeZone = timeZone
         self.isNamedJumuah = isNamedJumuah
+        self.stopwatchEnd = stopwatchEnd
         self.isPlaceholder = isPlaceholder
     }
 }
@@ -161,6 +165,7 @@ public extension PrayerTimer {
             isJumuah: isJumuah,
             timeZone: timeZone,
             isNamedJumuah: isJumuah && !isDhuhrStopwatchOnFriday,
+            stopwatchEnd: timerType == .stopwatch ? countdownDate + .minutes(stopwatchMinutes) : nil,
             isPlaceholder: isPlaceholder
         )
     }

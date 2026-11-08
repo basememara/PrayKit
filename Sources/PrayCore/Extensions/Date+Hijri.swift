@@ -65,3 +65,17 @@ public extension Date {
         self = date
     }
 }
+
+public extension Date {
+    /// The white days, the 13th to the 15th of a Hijri month, dated as the app shows them: this month's while they are
+    /// still to come or under way, else the next month's. Dhu'l-Hijjah's are passed over for Muharram's, since its
+    /// 13th is a day of tashreeq.
+    func whiteDays(offset: Int, timeZone: TimeZone) -> [Date] {
+        let today = hijri(offSet: offset, timeZone: timeZone)
+        guard let year = today.year, let month = today.month, let day = today.day else { return [] }
+        let next = { (year: Int, month: Int) in month == 12 ? (year + 1, 1) : (year, month + 1) }
+        let current = day <= 15 ? (year, month) : next(year, month)
+        let (whiteYear, whiteMonth) = current.1 == 12 ? next(current.0, current.1) : current
+        return (13...15).compactMap { Date(hijriYear: whiteYear, month: whiteMonth, day: $0, offset: offset) }
+    }
+}

@@ -207,7 +207,7 @@ private extension RecordedTimeline {
             ]
         ),
         RecordedTimeline(
-            expanded: .hourly,
+            expanded: .hourly(finalHourStep: 300),
             timeline: [
                 "2022/02/25 05:42:00 fajr iqama",
                 "2022/02/25 06:00:00 fajr iqama",

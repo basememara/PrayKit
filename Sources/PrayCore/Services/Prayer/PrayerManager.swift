@@ -67,8 +67,8 @@ public extension PrayerManager {
 public extension PrayerManager {
     enum Expanded: Sendable {
         case finalHour
-        /// Every hour of each prayer, then every five minutes in its last hour.
-        case hourly
+        /// Every hour of each prayer, then a step at a time through its last hour.
+        case hourly(finalHourStep: TimeInterval)
         case intervals(TimeInterval)
         case none // swiftlint:disable:this discouraged_none_name
     }
@@ -288,8 +288,8 @@ private extension PrayerManager {
         switch expanded {
         case .finalHour:
             entries = entries.expandedWithFinalHour(using: context, in: days, calendar: calendar)
-        case .hourly:
-            entries = entries.expandedHourly(using: context, in: days, calendar: calendar)
+        case let .hourly(finalHourStep):
+            entries = entries.expandedHourly(using: context, in: days, calendar: calendar, finalHourStep: finalHourStep)
         case let .intervals(progress):
             entries = entries.expanded(using: context, in: days, calendar: calendar, progressIntervals: progress)
         case .none:
@@ -401,7 +401,7 @@ private extension Array where Element == PrayerTimer {
 }
 
 private extension Array where Element == PrayerTimer {
-    func expandedHourly(using context: TimerContext, in days: [PrayerDay], calendar: Calendar) -> Self {
+    func expandedHourly(using context: TimerContext, in days: [PrayerDay], calendar: Calendar, finalHourStep: TimeInterval) -> Self {
         reduce(into: []) { result, entry in
             guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
 
@@ -419,12 +419,12 @@ private extension Array where Element == PrayerTimer {
                 context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }
 
-            // The last hour in five-minute steps, for a face too small for a live timer that shows the minutes left
+            // The last hour in steps, for a face that draws the minutes left without a live timer
             let finalHour = Swift.max(currentPrayer.dateInterval.start, currentPrayer.dateInterval.end - .hours(1))
             result += stride(
                 from: finalHour.timeIntervalSince1970,
                 to: currentPrayer.dateInterval.end.timeIntervalSince1970,
-                by: 300
+                by: finalHourStep
             ).compactMap { timeInterval in
                 context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }

@@ -290,7 +290,7 @@ extension PrayerTimelineAdhanTests {
         let (timeline, _, date) = try await fetchPrayerDay(
             settings: Settings(),
             date: "2022/04/01 06:00",
-            expanded: .hourly,
+            expanded: .hourly(finalHourStep: 300),
             limit: 200,
             timeZoneIdentifier: "America/New_York",
             latitude: 43.651070,
@@ -306,6 +306,28 @@ extension PrayerTimelineAdhanTests {
         }
     }
 
+    @Test
+    func hourlyCanCountTheLastHourDownInTenMinuteSteps() async throws {
+        let (timeline, _, date) = try await fetchPrayerDay(
+            settings: Settings(),
+            date: "2022/04/01 06:00",
+            expanded: .hourly(finalHourStep: 600),
+            limit: 200,
+            timeZoneIdentifier: "America/New_York",
+            latitude: 43.651070,
+            longitude: -79.347015,
+            method: .northAmerica
+        )
+
+        let dates = Set(timeline.map(\.date))
+        try [Prayer.dhuhr, .asr, .maghrib, .isha].forEach {
+            let start = try #require(timeline[dayOf: date, $0]).dateInterval.start
+            let steps = stride(from: 60, to: 0, by: -10).map { start - .minutes($0) }
+            #expect(steps.allSatisfy(dates.contains), "\($0) is missing a ten-minute step in its last hour")
+            #expect(!dates.contains(start - .minutes(55)) && !dates.contains(start - .minutes(35)), "\($0) still steps every five minutes")
+        }
+    }
+
     /// A face too small for a live timer shows the hours left to the nearest hour, so a step on each half hour before the
     /// prayer turns it as it changes; steps counted from the prayer before left "2h" up until well past an hour and a half.
     @Test
@@ -313,7 +335,7 @@ extension PrayerTimelineAdhanTests {
         let (timeline, _, date) = try await fetchPrayerDay(
             settings: Settings(),
             date: "2022/04/01 06:00",
-            expanded: .hourly,
+            expanded: .hourly(finalHourStep: 300),
             limit: 200,
             timeZoneIdentifier: "America/New_York",
             latitude: 43.651070,
@@ -339,7 +361,7 @@ extension PrayerTimelineAdhanTests {
         let (timeline, _, date) = try await fetchPrayerDay(
             settings: Settings(),
             date: "2022/04/01 07:30",
-            expanded: .hourly,
+            expanded: .hourly(finalHourStep: 300),
             limit: 15,
             timeZoneIdentifier: "America/New_York",
             latitude: 43.651070,

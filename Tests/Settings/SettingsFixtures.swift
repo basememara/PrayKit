@@ -36,7 +36,7 @@ extension Settings {
         settings.enable24hTimeFormat = true
         settings.hijriDayOffset = -1
         settings.autoIncrementHijri = false
-        settings.stopwatchMinutes = 15
+        settings.stopwatchMinutes = 20
         settings.snoozeMinutes = 10
         settings.preAdhanMinutes = PreAdhanMinutes(rawValue: ["fajr": 30, "dhuhr": 5])
         settings.duhaReminder = .time(hour: 8, minutes: 15)

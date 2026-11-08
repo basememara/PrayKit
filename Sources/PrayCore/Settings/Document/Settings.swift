@@ -36,7 +36,7 @@ public struct Settings: Codable, Equatable, Sendable {
     public var enable24hTimeFormat = false
     public var hijriDayOffset = 0
     public var autoIncrementHijri = true
-    public var stopwatchMinutes = 0
+    public var stopwatchMinutes = 15
 
     // Notification
     public var snoozeMinutes = 30

@@ -48,12 +48,12 @@ extension PrayerTimerTests {
         let date = today(hour: 18, minute: 20)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .isha)
-        #expect(prayerTimer.countdownDate == today(hour: 18, minute: 15))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 19, minute: 30))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -5)
+        assertCalculations(for: prayerTimer, minutes: 70, lastAdhanTime: today(hour: 18, minute: 15))
     }
 
     @Test
@@ -100,12 +100,12 @@ extension PrayerTimerTests {
         let date = today(hour: 6, minute: 0)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .fajr)
-        #expect(prayerTimer.countdownDate == today(hour: 5, minute: 52))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 6, minute: 15))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -8)
+        assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 5, minute: 52))
     }
 
     @Test
@@ -178,12 +178,12 @@ extension PrayerTimerTests {
         let date = today(hour: 12, minute: 20)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .dhuhr)
-        #expect(prayerTimer.countdownDate == today(hour: 12, minute: 10))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 12, minute: 45))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -10)
+        assertCalculations(for: prayerTimer, minutes: 25, lastAdhanTime: today(hour: 12, minute: 10))
     }
 
     @Test
@@ -246,12 +246,12 @@ extension PrayerTimerTests {
         let date = today(hour: 14, minute: 40)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .asr)
-        #expect(prayerTimer.countdownDate == today(hour: 14, minute: 25))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 15, minute: 0))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -15)
+        assertCalculations(for: prayerTimer, minutes: 20, lastAdhanTime: today(hour: 14, minute: 25))
     }
 
     @Test
@@ -354,12 +354,12 @@ extension PrayerTimerTests {
         let date = friday(hour: 12, minute: 20)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .dhuhr)
-        #expect(prayerTimer.countdownDate == friday(hour: 12, minute: 10))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == friday(hour: 13, minute: 30))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(!prayerTimer.isNamedJumuah)
-        assertCalculations(for: prayerTimer, minutes: -10)
+        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
+        assertCalculations(for: prayerTimer, minutes: 70, lastAdhanTime: friday(hour: 12, minute: 10))
     }
 
     @Test
@@ -406,12 +406,12 @@ extension PrayerTimerTests {
         let date = friday(hour: 14, minute: 40)
         let prayerTimer = try prayerTimer(at: date)
         #expect(prayerTimer.type == .asr)
-        #expect(prayerTimer.countdownDate == friday(hour: 14, minute: 25))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == friday(hour: 15, minute: 0))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -15)
+        assertCalculations(for: prayerTimer, minutes: 20, lastAdhanTime: friday(hour: 14, minute: 25))
     }
 
     @Test
@@ -505,12 +505,12 @@ extension PrayerTimerTests {
         let date = today(hour: 18, minute: 20)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
         #expect(prayerTimer.type == .isha)
-        #expect(prayerTimer.countdownDate == today(hour: 18, minute: 15))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 19, minute: 30))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -5)
+        assertCalculations(for: prayerTimer, minutes: 70, lastAdhanTime: today(hour: 18, minute: 15))
     }
 
     @Test
@@ -557,12 +557,12 @@ extension PrayerTimerTests {
         let date = today(hour: 6, minute: 0)
         let prayerTimer = try prayerTimer(at: date, sunriseAfterIsha: true)
         #expect(prayerTimer.type == .fajr)
-        #expect(prayerTimer.countdownDate == today(hour: 5, minute: 52))
-        #expect(prayerTimer.timerType == .stopwatch)
+        #expect(prayerTimer.countdownDate == today(hour: 6, minute: 15))
+        #expect(prayerTimer.timerType == .iqama)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: -8)
+        assertCalculations(for: prayerTimer, minutes: 15, lastAdhanTime: today(hour: 5, minute: 52))
     }
 
     @Test
@@ -676,7 +676,7 @@ extension PrayerTimerTests {
 
 // MARK: - Helpers
 
-private extension PrayerTimerTests {
+extension PrayerTimerTests {
     func assertCalculations(for prayerTimer: PrayerTimer, minutes: Int, lastAdhanTime: Date? = nil) {
         let componentFormatStyle = Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute])
         let formattedComponent = prayerTimer.timeRange.formatted(componentFormatStyle).components(separatedBy: .decimalDigits.inverted).joined()
@@ -695,7 +695,7 @@ private extension PrayerTimerTests {
     }
 }
 
-private extension PrayerTimerTests {
+extension PrayerTimerTests {
     func prayerTimer(
         at date: Date,
         isIqamaTimerEnabled: Bool = true,

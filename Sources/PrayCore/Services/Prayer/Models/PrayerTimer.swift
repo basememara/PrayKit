@@ -86,28 +86,13 @@ public extension PrayerTimer {
         let preAdhanMinutes = preAdhanMinutes[nextPrayer.type]
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
-        // Declare iqama time if applicable
-        var iqamaTime: Date?
-        if isIqamaTimerEnabled,
-           let currentIqama = iqamaTimes[currentPrayer, using: calendar],
-           currentPrayer.dateInterval.start.isIqamaTimer(at: date, iqamaTime: currentIqama) {
-            iqamaTime = currentIqama
-        }
+        let currentIqama = isIqamaTimerEnabled ? iqamaTimes[currentPrayer, using: calendar] : nil
+        let iqamaTime = currentIqama.flatMap { currentPrayer.dateInterval.start.isIqamaTimer(at: date, iqamaTime: $0) ? $0 : nil }
 
-        // Determine stopwatch state
-        let isStopwatchTimer: Bool
-        switch (
-            currentPrayer.dateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes),
-            currentPrayer.type,
-            iqamaTime
-        ) {
-        case (_, .sunrise, _):
-            isStopwatchTimer = false
-        case (_, .maghrib, .some):
-            isStopwatchTimer = false
-        case let (value, _, _):
-            isStopwatchTimer = value
-        }
+        // A prayer with an iqama never counts up, even once its iqama has passed
+        let isStopwatchTimer = currentIqama == nil
+            && currentPrayer.type != .sunrise
+            && currentPrayer.dateInterval.start.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
 
         // Set countdown details
         var timerType = isStopwatchTimer ? TimerType.stopwatch : iqamaTime != nil ? .iqama : .countdown
@@ -145,8 +130,7 @@ public extension PrayerTimer {
             countdownDate = fajrIqama
             currentDateInterval = DateInterval(start: currentPrayer.dateInterval.start, end: countdownDate)
             timerType = .iqama
-        } else if isIqamaTimerEnabled,
-                  let currentIqama = iqamaTimes[currentPrayer, using: calendar],
+        } else if let currentIqama,
                   currentIqama > currentPrayer.dateInterval.start,
                   currentIqama < nextPrayer.dateInterval.start {
             if timerType == .iqama {

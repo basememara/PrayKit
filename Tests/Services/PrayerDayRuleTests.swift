@@ -258,12 +258,15 @@ extension PrayerDayRuleTests {
         let june21 = calendar.startOfDay(for: try place.date(2026, 6, 21))
         let start = try place.date(2026, 6, 22, 0, 10)
         let ishaBegins = try place.date(2026, 6, 22, 0, 19)
+        // Without the count-up, Isha's own entry counts on to the next day's Fajr
+        var settings = Settings()
+        settings.stopwatchMinutes = 0
 
         let timeline = try await fixture.prayerManager.fetch(
             from: start,
             limit: 10,
             with: request,
-            settings: Settings(),
+            settings: settings,
             timeZone: request.timeZone
         )
         let now = try #require(timeline.first { $0.date == start })

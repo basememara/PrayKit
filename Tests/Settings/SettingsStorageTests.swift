@@ -291,7 +291,7 @@ private extension SettingsStorageTests {
             "reminderSounds": ["asr": "beep", "isha": "off"],
             "snoozeMinutes": 10,
             "soundsBeforeMute": ["maghrib": "beep"],
-            "stopwatchMinutes": 15,
+            "stopwatchMinutes": 20,
             "sunriseAfterIsha": true,
             "theme": "aqua"
         ]

@@ -435,7 +435,7 @@ public extension NotificationServiceUN {
         let date = Date(timeIntervalSinceNow: timeInterval)
         let identifier = "\(date.shortString(timeZone: state.timeZone, locale: .posix))-\(prayerTime.type)-snooze"
         let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
-        let calendar = Calendar(identifier: .gregorian, timeZone: state.timeZone)
+        let calendar = state.placeCalendar
 
         do {
             try await userNotification.add(

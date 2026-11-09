@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ZamzamCore
 
 /// The settings with the revision of each one, so copies from different devices merge setting by setting.
 public struct SettingsDocument: Equatable, Sendable {
@@ -105,6 +106,9 @@ public struct DeviceState: Equatable, Sendable {
 public extension DeviceState {
     /// The place's time zone, or this device's while there is no place.
     var timeZone: TimeZone { place?.timeZone ?? .current }
+
+    /// The Gregorian calendar on the place's clock, which reads and sets its times of day as the prayer list shows them.
+    var placeCalendar: Calendar { Calendar(identifier: .gregorian, timeZone: timeZone) }
 }
 
 extension SettingsDocument {

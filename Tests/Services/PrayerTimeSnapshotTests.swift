@@ -94,7 +94,8 @@ private extension PrayerTimeSnapshotTests {
                 prayerDay.times.first { $0.type == prayer }.map { Self.clock($0.dateInterval.start, from: start, using: calendar) } ?? "-"
             }
             let nextFajr = prayerDay.tomorrow.first { $0.type == .fajr }.map { Self.clock($0.dateInterval.start, from: start, using: calendar) } ?? "-"
-            return (leading + times + [nextFajr]).joined(separator: "\t")
+            let borrowed = prayerDay.borrowed.map { ["borrowed: \($0.rawValue)"] } ?? []
+            return (leading + times + [nextFajr] + borrowed).joined(separator: "\t")
         } catch {
             return (leading + ["error: \(error)"]).joined(separator: "\t")
         }
@@ -130,6 +131,7 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
     var fajrDegrees: Double?
     var ishaDegrees: Double?
     var adjustments: PrayerAdjustments?
+    var polarResolution = PolarResolution.nearestLatitude
     var note: String?
 
     var testDescription: String { id }
@@ -153,7 +155,8 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
             jurisprudence: jurisprudence,
             fajrDegrees: fajrDegrees,
             ishaDegrees: ishaDegrees,
-            adjustments: adjustments
+            adjustments: adjustments,
+            polarResolution: polarResolution
         )
     }
 
@@ -163,7 +166,9 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
         case .set: "set"
         }
 
-        return [
+        let polar = polarResolution == .nearestLatitude ? [] : ["polar \(polarResolution.rawValue)"]
+
+        return ([
             "# \(id)",
             "lat \(place.latitude)",
             "lon \(place.longitude)",
@@ -172,7 +177,7 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
             "madhab \(jurisprudence.rawValue)",
             "degrees \(fajrDegrees.map { "\($0)" } ?? "-")/\(ishaDegrees.map { "\($0)" } ?? "-")",
             "adjustments \(adjustments.map(Self.describe) ?? "-")"
-        ].joined(separator: "  ")
+        ] + polar).joined(separator: "  ")
     }
 
     static func describe(_ adjustments: PrayerAdjustments) -> String {
@@ -251,6 +256,7 @@ extension SnapshotPlace {
     static let istanbul = SnapshotPlace("istanbul", 41.0082, 28.9784, "Europe/Istanbul")
     static let karachi = SnapshotPlace("karachi", 24.8607, 67.0011, "Asia/Karachi")
     static let cairo = SnapshotPlace("cairo", 30.0444, 31.2357, "Africa/Cairo")
+    static let tromso = SnapshotPlace("tromso", 69.6492, 18.9553, "Europe/Oslo")
 
     /// Where users are, across the latitude bands, both hemispheres and the zones with odd offsets.
     static let all: [SnapshotPlace] = [
@@ -294,7 +300,7 @@ extension SnapshotPlace {
         SnapshotPlace("stockholm", 59.3293, 18.0686, "Europe/Stockholm"),
         SnapshotPlace("helsinki", 60.1699, 24.9384, "Europe/Helsinki"),
         SnapshotPlace("reykjavik", 64.1466, -21.9426, "Atlantic/Reykjavik"),
-        SnapshotPlace("tromso", 69.6492, 18.9553, "Europe/Oslo")
+        tromso
     ]
 }
 
@@ -322,7 +328,8 @@ extension SnapshotCase {
         SnapshotCase(id: "kuala-lumpur.custom.0-17", place: .kualaLumpur, method: .set(.custom), fajrDegrees: 0, ishaDegrees: 17),
         SnapshotCase(id: "istanbul.place.hanafi", place: .istanbul, jurisprudence: .hanafi),
         SnapshotCase(id: "karachi.place.hanafi", place: .karachi, jurisprudence: .hanafi),
-        SnapshotCase(id: "cairo.place.hanafi", place: .cairo, jurisprudence: .hanafi)
+        SnapshotCase(id: "cairo.place.hanafi", place: .cairo, jurisprudence: .hanafi),
+        SnapshotCase(id: "tromso.place.nearestday", place: .tromso, polarResolution: .nearestDay)
     ]
 }
 

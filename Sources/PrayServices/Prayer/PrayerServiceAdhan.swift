@@ -28,12 +28,15 @@ public extension PrayerServiceAdhan {
     ) throws -> [PrayerTime] {
         let coordinates = Adhan.Coordinates(latitude: request.coordinates.latitude, longitude: request.coordinates.longitude)
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
-        let parameters = CalculationParameters(from: request)
+        var parameters = CalculationParameters(from: request)
+        parameters.polarCircleResolution = PolarCircleResolution(request.polarResolution)
 
-        guard let prayers = PrayerTimes(coordinates: coordinates, date: dateComponents, calculationParameters: parameters) else {
+        guard let day = prayerTimes(at: coordinates, on: dateComponents, with: parameters, borrowingFrom: request.polarResolution) else {
             log.error("Could not initialize prayer times from adhan library.")
             throw PrayError.invalidParameters
         }
+
+        let prayers = day.times
 
         guard prayers.fajr < prayers.sunrise else {
             log.error("Fajr was invalid due to resulting after sunrise.")
@@ -145,13 +148,31 @@ public extension PrayerServiceAdhan {
             times.append(contentsOf: PrayerTime.night(from: prayers.maghrib, to: tomorrowFajrTime))
         }
 
-        return times
+        guard let borrowed = day.borrowed else { return times }
+        return times.map { PrayerTime(type: $0.type, dateInterval: $0.dateInterval, borrowed: borrowed) }
     }
 }
 
 // MARK: - Helpers
 
 private extension PrayerServiceAdhan {
+    /// The day's times, and where they were borrowed from when the day can't be calculated at the place itself.
+    func prayerTimes(
+        at coordinates: Adhan.Coordinates,
+        on date: DateComponents,
+        with parameters: CalculationParameters,
+        borrowingFrom resolution: PolarResolution
+    ) -> (times: PrayerTimes, borrowed: PolarResolution?)? {
+        var ownParameters = parameters
+        ownParameters.polarCircleResolution = .unresolved
+
+        if let times = PrayerTimes(coordinates: coordinates, date: date, calculationParameters: ownParameters) {
+            return (times, nil)
+        }
+
+        return PrayerTimes(coordinates: coordinates, date: date, calculationParameters: parameters).map { ($0, resolution) }
+    }
+
     func makeFajrPrayerTime(with request: PrayerAPI.Request, from prayers: PrayerTimes) -> PrayerTime {
         PrayerTime(
             type: .fajr,

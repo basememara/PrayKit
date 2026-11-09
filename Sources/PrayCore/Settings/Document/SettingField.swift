@@ -20,6 +20,7 @@ extension Settings {
         SettingField(.manualMethod, optional: \.manualMethod, .json),
         SettingField(.adjustmentMinutes, optional: \.adjustmentMinutes, .map(.int)),
         SettingField(.adjustmentElevation, optional: \.adjustmentElevation, .string),
+        SettingField(.polarResolution, \.polarResolution, .string),
         SettingField(.isGPSEnabled, \.isGPSEnabled, .bool),
         SettingField(.geofenceRadius, \.geofenceRadius, .double, synced: false),
         SettingField(.iqamaTimes, \.iqamaTimes, .json),

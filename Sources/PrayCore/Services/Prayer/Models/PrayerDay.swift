@@ -27,6 +27,9 @@ public struct PrayerDay: Equatable, Codable, Sendable {
 }
 
 public extension PrayerDay {
+    /// Where the day's times were borrowed from, when it can't be calculated at the place near the polar circles.
+    var borrowed: PolarResolution? { times.lazy.compactMap(\.borrowed).first }
+
     /// Whether the instant falls in this prayer day, which runs from its Fajr until its Isha ends at the next Fajr.
     func contains(_ instant: Date) -> Bool {
         guard let fajr = times[.fajr], let isha = times[.isha] else { return false }

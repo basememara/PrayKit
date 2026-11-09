@@ -13,10 +13,13 @@ import ZamzamCore
 public struct PrayerTime: Equatable, Codable, Sendable {
     public let type: Prayer
     public let dateInterval: DateInterval
+    /// Where the time was borrowed from on a day that can't be calculated at the place, near the polar circles.
+    public let borrowed: PolarResolution?
 
-    public init(type: Prayer, dateInterval: DateInterval) {
+    public init(type: Prayer, dateInterval: DateInterval, borrowed: PolarResolution? = nil) {
         self.type = type
         self.dateInterval = dateInterval
+        self.borrowed = borrowed
     }
 }
 

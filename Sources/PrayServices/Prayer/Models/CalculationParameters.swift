@@ -161,3 +161,14 @@ extension CalculationParameters {
         }
     }
 }
+
+extension PolarCircleResolution {
+    init(_ resolution: PolarResolution) {
+        switch resolution {
+        case .nearestLatitude:
+            self = .aqrabBalad
+        case .nearestDay:
+            self = .aqrabYaum
+        }
+    }
+}

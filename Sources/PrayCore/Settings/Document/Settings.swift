@@ -23,6 +23,8 @@ public struct Settings: Codable, Equatable, Sendable {
     // Adjustments
     public var adjustmentMinutes: AdjustmentMinutes?
     public var adjustmentElevation: ElevationRule?
+    /// Where polar days take their times from.
+    public var polarResolution: PolarResolution = .nearestLatitude
 
     // Location
     public var isGPSEnabled = true
@@ -120,6 +122,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case manualMethod
     case adjustmentMinutes
     case adjustmentElevation
+    case polarResolution
     case isGPSEnabled
     case geofenceRadius
     case iqamaTimes

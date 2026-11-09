@@ -21,6 +21,7 @@ extension Settings {
         settings.manualMethod = ManualMethod(keptTimeZones: ["Europe/Istanbul", "America/Winnipeg"])
         settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["fajr": 2, "isha": -3, "is_fajr_sunrise_relative": 1])
         settings.adjustmentElevation = .twilightAngle
+        settings.polarResolution = .nearestDay
         settings.isGPSEnabled = false
         settings.geofenceRadius = 20_000
         settings.iqamaTimes = IqamaTimes(

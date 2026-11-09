@@ -33,6 +33,7 @@ extension SettingsStorageTests {
 
         var expected = Settings.everyFieldChanged
         expected.manualMethod = Settings().manualMethod
+        expected.polarResolution = Settings().polarResolution
         expected.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
         expected.matchesAppIcon = Settings().matchesAppIcon
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled

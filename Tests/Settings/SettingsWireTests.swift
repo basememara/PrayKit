@@ -24,6 +24,7 @@ extension SettingsWireTests {
         expected["adhanDuaa"] = .string(AdhanDuaa.wasilahFadilah.rawValue)
         expected["soundsBeforeMute"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.soundsBeforeMute))
         expected["manualMethod"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.manualMethod))
+        expected["polarResolution"] = .string(PolarResolution.nearestDay.rawValue)
         let fields = SettingsDocument(settings: .everyFieldChanged).wireFields
 
         #expect(Set(fields.keys) == Set(expected.keys))
@@ -53,6 +54,7 @@ extension SettingsWireTests {
         expected.adhanDuaa = Settings().adhanDuaa
         expected.soundsBeforeMute = Settings().soundsBeforeMute
         expected.manualMethod = Settings().manualMethod
+        expected.polarResolution = Settings().polarResolution
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])
@@ -104,7 +106,7 @@ extension SettingsWireTests {
     func onlyThisCopyCanSupplyTheChangedSettingsAnOlderVersionNeverSynced() throws {
         let record = try Self.legacyRecord(of: .everyFieldChanged)
 
-        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute])
+        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute, .polarResolution])
         #expect(SettingsDocument().keysMissing(from: record).isEmpty)
         #expect(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: Self.revised.wireFields).isEmpty)
     }

@@ -29,6 +29,7 @@ public extension PrayerAPI {
         public let maghribDegrees: Double?
         public let ishaDegrees: Double?
         public let adjustments: PrayerAdjustments?
+        public let polarResolution: PolarResolution
         public let filter: PrayerFilter
 
         public init(
@@ -41,6 +42,7 @@ public extension PrayerAPI {
             maghribDegrees: Double? = nil,
             ishaDegrees: Double? = nil,
             adjustments: PrayerAdjustments? = nil,
+            polarResolution: PolarResolution = .nearestLatitude,
             filter: PrayerFilter = .all
         ) {
             self.coordinates = coordinates
@@ -52,6 +54,7 @@ public extension PrayerAPI {
             self.maghribDegrees = maghribDegrees
             self.ishaDegrees = ishaDegrees
             self.adjustments = adjustments
+            self.polarResolution = polarResolution
             self.filter = filter
         }
 
@@ -78,6 +81,7 @@ public extension PrayerAPI {
                     adjustmentMinutes: settings.adjustmentMinutes,
                     adjustmentElevation: settings.adjustmentElevation
                 ),
+                polarResolution: settings.polarResolution,
                 filter: filter
             )
         }

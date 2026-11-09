@@ -1,5 +1,5 @@
 {
-  "originHash" : "ebbb67ecf976f657b3da2b648457d93d1abc2c8a76f815a4744659ec9e69c1b9",
+  "originHash" : "b99857c31f26863d98ec0c3717f521b47ec55b9476e01d95d354e3eb364c3db7",
   "pins" : [
     {
       "identity" : "adhan-swift",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/batoulapps/adhan-swift.git",
       "state" : {
         "branch" : "develop",
-        "revision" : "e2d3c195bbfc42bf3c17984debaa246d7d5d3b80"
+        "revision" : "55a135070a9f04b47ec4bfb76838232562c69b6e"
       }
     },
     {

@@ -284,6 +284,7 @@ extension SnapshotPlace {
         SnapshotPlace("adelaide", -34.9285, 138.6007, "Australia/Adelaide"),
         SnapshotPlace("cape-town", -33.9249, 18.4241, "Africa/Johannesburg"),
         SnapshotPlace("auckland", -36.8485, 174.7633, "Pacific/Auckland"),
+        SnapshotPlace("punta-arenas", -53.1638, -70.9171, "America/Punta_Arenas"),
         SnapshotPlace("edinburgh", 55.9533, -3.1883, "Europe/London"),
         oslo,
         SnapshotPlace("stockholm", 59.3293, 18.0686, "Europe/Stockholm"),

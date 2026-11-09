@@ -16,6 +16,11 @@ public enum DuhaType: Equatable, Codable, Sendable {
 }
 
 public extension DuhaType {
+    /// The time of day `date` reads in `calendar`.
+    init(date: Date, using calendar: Calendar) {
+        self = .time(hour: calendar.component(.hour, from: date), minutes: calendar.component(.minute, from: date))
+    }
+
     func date(from sunriseDateInterval: DateInterval, using calendar: Calendar) -> Date? {
         let startTime = sunriseDateInterval.start
         let endTime = sunriseDateInterval.end

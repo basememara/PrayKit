@@ -10,7 +10,8 @@ import Foundation
 
 /// A calculation method picked by hand, which a new place never replaces without asking.
 public struct ManualMethod: Codable, Equatable, Sendable {
-    /// The time zones where the user kept it over the one most mosques there use, as identifiers.
+    /// Where the user kept it over the one most mosques there use: time zone identifiers, split by method where a city's
+    /// timetable stops holding (`CalculationMethod.area(at:)`).
     public var keptTimeZones: Set<String>
 
     public init(keptTimeZones: Set<String>) {

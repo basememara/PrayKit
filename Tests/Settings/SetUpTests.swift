@@ -25,7 +25,7 @@ extension SetUpTests {
         let edited = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 10 }
 
         let proposed = edited.proposing {
-            $0.recommendMethod(for: kualaLumpur)
+            $0.recommendMethod(at: .zone(kualaLumpur))
             $0.snoozeMinutes = 5
         }
 
@@ -39,8 +39,8 @@ extension SetUpTests {
     func aMethodPickedOnAnotherDeviceBeatsTheProposalWheneverItArrives() throws {
         let kualaLumpur = try #require(kualaLumpur)
         // Picked well before the Mac's first launch, as an existing user's choice always is
-        let phone = SettingsDocument().editing(at: Date(timeIntervalSince1970: 1_600_000_000)) { $0.pickMethod(.northAmerica, in: kualaLumpur) }
-        let mac = SettingsDocument().proposing { $0.recommendMethod(for: kualaLumpur) }
+        let phone = SettingsDocument().editing(at: Date(timeIntervalSince1970: 1_600_000_000)) { $0.pickMethod(.northAmerica, at: .zone(kualaLumpur)) }
+        let mac = SettingsDocument().proposing { $0.recommendMethod(at: .zone(kualaLumpur)) }
 
         let onTheMac = mac.merging(phone)
         let onThePhone = phone.merging(mac)
@@ -54,7 +54,7 @@ extension SetUpTests {
     @Test
     func theFirstDeviceStillSuppliesItsProposedMethod() throws {
         let kualaLumpur = try #require(kualaLumpur)
-        let proposed = SettingsDocument().proposing { $0.recommendMethod(for: kualaLumpur) }
+        let proposed = SettingsDocument().proposing { $0.recommendMethod(at: .zone(kualaLumpur)) }
 
         #expect(proposed.keysMissing(from: [:]).contains(.calculationMethod))
     }
@@ -81,7 +81,7 @@ extension SetUpTests {
     func settingUpAPlaceKeepsAMethodThisDeviceAlreadyHas() throws {
         let kualaLumpur = try #require(kualaLumpur)
         let storage = SettingsStorage(defaults: .makeTest())
-        storage.edit(at: date) { $0.pickMethod(.northAmerica, in: kualaLumpur) }
+        storage.edit(at: date) { $0.pickMethod(.northAmerica, at: .zone(kualaLumpur)) }
 
         let set = storage.setUpPlace(coordinates, timeZone: kualaLumpur, regionName: "Kuala Lumpur", at: date + 60)
 
@@ -94,7 +94,7 @@ extension SetUpTests {
         let kualaLumpur = try #require(kualaLumpur)
         let storage = SettingsStorage(defaults: .makeTest())
 
-        storage.propose { $0.recommendMethod(for: kualaLumpur) }
+        storage.propose { $0.recommendMethod(at: .zone(kualaLumpur)) }
 
         let stored = storage.load().document
         #expect(stored.settings.calculationMethod == .jakim)

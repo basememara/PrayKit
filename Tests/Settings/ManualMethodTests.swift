@@ -25,11 +25,11 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         var settings = Settings()
 
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
         #expect(settings.calculationMethod == .northAmerica)
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["America/Winnipeg"]))
-        #expect(settings.methodSuggestion(in: winnipeg) == nil)
+        #expect(settings.methodSuggestion(at: .zone(winnipeg)) == nil)
     }
 
     @Test
@@ -37,10 +37,10 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let riyadh = try #require(riyadh)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
-        settings.keepMethod(in: riyadh)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
+        settings.keepMethod(at: .zone(riyadh))
 
-        settings.pickMethod(.muslimWorldLeague, in: riyadh)
+        settings.pickMethod(.muslimWorldLeague, at: .zone(riyadh))
 
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["Asia/Riyadh"]))
     }
@@ -50,9 +50,9 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let riyadh = try #require(riyadh)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        settings.recommendMethod(for: riyadh)
+        settings.recommendMethod(at: .zone(riyadh))
 
         #expect(settings.calculationMethod == .ummAlQura)
         #expect(settings.manualMethod == nil)
@@ -67,9 +67,9 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let riyadh = try #require(riyadh)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        #expect(settings.methodSuggestion(in: riyadh) == .ummAlQura)
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) == .ummAlQura)
     }
 
     @Test
@@ -77,9 +77,9 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let chicago = try #require(chicago)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        #expect(settings.methodSuggestion(in: chicago) == nil)
+        #expect(settings.methodSuggestion(at: .zone(chicago)) == nil)
     }
 
     @Test
@@ -87,10 +87,10 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let utc = try #require(utc)
         var settings = Settings()
-        settings.pickMethod(.ummAlQura, in: winnipeg)
+        settings.pickMethod(.ummAlQura, at: .zone(winnipeg))
 
-        #expect(CalculationMethod.recommended(for: utc) == nil)
-        #expect(settings.methodSuggestion(in: utc) == nil)
+        #expect(CalculationMethod.recommended(for: utc, at: nil) == nil)
+        #expect(settings.methodSuggestion(at: .zone(utc)) == nil)
     }
 
     @Test
@@ -98,13 +98,13 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let riyadh = try #require(riyadh)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        settings.keepMethod(in: riyadh)
+        settings.keepMethod(at: .zone(riyadh))
 
         #expect(settings.calculationMethod == .northAmerica)
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["America/Winnipeg", "Asia/Riyadh"]))
-        #expect(settings.methodSuggestion(in: riyadh) == nil)
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) == nil)
     }
 
     @Test
@@ -113,10 +113,10 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.calculationMethod = .northAmerica
 
-        settings.keepMethod(in: riyadh)
+        settings.keepMethod(at: .zone(riyadh))
 
         #expect(settings.manualMethod == nil)
-        #expect(settings.methodSuggestion(in: riyadh) == nil)
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) == nil)
     }
 }
 
@@ -129,7 +129,7 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.calculationMethod = .northAmerica
 
-        settings.inferManualMethod(in: winnipeg)
+        settings.upgradeMethod(at: .zone(winnipeg))
 
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["America/Winnipeg"]))
     }
@@ -140,7 +140,7 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.calculationMethod = method
 
-        settings.inferManualMethod(in: riyadh)
+        settings.upgradeMethod(at: .zone(riyadh))
 
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["Asia/Riyadh"]))
     }
@@ -151,7 +151,7 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.calculationMethod = .moonsightingCommittee
 
-        settings.inferManualMethod(in: utc)
+        settings.upgradeMethod(at: .zone(utc))
 
         #expect(settings.manualMethod == nil)
     }
@@ -162,7 +162,7 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.calculationMethod = .northAmerica
 
-        settings.inferManualMethod(in: chicago)
+        settings.upgradeMethod(at: .zone(chicago))
 
         #expect(settings.manualMethod == nil)
     }
@@ -172,9 +172,9 @@ extension ManualMethodTests {
         let winnipeg = try #require(winnipeg)
         let riyadh = try #require(riyadh)
         var settings = Settings()
-        settings.pickMethod(.northAmerica, in: winnipeg)
+        settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        settings.inferManualMethod(in: riyadh)
+        settings.upgradeMethod(at: .zone(riyadh))
 
         #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["America/Winnipeg"]))
     }

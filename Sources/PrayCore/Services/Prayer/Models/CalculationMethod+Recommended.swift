@@ -5,12 +5,46 @@
 //  Created by Basem Emara on 2022-07-19.
 //
 
+import CoreLocation.CLLocation
 import Foundation.NSTimeZone
+import ZamzamCore
 
 public extension CalculationMethod {
-    /// Returns the recommended Calculation Method for the specified time zone.
-    static func recommended(for timeZone: TimeZone = .current) -> Self? {
-        mapped.first { $0.value.contains(timeZone.identifier) }?.key
+    /// The method most mosques use at a place: its time zone's where that method holds, and the Moonsighting
+    /// Committee's elsewhere in the zone. Without coordinates the zone decides.
+    static func recommended(for timeZone: TimeZone, at coordinates: Coordinates?) -> Self? {
+        let zoneMethod = mapped.first { $0.value.contains(timeZone.identifier) }?.key
+        guard let zoneMethod, let coordinates, !zoneMethod.holds(at: coordinates) else { return zoneMethod }
+        return .moonsightingCommittee
+    }
+}
+
+extension CalculationMethod {
+    /// The recommendation for a place, with the device's time zone standing in for a place not yet known.
+    static func recommended(at place: Place?) -> Self? {
+        recommended(for: place?.timeZone ?? .current, at: place?.coordinates)
+    }
+
+    /// Where one recommendation holds, the key a method picked by hand is kept under: the time zone, split by method
+    /// where its own stops holding.
+    static func area(at place: Place?) -> String {
+        let timeZone = place?.timeZone ?? .current
+        guard let method = recommended(at: place), method != recommended(for: timeZone, at: nil) else { return timeZone.identifier }
+        return "\(timeZone.identifier)/\(method.rawValue)"
+    }
+
+    /// A city's own timetable holds only near the city; a calculated method holds anywhere.
+    private func holds(at coordinates: Coordinates) -> Bool {
+        guard let reach else { return true }
+        return coordinates.location.distance(from: reach.centre.location) <= reach.radius
+    }
+
+    private var reach: (centre: Coordinates, radius: CLLocationDistance)? {
+        switch self {
+        // Sunset stays within about 4 minutes of London's out to 50 km, and drifts up to 45 minutes across the rest of the UK
+        case .london: (Coordinates(latitude: 51.5074, longitude: -0.1278), 50_000)
+        default: nil
+        }
     }
 }
 

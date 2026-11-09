@@ -46,8 +46,8 @@ extension PrayerTimeSnapshotTests {
 
         let listed = try known.sorted().map { identifier in
             let timeZone = try #require(TimeZone(identifier: identifier))
-            let source = CalculationMethod.recommended(for: timeZone) == nil ? "fallback" : "map"
-            return [identifier, Settings.placeMethod(for: timeZone).rawValue, source].joined(separator: "\t")
+            let source = CalculationMethod.recommended(for: timeZone, at: nil) == nil ? "fallback" : "map"
+            return [identifier, Settings.placeMethod(for: timeZone, at: nil).rawValue, source].joined(separator: "\t")
         }
 
         let unlisted = CalculationMethod.mapped
@@ -137,7 +137,7 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
     func resolvedMethod(in timeZone: TimeZone) -> CalculationMethod {
         switch method {
         case .place:
-            Settings.placeMethod(for: timeZone)
+            Settings.placeMethod(for: timeZone, at: place.coordinates)
         case let .set(method):
             method
         }
@@ -147,7 +147,7 @@ struct SnapshotCase: Sendable, CustomTestStringConvertible {
         let timeZone = try place.timeZone()
 
         return PrayerAPI.Request(
-            coordinates: Coordinates(latitude: place.latitude, longitude: place.longitude),
+            coordinates: place.coordinates,
             timeZone: timeZone,
             method: resolvedMethod(in: timeZone),
             jurisprudence: jurisprudence,
@@ -210,6 +210,8 @@ struct SnapshotPlace: Sendable {
         self.longitude = longitude
         self.timeZoneIdentifier = timeZoneIdentifier
     }
+
+    var coordinates: Coordinates { Coordinates(latitude: latitude, longitude: longitude) }
 
     func timeZone() throws -> TimeZone {
         try #require(TimeZone(identifier: timeZoneIdentifier))
@@ -302,9 +304,7 @@ extension SnapshotCase {
     }
 
     /// Rows known to be wrong today, so nobody takes them for verified times.
-    static let notes = [
-        "edinburgh": "Europe/London gives the London timetable, which never reads the coordinates: these are London's times, not Edinburgh's."
-    ]
+    static let notes: [String: String] = [:]
 
     static let methods: [SnapshotCase] = [SnapshotPlace.kualaLumpur, .london, .oslo].flatMap { place in
         CalculationMethod.allCases.map { SnapshotCase(id: "\(place.id).\($0.rawValue.lowercased())", place: place, method: .set($0)) }

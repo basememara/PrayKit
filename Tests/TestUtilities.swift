@@ -48,3 +48,10 @@ extension PrayerTime {
         }
     }
 }
+
+extension Place {
+    /// A place in the time zone, where the coordinates matter only for London's timetable.
+    static func zone(_ timeZone: TimeZone, at coordinates: Coordinates = Coordinates(latitude: 0, longitude: 0)) -> Place {
+        Place(coordinates: coordinates, timeZone: timeZone, regionName: nil, fixedAt: nil)
+    }
+}

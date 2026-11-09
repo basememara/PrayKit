@@ -29,6 +29,8 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
     public let isNamedJumuah: Bool
     /// When the count-up after the adhan stops, while it runs.
     public let stopwatchEnd: Date?
+    /// When the day's lists turn to tomorrow's; see `PrayerDay.turnover`.
+    public let turnover: Date?
     /// Sample or fallback data that widget views must render redacted, never as real times
     public let isPlaceholder: Bool
 
@@ -48,6 +50,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         timeZone: TimeZone,
         isNamedJumuah: Bool = false,
         stopwatchEnd: Date? = nil,
+        turnover: Date? = nil,
         isPlaceholder: Bool = false
     ) {
         self.date = date
@@ -65,6 +68,7 @@ public struct PrayerTimer: Equatable, Codable, Sendable {
         self.timeZone = timeZone
         self.isNamedJumuah = isNamedJumuah
         self.stopwatchEnd = stopwatchEnd
+        self.turnover = turnover
         self.isPlaceholder = isPlaceholder
     }
 }
@@ -166,6 +170,12 @@ public extension PrayerTimer {
             timeZone: timeZone,
             isNamedJumuah: isJumuah && !isDhuhrStopwatchOnFriday,
             stopwatchEnd: timerType == .stopwatch ? countdownDate + .minutes(stopwatchMinutes) : nil,
+            turnover: prayerDay.turnover(
+                iqamaTimes: iqamaTimes,
+                isIqamaTimerEnabled: isIqamaTimerEnabled,
+                stopwatchMinutes: stopwatchMinutes,
+                using: calendar
+            ),
             isPlaceholder: isPlaceholder
         )
     }
@@ -190,11 +200,18 @@ public extension PrayerTimer {
 }
 
 public extension PrayerTimer {
-    /// The times a countdown face lists: this day's, then tomorrow's once what it counts toward lies past this
-    /// day's Isha, so the Isha stopwatch and iqama still show tonight's list.
+    /// Whether the day's lists have turned to tomorrow's, once its turnover has passed.
+    var listsTomorrow: Bool {
+        turnover.map { date >= $0 } ?? false
+    }
+
+    /// The day a face lists: this one until its turnover, then the next.
+    var listedDay: PrayerDay {
+        listsTomorrow ? prayerDay.dayAfter(using: Calendar(identifier: .gregorian, timeZone: timeZone)) : prayerDay
+    }
+
     var listedTimes: [PrayerTime] {
-        guard let isha = prayerDay.times[.isha], countdownDate >= isha.dateInterval.end else { return prayerDay.times }
-        return prayerDay.tomorrow
+        listedDay.times
     }
 }
 

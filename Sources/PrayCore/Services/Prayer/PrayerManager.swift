@@ -39,6 +39,14 @@ public extension PrayerManager {
         return try await day(containing: instant, from: instant, steps: 2, using: calendar, with: request)
     }
 
+    /// The day screens list at an instant: the prayer day holding it until that day's turnover, then the next.
+    ///
+    /// - Throws: `PrayError.invalidTimes` when no day's times contain the instant.
+    func fetch(listedAt instant: Date, with request: PrayerAPI.Request, settings: Settings) async throws -> PrayerDay {
+        let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
+        return try await fetch(at: instant, with: request).listedDay(at: instant, settings: settings, using: calendar)
+    }
+
     /// The prayer day an instant belongs to, at the device's place with its settings.
     ///
     /// - Throws: `PrayError.locationFailure` before the device has a place.
@@ -297,10 +305,13 @@ private extension PrayerManager {
         }
 
         // Midnight changes no prayer, but it turns the calendar date and, without auto-increment, the Hijri date the
-        // faces show. It goes in date order, since the expanded entries can already reach past it.
-        let midnight = prayerDay.date.tomorrow(using: calendar)
-        if prayerDay.contains(midnight), !entries.contains(where: { $0.date == midnight }), let entry = context.timer(midnight, prayerDay) {
-            entries.insert(entry, at: entries.firstIndex { $0.date > midnight } ?? entries.endIndex)
+        // faces show, and the turnover, which a late Isha puts after it, turns the lists to tomorrow's. Each goes in
+        // date order, since the expanded entries can already reach past it.
+        let moments = [prayerDay.date.tomorrow(using: calendar), prayerDay.turnover(settings: context.settings, using: calendar)]
+        for moment in moments.compactMap(\.self) where prayerDay.contains(moment) && !entries.contains(where: { $0.date == moment }) {
+            if let entry = context.timer(moment, prayerDay) {
+                entries.insert(entry, at: entries.firstIndex { $0.date > moment } ?? entries.endIndex)
+            }
         }
 
         // A short night can put this day's first reminder before the last entries of the day before, and both days

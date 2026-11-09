@@ -532,12 +532,34 @@ extension PrayerDayRuleTests {
         #expect(day.contains(moment))
         #expect(PrayerTimer.mock(at: moment, prayerDay: day) != nil)
     }
+}
+
+// MARK: - What screens list
+
+extension PrayerDayRuleTests {
+    @Test
+    func aListTurnsToTomorrowsAtMidnight() async throws {
+        let place = try #require(DayFixture.all.first)
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+        let calendar = try place.calendar()
+        let midnight = try place.date(2021, 1, 3, 0, 0)
+        let settings = Settings()
+
+        let listed = day.listedDay(at: midnight + 60, settings: settings, using: calendar)
+
+        #expect(day.turnover(settings: settings, using: calendar) == midnight)
+        #expect(day.listedDay(at: midnight - 60, settings: settings, using: calendar) == day)
+        #expect(listed.date == midnight)
+        #expect(listed.times == day.tomorrow)
+        #expect(listed.current(at: midnight + 60) == nil, "Nothing is under way before the listed day's Fajr")
+    }
 
     @Test
-    func aCountdownListsTomorrowOnceItCountsPastIsha() async throws {
+    func aCountdownListsTonightsTimesUntilMidnight() async throws {
         let place = try #require(DayFixture.all.first)
         let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
         let isha = try #require(day.times[.isha]).dateInterval.start
+        let midnight = try place.date(2021, 1, 3, 0, 0)
         let timeZone = try place.request().timeZone
 
         func timer(at date: Date, sunriseAfterIsha: Bool = false) throws -> PrayerTimer {
@@ -555,10 +577,74 @@ extension PrayerDayRuleTests {
             )
         }
 
-        #expect(try timer(at: isha - 60).listedTimes == day.times, "Counting down to Isha")
-        #expect(try timer(at: isha + 60).listedTimes == day.times, "Isha's stopwatch")
-        #expect(try timer(at: isha + 20 * 60).listedTimes == day.tomorrow, "Counting down to tomorrow's Fajr")
-        #expect(try timer(at: isha + 20 * 60, sunriseAfterIsha: true).listedTimes == day.tomorrow, "Counting down to tomorrow's sunrise")
+        #expect(try timer(at: isha + 60).listedTimes == day.times, "Isha's count-up")
+        #expect(try timer(at: isha + 20 * 60).listedTimes == day.times, "Counting down to tomorrow's Fajr before midnight")
+        #expect(try timer(at: isha + 20 * 60, sunriseAfterIsha: true).listedTimes == day.times, "Counting down to sunrise")
+        #expect(try timer(at: midnight + 60).listedTimes == day.tomorrow)
+        #expect(try timer(at: midnight + 60).listedDay.date == midnight)
+    }
+
+    /// Paris on France 18 begins Isha at 00:19, so its list holds tonight's times through Isha's window.
+    @Test
+    func anIshaAfterMidnightKeepsTonightsListThroughItsWindow() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let calendar = try place.calendar()
+        let day = try await fixture.prayerManager.fetch(at: try place.date(2026, 6, 22, 0, 25), with: try place.request())
+        let isha = try #require(day.times[.isha]).dateInterval.start
+        var settings = Settings()
+        settings.stopwatchMinutes = 15
+
+        #expect(day.turnover(settings: settings, using: calendar) == isha + 15 * 60, "After the count-up")
+        #expect(day.listedDay(at: isha + 10 * 60, settings: settings, using: calendar) == day)
+        #expect(day.listedDay(at: isha + 16 * 60, settings: settings, using: calendar).date == (try place.date(2026, 6, 22, 0, 0)))
+
+        settings.iqamaTimes = IqamaTimes(fajr: nil, dhuhr: nil, asr: nil, maghrib: nil, isha: .time(hour: 0, minutes: 30), jumuah: nil)
+        #expect(day.turnover(settings: settings, using: calendar) == (try place.date(2026, 6, 22, 0, 30)), "After the iqama")
+    }
+
+    @Test
+    func aFajrBeforeMidnightIsTheTurnover() async throws {
+        let place = try #require(DayFixture.all.first { $0.name.hasPrefix("Edinburgh") })
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+        let isha = try #require(day.times[.isha])
+
+        #expect(day.turnover(settings: Settings(), using: try place.calendar()) == isha.dateInterval.end)
+    }
+
+    @Test
+    func aTimelineTurnsAtALateTurnover() async throws {
+        let place = try #require(DayFixture.all.first { $0.method == .france18 })
+        let request = try place.request()
+        let midnight = try place.date(2026, 6, 22, 0, 0)
+        let day = try await fixture.prayerManager.fetch(at: midnight, with: request)
+        let turnover = try #require(day.times[.isha]).dateInterval.start + 15 * 60
+        var settings = Settings()
+        settings.stopwatchMinutes = 15
+
+        let timeline = try await fixture.prayerManager.fetch(
+            from: try place.date(2026, 6, 21, 23, 0),
+            limit: 20,
+            with: request,
+            settings: settings,
+            timeZone: request.timeZone
+        )
+
+        #expect(try #require(timeline.first { $0.date == midnight }).listsTomorrow == false)
+        #expect(try #require(timeline.first { $0.date == turnover }).listsTomorrow)
+    }
+
+    @Test
+    func aDayScreenListsTomorrowsDayAfterTheTurnover() async throws {
+        let place = try #require(DayFixture.all.first)
+        let request = try place.request()
+        let today = try #require(try await place.days(1, using: fixture.prayerManager).first)
+
+        let evening = try await fixture.prayerManager.fetch(listedAt: try place.date(2021, 1, 2, 23, 0), with: request, settings: Settings())
+        let night = try await fixture.prayerManager.fetch(listedAt: try place.date(2021, 1, 3, 1, 0), with: request, settings: Settings())
+
+        #expect(evening == today)
+        #expect(night.date == (try place.date(2021, 1, 3, 0, 0)))
+        #expect(night.times == today.tomorrow)
     }
 }
 

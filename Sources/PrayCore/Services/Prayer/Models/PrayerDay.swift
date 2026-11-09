@@ -8,6 +8,7 @@
 
 import Foundation.NSDate
 import Foundation.NSTimeZone
+import ZamzamCore
 
 /// A prayer day runs from its Fajr to the next Fajr: its prayers follow one another with no gap and Isha ends where
 /// the next day's Fajr begins, so midnight is not a boundary and every moment belongs to exactly one day. `tomorrow`
@@ -67,6 +68,48 @@ public extension PrayerDay {
     /// The next obligatory prayer to begin, which after Isha is tomorrow's Fajr.
     func nextObligatory(at time: Date) -> PrayerTime? {
         (times + tomorrow).first { $0.type.isObligation && $0.dateInterval.start > time }
+    }
+}
+
+// MARK: - Turnover
+
+// Screens list a day's prayers until its turnover, then the next day's. The prayer day still runs to the next Fajr for
+// everything that answers "now": the countdown, the prayer under way, Siri and the notifications.
+public extension PrayerDay {
+    /// When screens stop listing this day and list the next: 12 AM, or later when tonight's Isha hasn't begun or its
+    /// iqama or count-up hasn't ended by then, and the next Fajr at the latest. `nil` for a day without an Isha.
+    func turnover(settings: Settings, using calendar: Calendar) -> Date? {
+        turnover(
+            iqamaTimes: settings.iqamaTimes,
+            isIqamaTimerEnabled: settings.isIqamaTimerEnabled,
+            stopwatchMinutes: settings.stopwatchMinutes,
+            using: calendar
+        )
+    }
+
+    /// Whether screens list the next day at a moment, once this day's turnover has passed.
+    func listsTomorrow(at time: Date, settings: Settings, using calendar: Calendar) -> Bool {
+        turnover(settings: settings, using: calendar).map { time >= $0 } ?? false
+    }
+
+    /// The day screens list at a moment: this one until its turnover, then the next.
+    func listedDay(at time: Date, settings: Settings, using calendar: Calendar) -> PrayerDay {
+        listsTomorrow(at: time, settings: settings, using: calendar) ? dayAfter(using: calendar) : self
+    }
+}
+
+extension PrayerDay {
+    func turnover(iqamaTimes: IqamaTimes, isIqamaTimerEnabled: Bool, stopwatchMinutes: Int, using calendar: Calendar) -> Date? {
+        guard let isha = times[.isha] else { return nil }
+        // The same window a timer shows: an iqama when one is set, otherwise the count-up
+        let iqama = isIqamaTimerEnabled ? iqamaTimes[isha, using: calendar] : nil
+        let ishaWindowEnd = iqama ?? isha.dateInterval.start + .minutes(max(stopwatchMinutes, 0))
+        return min(max(date.tomorrow(using: calendar), ishaWindowEnd), isha.dateInterval.end)
+    }
+
+    /// The next day from `tomorrow`, listed only until its own Fajr, before which nothing in it is under way.
+    func dayAfter(using calendar: Calendar) -> PrayerDay {
+        PrayerDay(date: date.tomorrow(using: calendar), times: tomorrow, tomorrow: [])
     }
 }
 

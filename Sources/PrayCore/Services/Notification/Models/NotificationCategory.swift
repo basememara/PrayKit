@@ -12,4 +12,5 @@ public enum NotificationCategory: String, Sendable {
     case reminder = "reminderCategory"
     case calibrate = "calibrateCategory"
     case beacon = "beaconCategory"
+    case methodSuggestion = "methodSuggestionCategory"
 }

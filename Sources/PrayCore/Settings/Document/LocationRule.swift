@@ -10,7 +10,7 @@ import CoreLocation.CLLocation
 import Foundation
 
 /// How a GPS fix updates the device's place: only while GPS is on, jitter under a kilometre is ignored unless the
-/// time zone changed, and arriving in a new time zone switches to its recommended method.
+/// time zone changed, and arriving in a new time zone switches to its recommended method unless one was picked by hand.
 public enum LocationRule {
     private static let significantDistance: CLLocationDistance = 1_000
 
@@ -26,8 +26,9 @@ public enum LocationRule {
             return nil
         }
 
-        let method = state.document.settings.calculationMethod
-        let document = hasChangedTimeZone && ![.moonsightingCommittee, .muslimWorldLeague].contains(method)
+        let settings = state.document.settings
+        let followsPlace = settings.manualMethod == nil && !Settings.universalMethods.contains(settings.calculationMethod)
+        let document = hasChangedTimeZone && followsPlace
             ? state.document.editing(at: date) { $0.recommendMethod(for: timeZone) }
             : state.document
 
@@ -41,21 +42,62 @@ public enum LocationRule {
 
 public extension Settings {
     /// Switches to the calculation method recommended for a time zone, the Moonsighting Committee's where
-    /// none is.
+    /// none is, and lets the method follow the place from then on.
     mutating func recommendMethod(for timeZone: TimeZone) {
-        calculationMethod = .recommended(for: timeZone) ?? .moonsightingCommittee
+        calculationMethod = Self.placeMethod(for: timeZone)
+        manualMethod = nil
+    }
+
+    /// Sets a method picked by hand, kept where it was picked, so only another place asks about it.
+    mutating func pickMethod(_ method: CalculationMethod, in timeZone: TimeZone) {
+        calculationMethod = method
+        manualMethod = ManualMethod(keptTimeZones: [timeZone.identifier])
+    }
+
+    /// Keeps the method picked by hand in a time zone that recommends another, so it isn't suggested there again.
+    mutating func keepMethod(in timeZone: TimeZone) {
+        manualMethod?.keptTimeZones.insert(timeZone.identifier)
+    }
+
+    /// The method a time zone recommends over one picked by hand, unless the user kept theirs there.
+    func methodSuggestion(in timeZone: TimeZone) -> CalculationMethod? {
+        guard let manualMethod, !manualMethod.keptTimeZones.contains(timeZone.identifier),
+              let recommended = CalculationMethod.recommended(for: timeZone), recommended != calculationMethod
+        else { return nil }
+
+        return recommended
+    }
+
+    /// Takes a method that differs from what the place recommends for one picked by hand, for settings saved before
+    /// picks were recorded. The universal methods are left out, since a new place never replaced them.
+    mutating func inferManualMethod(in timeZone: TimeZone) {
+        guard manualMethod == nil, !Self.universalMethods.contains(calculationMethod),
+              calculationMethod != Self.placeMethod(for: timeZone)
+        else { return }
+
+        manualMethod = ManualMethod(keptTimeZones: [timeZone.identifier])
+    }
+}
+
+extension Settings {
+    static let universalMethods: Set<CalculationMethod> = [.moonsightingCommittee, .muslimWorldLeague]
+
+    static func placeMethod(for timeZone: TimeZone) -> CalculationMethod {
+        .recommended(for: timeZone) ?? .moonsightingCommittee
     }
 }
 
 public extension SettingsStorage {
     /// Saves a place picked by hand. GPS turns off so no fix replaces it, and, as on arriving somewhere new,
-    /// the method recommended for its time zone applies.
+    /// the method recommended for its time zone applies, unless the method was picked by hand too.
     @discardableResult
     func setManualPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
         update { state in
             DeviceState(
                 document: state.document.editing(at: date) {
                     $0.isGPSEnabled = false
+
+                    guard $0.manualMethod == nil else { return }
                     $0.recommendMethod(for: timeZone)
                 },
                 place: Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)

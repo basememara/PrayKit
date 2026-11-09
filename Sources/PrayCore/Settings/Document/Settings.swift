@@ -17,6 +17,8 @@ public struct Settings: Codable, Equatable, Sendable {
     public var maghribDegrees: Double = 0
     public var ishaDegrees: Double = 0
     public var elevationRule: ElevationRule?
+    /// The method picked by hand, or `nil` while it follows the place.
+    public var manualMethod: ManualMethod?
 
     // Adjustments
     public var adjustmentMinutes: AdjustmentMinutes?
@@ -115,6 +117,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case maghribDegrees
     case ishaDegrees
     case elevationRule = "elavationMethod"
+    case manualMethod
     case adjustmentMinutes
     case adjustmentElevation
     case isGPSEnabled

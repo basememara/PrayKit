@@ -23,6 +23,7 @@ extension SettingsWireTests {
         var expected = try Self.legacyRecord(of: .everyFieldChanged)
         expected["adhanDuaa"] = .string(AdhanDuaa.wasilahFadilah.rawValue)
         expected["soundsBeforeMute"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.soundsBeforeMute))
+        expected["manualMethod"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.manualMethod))
         let fields = SettingsDocument(settings: .everyFieldChanged).wireFields
 
         #expect(Set(fields.keys) == Set(expected.keys))
@@ -36,6 +37,7 @@ extension SettingsWireTests {
         #expect(try Self.decode(NotificationSounds.self, fields["notificationSounds"]) == Settings.everyFieldChanged.notificationSounds)
         #expect(try Self.decode(NotificationSounds.self, fields["soundsBeforeMute"]) == Settings.everyFieldChanged.soundsBeforeMute)
         #expect(try Self.decode(ReminderSounds.self, fields["reminderSounds"]) == Settings.everyFieldChanged.reminderSounds)
+        #expect(try Self.decode(ManualMethod.self, fields["manualMethod"]) == Settings.everyFieldChanged.manualMethod)
     }
 
     @Test
@@ -50,6 +52,7 @@ extension SettingsWireTests {
         var expected = Settings.everyFieldChanged.synced
         expected.adhanDuaa = Settings().adhanDuaa
         expected.soundsBeforeMute = Settings().soundsBeforeMute
+        expected.manualMethod = Settings().manualMethod
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])

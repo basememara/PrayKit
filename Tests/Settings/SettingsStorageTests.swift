@@ -31,8 +31,8 @@ extension SettingsStorageTests {
         let expectedPlace = try Self.goldenPlace()
         Self.golden.forEach { defaults.set($0.value, forKey: $0.key) }
 
-        // Earlier versions had no Live Activity, app icon, full adhan or alarm switch, so those read as their defaults
         var expected = Settings.everyFieldChanged
+        expected.manualMethod = Settings().manualMethod
         expected.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
         expected.matchesAppIcon = Settings().matchesAppIcon
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled

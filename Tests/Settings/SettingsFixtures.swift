@@ -18,6 +18,7 @@ extension Settings {
         settings.maghribDegrees = 4
         settings.ishaDegrees = 17
         settings.elevationRule = .seventhOfTheNight
+        settings.manualMethod = ManualMethod(keptTimeZones: ["Europe/Istanbul", "America/Winnipeg"])
         settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["fajr": 2, "isha": -3, "is_fajr_sunrise_relative": 1])
         settings.adjustmentElevation = .twilightAngle
         settings.isGPSEnabled = false

@@ -17,6 +17,7 @@ extension Settings {
         SettingField(.maghribDegrees, \.maghribDegrees, .double),
         SettingField(.ishaDegrees, \.ishaDegrees, .double),
         SettingField(.elevationRule, optional: \.elevationRule, .string),
+        SettingField(.manualMethod, optional: \.manualMethod, .json),
         SettingField(.adjustmentMinutes, optional: \.adjustmentMinutes, .map(.int)),
         SettingField(.adjustmentElevation, optional: \.adjustmentElevation, .string),
         SettingField(.isGPSEnabled, \.isGPSEnabled, .bool),

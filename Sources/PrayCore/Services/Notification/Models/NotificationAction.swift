@@ -10,4 +10,6 @@ public enum NotificationAction: String, Sendable {
     case snooze = "snoozeAction"
     case calibrate = "calibrateAction"
     case playAdhan = "playAdhanAction"
+    case switchMethod = "switchMethodAction"
+    case keepMethod = "keepMethodAction"
 }

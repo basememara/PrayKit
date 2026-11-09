@@ -80,6 +80,24 @@ struct LocationRuleTests {
     }
 
     @Test
+    func aMethodPickedByHandSurvivesATimeZoneChange() throws {
+        let saved = try #require(TimeZone(identifier: "America/Winnipeg"))
+        let current = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        var settings = Settings()
+        settings.pickMethod(.northAmerica, in: saved)
+        let state = DeviceState(
+            document: SettingsDocument(settings: settings),
+            place: Place(coordinates: toronto, timeZone: saved, regionName: "Fort Frances", fixedAt: date)
+        )
+
+        let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date + 60, to: state))
+
+        #expect(updated.place?.timeZone == current)
+        #expect(updated.document == state.document)
+        #expect(updated.document.settings.methodSuggestion(in: current) == .ummAlQura)
+    }
+
+    @Test
     func aManualPlaceIsNeverOverwritten() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
         var settings = Settings()
@@ -164,5 +182,19 @@ extension LocationRuleTests {
         #expect(!saved.document.settings.isGPSEnabled)
         #expect(saved.document.settings.calculationMethod == .jakim)
         #expect(storage.load() == saved)
+    }
+
+    @Test
+    func aManualPlaceKeepsAMethodPickedByHand() throws {
+        let picked = try #require(TimeZone(identifier: "America/Winnipeg"))
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.edit { $0.pickMethod(.northAmerica, in: picked) }
+
+        let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
+
+        #expect(!saved.document.settings.isGPSEnabled)
+        #expect(saved.document.settings.calculationMethod == .northAmerica)
+        #expect(saved.document.settings.methodSuggestion(in: timeZone) == .jakim)
     }
 }

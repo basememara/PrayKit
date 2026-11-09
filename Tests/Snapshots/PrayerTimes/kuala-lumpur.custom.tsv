@@ -1,0 +1,16 @@
+# kuala-lumpur.custom  lat 3.139  lon 101.6869  tz Asia/Kuala_Lumpur  method Custom (set)  madhab Standard  degrees -/-  adjustments -
+date	utc	fajr	sunrise	dhuhr	asr	maghrib	isha	midnight	lastThird	nextFajr
+2026-01-21	+08:00	error: invalidTimes
+2026-02-21	+08:00	error: invalidTimes
+2026-03-01	+08:00	error: invalidTimes
+2026-03-21	+08:00	error: invalidTimes
+2026-04-21	+08:00	error: invalidTimes
+2026-05-21	+08:00	error: invalidTimes
+2026-06-21	+08:00	error: invalidTimes
+2026-07-21	+08:00	error: invalidTimes
+2026-08-21	+08:00	error: invalidTimes
+2026-09-21	+08:00	error: invalidTimes
+2026-10-21	+08:00	error: invalidTimes
+2026-11-21	+08:00	error: invalidTimes
+2026-12-21	+08:00	error: invalidTimes
+2026-12-31	+08:00	error: invalidTimes

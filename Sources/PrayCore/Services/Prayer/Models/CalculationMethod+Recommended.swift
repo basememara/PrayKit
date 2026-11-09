@@ -14,7 +14,7 @@ public extension CalculationMethod {
     }
 }
 
-private extension CalculationMethod {
+extension CalculationMethod {
     static let mapped: [Self: [String]] = [
         .egyptian: ["Africa/Cairo", "Africa/Khartoum", "Africa/Tripoli"],
         .algerian: ["Africa/Algiers"],

@@ -44,6 +44,7 @@ let package = Package(
                 "PrayServices"
             ],
             path: "Tests",
+            exclude: ["Snapshots"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(

@@ -135,12 +135,23 @@ extension ManualMethodTests {
     }
 
     @Test(arguments: [CalculationMethod.moonsightingCommittee, .muslimWorldLeague])
-    func universalMethodsAreNotTakenForAPick(method: CalculationMethod) throws {
+    func aUniversalMethodOtherThanThePlacesWasPickedByHand(method: CalculationMethod) throws {
         let riyadh = try #require(riyadh)
         var settings = Settings()
         settings.calculationMethod = method
 
         settings.inferManualMethod(in: riyadh)
+
+        #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["Asia/Riyadh"]))
+    }
+
+    @Test
+    func theDefaultWhereNoMethodIsRecommendedIsNotTakenForAPick() throws {
+        let utc = try #require(utc)
+        var settings = Settings()
+        settings.calculationMethod = .moonsightingCommittee
+
+        settings.inferManualMethod(in: utc)
 
         #expect(settings.manualMethod == nil)
     }

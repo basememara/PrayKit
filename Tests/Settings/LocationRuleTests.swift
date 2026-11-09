@@ -64,11 +64,27 @@ struct LocationRuleTests {
     }
 
     @Test(arguments: [CalculationMethod.moonsightingCommittee, .muslimWorldLeague])
-    func universalMethodsSurviveATimeZoneChange(method: CalculationMethod) throws {
+    func universalMethodsTheAppSetFollowThePlace(method: CalculationMethod) throws {
         let saved = try #require(TimeZone(identifier: "America/Toronto"))
         let current = try #require(TimeZone(identifier: "Asia/Riyadh"))
         var settings = Settings()
         settings.calculationMethod = method
+        let state = DeviceState(
+            document: SettingsDocument(settings: settings),
+            place: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
+        )
+
+        let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date, to: state))
+
+        #expect(updated.document.settings.calculationMethod == .ummAlQura)
+    }
+
+    @Test(arguments: [CalculationMethod.moonsightingCommittee, .muslimWorldLeague])
+    func universalMethodsPickedByHandSurviveATimeZoneChange(method: CalculationMethod) throws {
+        let saved = try #require(TimeZone(identifier: "America/Toronto"))
+        let current = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        var settings = Settings()
+        settings.pickMethod(method, in: saved)
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
             place: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
@@ -182,6 +198,24 @@ extension LocationRuleTests {
         #expect(!saved.document.settings.isGPSEnabled)
         #expect(saved.document.settings.calculationMethod == .jakim)
         #expect(storage.load() == saved)
+    }
+
+    @Test
+    func aMethodAPlacePickedByHandSetIsReplacedWhenGPSComesBack() throws {
+        let kualaLumpur = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let paris = try #require(TimeZone(identifier: "Europe/Paris"))
+        let kualaLumpurCoordinates = Coordinates(latitude: 3.139, longitude: 101.687)
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.saveLocation(kualaLumpurCoordinates, timeZone: kualaLumpur, at: date)
+        storage.edit { $0.calculationMethod = .jakim }
+
+        let manual = storage.setManualPlace(Coordinates(latitude: 48.857, longitude: 2.352), timeZone: paris, regionName: "Paris", at: date + 60)
+        #expect(manual.document.settings.calculationMethod == .muslimWorldLeague)
+
+        storage.edit { $0.isGPSEnabled = true }
+        let back = storage.saveLocation(kualaLumpurCoordinates, timeZone: kualaLumpur, at: date + 120)
+
+        #expect(back.document.settings.calculationMethod == .jakim)
     }
 
     @Test

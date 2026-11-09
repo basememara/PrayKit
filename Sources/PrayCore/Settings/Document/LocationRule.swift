@@ -26,9 +26,7 @@ public enum LocationRule {
             return nil
         }
 
-        let settings = state.document.settings
-        let followsPlace = settings.manualMethod == nil && !Settings.universalMethods.contains(settings.calculationMethod)
-        let document = hasChangedTimeZone && followsPlace
+        let document = hasChangedTimeZone && state.document.settings.manualMethod == nil
             ? state.document.editing(at: date) { $0.recommendMethod(for: timeZone) }
             : state.document
 
@@ -69,19 +67,14 @@ public extension Settings {
     }
 
     /// Takes a method that differs from what the place recommends for one picked by hand, for settings saved before
-    /// picks were recorded. The universal methods are left out, since a new place never replaced them.
+    /// picks were recorded.
     mutating func inferManualMethod(in timeZone: TimeZone) {
-        guard manualMethod == nil, !Self.universalMethods.contains(calculationMethod),
-              calculationMethod != Self.placeMethod(for: timeZone)
-        else { return }
-
+        guard manualMethod == nil, calculationMethod != Self.placeMethod(for: timeZone) else { return }
         manualMethod = ManualMethod(keptTimeZones: [timeZone.identifier])
     }
 }
 
 extension Settings {
-    static let universalMethods: Set<CalculationMethod> = [.moonsightingCommittee, .muslimWorldLeague]
-
     static func placeMethod(for timeZone: TimeZone) -> CalculationMethod {
         .recommended(for: timeZone) ?? .moonsightingCommittee
     }

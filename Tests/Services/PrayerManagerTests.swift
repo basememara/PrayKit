@@ -7,6 +7,7 @@
 
 import Foundation
 import PrayCore
+import PrayServices
 import Testing
 import ZamzamCore
 
@@ -130,11 +131,51 @@ extension PrayerManagerTests {
             try await prayerManager.fetch(between: DateInterval(start: start, end: end), with: try place.request())
         }
     }
+
+    /// London's timetable ends with its last bundled year, past which a day comes back with no times.
+    @Test
+    func aDayPastTheTimetableEndsTheRangeThere() async throws {
+        // Given
+        let place = edinburghInLateDecember()
+        let prayerManager = timetablePrayerManager(endingAfter: try place.date(2026, 12, 31))
+        let start = try place.date(2026, 12, 29)
+        let end = try place.date(2027, 1, 3)
+
+        // When
+        let prayerDays = try await prayerManager.fetch(between: DateInterval(start: start, end: end), with: try place.request())
+
+        // Then
+        let calendar = try place.calendar()
+        #expect(prayerDays.map { calendar.component(.day, from: $0.date) } == [29, 30, 31])
+    }
+
+    @Test
+    func aDayPastTheTimetableThrows() async throws {
+        // Given
+        let place = edinburghInLateDecember()
+        let prayerManager = timetablePrayerManager(endingAfter: try place.date(2026, 12, 31))
+        let date = try place.date(2027, 1, 2)
+
+        // Then
+        await #expect(throws: PrayError.self) {
+            try await prayerManager.fetch(for: date, with: try place.request())
+        }
+    }
 }
 
 // MARK: - Helpers
 
 private extension PrayerManagerTests {
+    func edinburghInLateDecember() -> DayFixture {
+        DayFixture("Edinburgh in late December", 55.9533, -3.1883, "Europe/London", .muslimWorldLeague, 2026, 12, 29)
+    }
+
+    func timetablePrayerManager(endingAfter lastDay: Date) -> PrayerManager {
+        let fixture = PrayTestFixture()
+        let service = TimetableService(lastDay: lastDay, service: PrayerServiceAdhan(log: fixture.log))
+        return PrayerManager(service: service, londonService: service, log: fixture.log)
+    }
+
     func edinburghFajrPastSunriseByMay26() -> DayFixture {
         DayFixture(
             "Edinburgh, Fajr 60 minutes later, past sunrise by May 26", 55.9533, -3.1883, "Europe/London", .muslimWorldLeague, 2026, 5, 17,
@@ -158,5 +199,15 @@ private extension PrayerAPI.Request {
             timeZone: timeZone,
             method: .london
         )
+    }
+}
+
+/// A timetable that answers a day after its last with no times, as London's does past its last bundled year.
+private struct TimetableService: PrayerService {
+    let lastDay: Date
+    let service: PrayerService
+
+    func calculate(for date: Date, using calendar: Calendar, with request: PrayerAPI.Request) async throws -> [PrayerTime] {
+        date > lastDay ? [] : try await service.calculate(for: date, using: calendar, with: request)
     }
 }

@@ -251,11 +251,19 @@ private extension PrayerManager {
 private extension PrayerManager {
     func fetch(for date: Date, using calendar: Calendar, with request: PrayerAPI.Request) async throws -> PrayerDay {
         let prayerService = request.method == .london ? londonService : service
+        let times = try await prayerService.calculate(for: date, using: calendar, with: request)
+
+        // A timetable answers a day past its end with no times (London's, past its last bundled year). The day after
+        // may still be empty, so the last day of a timetable keeps its own times.
+        guard !times.isEmpty else {
+            log.warning("No prayer times for \(date, formatter: .zuluFormatter)")
+            throw PrayError.invalidTimes
+        }
 
         // In time order, since a short night can put its middle before Isha begins
         return PrayerDay(
             date: date.startOfDay(using: calendar),
-            times: try await prayerService.calculate(for: date, using: calendar, with: request).sorted(by: \.dateInterval.start),
+            times: times.sorted(by: \.dateInterval.start),
             tomorrow: try await prayerService.calculate(for: date.tomorrow(using: calendar), using: calendar, with: request).sorted(by: \.dateInterval.start)
         )
     }

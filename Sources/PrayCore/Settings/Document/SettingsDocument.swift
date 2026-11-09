@@ -57,6 +57,17 @@ public extension SettingsDocument {
         )
     }
 
+    /// Applies a default this device suggests, such as the method a first-run place recommends, to the settings
+    /// nothing has revised, and leaves them unrevised, so a choice synced from another device still wins.
+    func proposing(_ edit: (inout Settings) -> Void) -> SettingsDocument {
+        var edited = settings
+        edit(&edited)
+
+        return Settings.fields
+            .filter { revision(of: $0.key) == .legacy && !$0.isEqual(settings, edited) }
+            .reduce(into: self) { $1.copy(from: edited, into: &$0.settings) }
+    }
+
     /// The settings whose values differ from `other`.
     func changedKeys(to other: Settings) -> [SettingKey] {
         Settings.fields

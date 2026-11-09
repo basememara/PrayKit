@@ -98,6 +98,26 @@ public extension SettingsStorage {
         }
     }
 
+    /// Saves the place a first-run screen picks, as `setManualPlace` does, but only proposes its recommended
+    /// method, so a method chosen on another device still wins when iCloud brings it.
+    @discardableResult
+    func setUpPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
+        update { state in
+            DeviceState(
+                document: state.document
+                    .editing(at: date) { $0.isGPSEnabled = false }
+                    .proposing { $0.recommendMethod(for: timeZone) },
+                place: Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
+            )
+        }
+    }
+
+    /// Proposes defaults; see `SettingsDocument.proposing(_:)`.
+    @discardableResult
+    func propose(_ edit: (inout Settings) -> Void) -> DeviceState {
+        update { DeviceState(document: $0.document.proposing(edit), place: $0.place) }
+    }
+
     /// Saves a GPS fix through the location rule, returning the state as stored.
     @discardableResult
     func saveLocation(_ coordinates: Coordinates, timeZone: TimeZone = .current, at date: Date = .now) -> DeviceState {

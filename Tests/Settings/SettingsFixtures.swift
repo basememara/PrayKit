@@ -52,7 +52,7 @@ extension Settings {
         settings.sunriseAfterIsha = true
         settings.appearanceMode = .light
         settings.theme = .aqua
-        settings.isPrayerActivityEnabled = true
+        settings.prayerActivity = .inCar
         settings.matchesAppIcon = true
         settings.isFullAdhanEnabled = true
         settings.alarms = [.fajr, .sunrise]
@@ -63,7 +63,7 @@ extension Settings {
     var synced: Settings {
         var settings = self
         settings.geofenceRadius = Settings().geofenceRadius
-        settings.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
+        settings.prayerActivity = Settings().prayerActivity
         settings.matchesAppIcon = Settings().matchesAppIcon
         settings.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         settings.alarms = Settings().alarms

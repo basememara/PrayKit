@@ -44,7 +44,7 @@ extension Settings {
         SettingField(.sunriseAfterIsha, \.sunriseAfterIsha, .bool),
         SettingField(.appearanceMode, \.appearanceMode, .string),
         SettingField(.theme, \.theme, .string),
-        SettingField(.isPrayerActivityEnabled, \.isPrayerActivityEnabled, .bool, synced: false),
+        SettingField(.prayerActivity, \.prayerActivity, .string, synced: false),
         SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false),
         SettingField(.isFullAdhanEnabled, \.isFullAdhanEnabled, .bool, synced: false),
         SettingField(.alarms, \.alarms, .json, synced: false)

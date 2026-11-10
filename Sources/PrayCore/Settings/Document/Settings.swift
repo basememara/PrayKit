@@ -103,7 +103,7 @@ public struct Settings: Codable, Equatable, Sendable {
     public var theme: AppTheme = .default
 
     // Device
-    public var isPrayerActivityEnabled = false
+    public var prayerActivity: PrayerActivityMode = .off
     public var matchesAppIcon = false
     public var isFullAdhanEnabled = false
     public var alarms: Set<Prayer> = []
@@ -146,7 +146,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case sunriseAfterIsha
     case appearanceMode
     case theme
-    case isPrayerActivityEnabled
+    case prayerActivity
     case matchesAppIcon
     case isFullAdhanEnabled
     case alarms

@@ -190,7 +190,7 @@ extension SettingsWireTests {
     func aDeviceSettingNeverGoesOnTheWire() {
         let fields = Self.revised.wireFields
 
-        #expect([SettingKey.geofenceRadius, .isPrayerActivityEnabled, .matchesAppIcon, .isFullAdhanEnabled, .alarms].allSatisfy {
+        #expect([SettingKey.geofenceRadius, .prayerActivity, .matchesAppIcon, .isFullAdhanEnabled, .alarms].allSatisfy {
             fields[$0.rawValue] == nil && fields[$0.revisionKey] == nil
         })
     }

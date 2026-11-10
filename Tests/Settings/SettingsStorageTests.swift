@@ -34,7 +34,7 @@ extension SettingsStorageTests {
         var expected = Settings.everyFieldChanged
         expected.manualMethod = Settings().manualMethod
         expected.polarResolution = Settings().polarResolution
-        expected.isPrayerActivityEnabled = Settings().isPrayerActivityEnabled
+        expected.prayerActivity = Settings().prayerActivity
         expected.matchesAppIcon = Settings().matchesAppIcon
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         expected.alarms = Settings().alarms
@@ -45,14 +45,16 @@ extension SettingsStorageTests {
         #expect(state.place == expectedPlace)
     }
 
-    /// New installs and upgrades start without the Live Activity; only a device that turned it on has it.
-    @Test
-    func theLiveActivityIsOffUntilTurnedOn() {
+    /// New installs and upgrades start without the Live Activity, even with the old on/off key set; only a device that
+    /// picks a mode has it.
+    @Test(arguments: [PrayerActivityMode.always, .inCar])
+    func theLiveActivityIsOffUntilPicked(mode: PrayerActivityMode) {
         Self.golden.forEach { defaults.set($0.value, forKey: $0.key) }
-        #expect(!storage.load().document.settings.isPrayerActivityEnabled)
+        defaults.set(true, forKey: "isPrayerActivityEnabled")
+        #expect(storage.load().document.settings.prayerActivity == .off)
 
-        storage.edit { $0.isPrayerActivityEnabled = true }
-        #expect(storage.load().document.settings.isPrayerActivityEnabled)
+        storage.edit { $0.prayerActivity = mode }
+        #expect(storage.load().document.settings.prayerActivity == mode)
     }
 
     @Test

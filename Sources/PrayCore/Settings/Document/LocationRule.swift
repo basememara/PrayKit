@@ -62,7 +62,7 @@ public extension Settings {
 
     /// Whether the method changes with the place: it does unless picked by hand, and a city's timetable picked by hand
     /// still does outside its time zone, where its times would be read on another clock.
-    func followsThePlace(in timeZone: TimeZone) -> Bool {
+    internal func followsThePlace(in timeZone: TimeZone) -> Bool {
         manualMethod == nil || !calculationMethod.isReadable(in: timeZone)
     }
 
@@ -86,7 +86,7 @@ public extension Settings {
         }
 
         // Minutes tuned to this method's times would move another's, so a user who adjusted any is asked instead
-        guard Self.placeMethod(at: place) == calculationMethod || adjustmentMinutes?.isEmpty ?? true else {
+        guard Self.placeMethod(at: place) == calculationMethod || adjustments.isEmpty else {
             manualMethod = ManualMethod(keptTimeZones: [])
             return
         }

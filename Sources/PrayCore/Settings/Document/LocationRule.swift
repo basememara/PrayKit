@@ -85,6 +85,12 @@ public extension Settings {
             return
         }
 
+        // Minutes tuned to this method's times would move another's, so a user who adjusted any is asked instead
+        guard Self.placeMethod(at: place) == calculationMethod || adjustmentMinutes?.isEmpty ?? true else {
+            manualMethod = ManualMethod(keptTimeZones: [])
+            return
+        }
+
         recommendMethod(at: place)
     }
 }

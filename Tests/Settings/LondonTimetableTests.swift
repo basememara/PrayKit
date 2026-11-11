@@ -153,6 +153,21 @@ extension LondonTimetableTests {
         #expect(settings.manualMethod == nil)
     }
 
+    // Edinburgh's Maghrib moved 10 minutes later to match its sunset would land 10 minutes late on the Moonsighting
+    // Committee's, which already uses it
+    @Test
+    func anUpgradeOutsideLondonWithAdjustmentsKeepsTheTimetableAndAsks() throws {
+        let timeZone = try #require(TimeZone(identifier: "Europe/London"))
+        var settings = Settings()
+        settings.calculationMethod = .london
+        settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["maghrib": 10])
+
+        settings.upgradeMethod(at: .zone(timeZone, at: edinburgh))
+
+        #expect(settings.calculationMethod == .london)
+        #expect(settings.methodSuggestion(at: .zone(timeZone, at: edinburgh)) == .moonsightingCommittee)
+    }
+
     @Test
     func anUpgradeInLondonKeepsTheTimetable() throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/London"))

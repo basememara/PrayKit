@@ -29,7 +29,7 @@ public enum LocationRule {
 
         // A move leaves the old name behind, so the next fix names the new place even if this lookup fails
         let newPlace = Place(coordinates: coordinates, timeZone: timeZone, regionName: hasMoved ? nil : place?.regionName, fixedAt: date)
-        let followsThePlace = state.document.settings.followsThePlace(in: timeZone)
+        let followsThePlace = state.document.settings.manualMethod == nil
         let recommendsAnother = place.map { Settings.placeMethod(at: $0) != Settings.placeMethod(at: newPlace) } ?? false
 
         let document = followsThePlace && (hasChangedTimeZone || recommendsAnother)
@@ -60,16 +60,17 @@ public extension Settings {
         manualMethod?.keptTimeZones.insert(CalculationMethod.area(at: place))
     }
 
-    /// Whether the method changes with the place: it does unless picked by hand, and a city's timetable picked by hand
-    /// still does outside its time zone, where its times would be read on another clock.
-    internal func followsThePlace(in timeZone: TimeZone) -> Bool {
-        manualMethod == nil || !calculationMethod.isReadable(in: timeZone)
+    /// The method the times are calculated with: the one chosen, unless it's a city's timetable away from its time
+    /// zone, whose times would be read on another clock, where the place's own applies.
+    func method(at place: Place?) -> CalculationMethod {
+        guard let place, !calculationMethod.isReadable(in: place.timeZone) else { return calculationMethod }
+        return Self.placeMethod(at: place)
     }
 
     /// The method a place recommends over one picked by hand, unless the user kept theirs there.
     func methodSuggestion(at place: Place?) -> CalculationMethod? {
         guard let manualMethod, !manualMethod.keptTimeZones.contains(CalculationMethod.area(at: place)),
-              let recommended = CalculationMethod.recommended(at: place), recommended != calculationMethod
+              let recommended = CalculationMethod.recommended(at: place), recommended != method(at: place)
         else { return nil }
 
         return recommended
@@ -117,7 +118,7 @@ public extension SettingsStorage {
                 document: state.document.editing(at: date) {
                     $0.isGPSEnabled = false
 
-                    guard $0.followsThePlace(in: timeZone) else { return }
+                    guard $0.manualMethod == nil else { return }
                     $0.recommendMethod(at: place)
                 },
                 place: place

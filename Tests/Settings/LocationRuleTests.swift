@@ -115,7 +115,7 @@ struct LocationRuleTests {
 
     // London's timetable is printed for London's clock: read in Riyadh it put Maghrib an hour and a half early
     @Test
-    func londonPickedByHandFollowsThePlaceOutsideItsTimeZone() throws {
+    func londonPickedByHandIsReadAsThePlacesMethodOutsideItsTimeZoneAndKept() throws {
         let london = try #require(TimeZone(identifier: "Europe/London"))
         let riyadh = try #require(TimeZone(identifier: "Asia/Riyadh"))
         let makkah = Coordinates(latitude: 21.4225, longitude: 39.8262)
@@ -127,9 +127,28 @@ struct LocationRuleTests {
         )
 
         let updated = try #require(LocationRule.apply(makkah, timeZone: riyadh, at: date + 60, to: state))
+        let abroad = updated.document.settings
+        let place = try #require(updated.place)
 
-        #expect(updated.document.settings.calculationMethod == .ummAlQura)
-        #expect(updated.document.settings.manualMethod == nil)
+        #expect(abroad.calculationMethod == .london)
+        #expect(abroad.method(at: place) == .ummAlQura)
+        #expect(PrayerAPI.Request(settings: abroad, place: place)?.method == .ummAlQura)
+        #expect(abroad.methodSuggestion(at: place) == nil)
+
+        let home = try #require(LocationRule.apply(Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, at: date + 120, to: updated))
+        #expect(try home.document.settings.method(at: #require(home.place)) == .london)
+    }
+
+    // iCloud brings the pick without a fix, so the device it lands on must read it by its own place
+    @Test
+    func londonPickedOnAnotherDeviceIsReadAsThePlacesMethod() throws {
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let riyadh = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        var settings = Settings()
+        settings.pickMethod(.london, at: .zone(london))
+        let place = Place(coordinates: Coordinates(latitude: 21.4225, longitude: 39.8262), timeZone: riyadh, regionName: "Makkah", fixedAt: date)
+
+        #expect(PrayerAPI.Request(settings: settings, place: place)?.method == .ummAlQura)
     }
 
     @Test
@@ -150,7 +169,7 @@ struct LocationRuleTests {
     }
 
     @Test
-    func aCityPickedAbroadReplacesLondonPickedByHand() throws {
+    func aCityPickedAbroadKeepsLondonPickedByHandAndReadsTheCitysMethod() throws {
         let london = try #require(TimeZone(identifier: "Europe/London"))
         let riyadh = try #require(TimeZone(identifier: "Asia/Riyadh"))
         let storage = SettingsStorage(defaults: .makeTest())
@@ -158,7 +177,8 @@ struct LocationRuleTests {
 
         let saved = storage.setManualPlace(Coordinates(latitude: 21.4225, longitude: 39.8262), timeZone: riyadh, regionName: "Makkah", at: date)
 
-        #expect(saved.document.settings.calculationMethod == .ummAlQura)
+        #expect(saved.document.settings.calculationMethod == .london)
+        #expect(try saved.document.settings.method(at: #require(saved.place)) == .ummAlQura)
     }
 
     @Test

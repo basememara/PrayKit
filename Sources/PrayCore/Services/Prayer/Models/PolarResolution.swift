@@ -18,17 +18,17 @@ public extension PolarResolution {
     /// 57° under one that times Maghrib by an angle, whose Maghrib can fall within 5 minutes of Isha in summer.
     static func applies(at place: Place, with settings: Settings) -> Bool {
         let latitude = abs(place.coordinates.latitude)
-        return latitude >= 65.5 || (latitude >= 57 && settings.timesMaghribByAngle)
+        return latitude >= 65.5 || (latitude >= 57 && settings.method(at: place).timesMaghribByAngle(with: settings))
     }
 }
 
-private extension Settings {
-    var timesMaghribByAngle: Bool {
-        switch calculationMethod {
+private extension CalculationMethod {
+    func timesMaghribByAngle(with settings: Settings) -> Bool {
+        switch self {
         case .tehran, .shia:
             true
         case .custom:
-            maghribDegrees > 0
+            settings.maghribDegrees > 0
         default:
             false
         }

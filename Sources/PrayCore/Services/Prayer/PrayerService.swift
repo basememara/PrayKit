@@ -71,7 +71,7 @@ public extension PrayerAPI {
             self.init(
                 coordinates: place.coordinates,
                 timeZone: timeZone ?? place.timeZone,
-                method: method ?? settings.calculationMethod,
+                method: method ?? settings.method(at: place),
                 jurisprudence: settings.juristicMethod,
                 elevation: settings.elevationRule,
                 fajrDegrees: settings.fajrDegrees,

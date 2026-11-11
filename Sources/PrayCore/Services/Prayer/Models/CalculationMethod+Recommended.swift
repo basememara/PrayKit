@@ -33,6 +33,12 @@ extension CalculationMethod {
         return "\(timeZone.identifier)/\(method.rawValue)"
     }
 
+    /// A city's timetable is printed for its own clock, so it reads right only in that time zone; a calculated method
+    /// reads right anywhere.
+    func isReadable(in timeZone: TimeZone) -> Bool {
+        reach == nil || Self.mapped[self]?.contains(timeZone.identifier) == true
+    }
+
     /// A city's own timetable holds only near the city; a calculated method holds anywhere.
     private func holds(at coordinates: Coordinates) -> Bool {
         guard let reach else { return true }

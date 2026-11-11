@@ -113,6 +113,54 @@ struct LocationRuleTests {
         #expect(updated.document.settings.methodSuggestion(at: .zone(current)) == .ummAlQura)
     }
 
+    // London's timetable is printed for London's clock: read in Riyadh it put Maghrib an hour and a half early
+    @Test
+    func londonPickedByHandFollowsThePlaceOutsideItsTimeZone() throws {
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let riyadh = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        let makkah = Coordinates(latitude: 21.4225, longitude: 39.8262)
+        var settings = Settings()
+        settings.pickMethod(.london, at: .zone(london))
+        let state = DeviceState(
+            document: SettingsDocument(settings: settings),
+            place: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
+        )
+
+        let updated = try #require(LocationRule.apply(makkah, timeZone: riyadh, at: date + 60, to: state))
+
+        #expect(updated.document.settings.calculationMethod == .ummAlQura)
+        #expect(updated.document.settings.manualMethod == nil)
+    }
+
+    @Test
+    func londonPickedByHandStaysAcrossTheUK() throws {
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let manchester = Coordinates(latitude: 53.4808, longitude: -2.2426)
+        var settings = Settings()
+        settings.pickMethod(.london, at: .zone(london))
+        let state = DeviceState(
+            document: SettingsDocument(settings: settings),
+            place: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
+        )
+
+        let updated = try #require(LocationRule.apply(manchester, timeZone: london, at: date + 60, to: state))
+
+        #expect(updated.document.settings.calculationMethod == .london)
+        #expect(updated.document.settings.manualMethod != nil)
+    }
+
+    @Test
+    func aCityPickedAbroadReplacesLondonPickedByHand() throws {
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let riyadh = try #require(TimeZone(identifier: "Asia/Riyadh"))
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.edit { $0.pickMethod(.london, at: .zone(london)) }
+
+        let saved = storage.setManualPlace(Coordinates(latitude: 21.4225, longitude: 39.8262), timeZone: riyadh, regionName: "Makkah", at: date)
+
+        #expect(saved.document.settings.calculationMethod == .ummAlQura)
+    }
+
     @Test
     func aManualPlaceIsNeverOverwritten() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))

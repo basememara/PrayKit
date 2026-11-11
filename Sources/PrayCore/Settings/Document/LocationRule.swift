@@ -11,7 +11,7 @@ import Foundation
 
 /// How a GPS fix updates the device's place: only while GPS is on, jitter under a kilometre is ignored unless the
 /// time zone changed, and arriving in a new time zone, or anywhere that recommends another method, switches to its
-/// recommended method unless one was picked by hand.
+/// recommended method unless one was picked by hand or minutes were adjusted, which ask instead.
 public enum LocationRule {
     private static let significantDistance: CLLocationDistance = 1_000
 
@@ -33,7 +33,7 @@ public enum LocationRule {
         let recommendsAnother = place.map { Settings.placeMethod(at: $0) != Settings.placeMethod(at: newPlace) } ?? false
 
         let document = followsThePlace && (hasChangedTimeZone || recommendsAnother)
-            ? state.document.editing(at: date) { $0.recommendMethod(at: newPlace) }
+            ? state.document.editing(at: date) { $0.followPlace(newPlace) }
             : state.document
 
         return DeviceState(document: document, place: newPlace)
@@ -58,6 +58,17 @@ public extension Settings {
     /// Keeps the method picked by hand in a place that recommends another, so it isn't suggested there again.
     mutating func keepMethod(at place: Place?) {
         manualMethod?.keptTimeZones.insert(CalculationMethod.area(at: place))
+    }
+
+    /// Follows the place's recommended method, unless minutes adjusted for this method's times would move another's:
+    /// then the method stays, counted as picked by hand, so the place asks instead.
+    mutating func followPlace(_ place: Place) {
+        guard Self.placeMethod(at: place) == calculationMethod || adjustments.isEmpty else {
+            manualMethod = ManualMethod(keptTimeZones: [])
+            return
+        }
+
+        recommendMethod(at: place)
     }
 
     /// The method the times are calculated with: the one chosen, unless it's a city's timetable away from its time
@@ -86,13 +97,7 @@ public extension Settings {
             return
         }
 
-        // Minutes tuned to this method's times would move another's, so a user who adjusted any is asked instead
-        guard Self.placeMethod(at: place) == calculationMethod || adjustments.isEmpty else {
-            manualMethod = ManualMethod(keptTimeZones: [])
-            return
-        }
-
-        recommendMethod(at: place)
+        followPlace(place)
     }
 }
 
@@ -108,7 +113,8 @@ extension Settings {
 
 public extension SettingsStorage {
     /// Saves a place picked by hand. GPS turns off so no fix replaces it, and, as on arriving somewhere new,
-    /// the method recommended for its time zone applies, unless the method was picked by hand too.
+    /// the method recommended for its time zone applies, unless the method was picked by hand too or minutes were
+    /// adjusted.
     @discardableResult
     func setManualPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
         let place = Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
@@ -119,7 +125,7 @@ public extension SettingsStorage {
                     $0.isGPSEnabled = false
 
                     guard $0.manualMethod == nil else { return }
-                    $0.recommendMethod(at: place)
+                    $0.followPlace(place)
                 },
                 place: place
             )

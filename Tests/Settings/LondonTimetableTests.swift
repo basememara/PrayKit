@@ -169,6 +169,40 @@ extension LondonTimetableTests {
     }
 
     @Test
+    func leavingLondonWithAdjustmentsKeepsTheTimetableAndAsks() throws {
+        let timeZone = try #require(TimeZone(identifier: "Europe/London"))
+        var settings = Settings()
+        settings.recommendMethod(at: .zone(timeZone, at: london))
+        settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["asr": 5])
+        let state = DeviceState(document: SettingsDocument(settings: settings), place: .zone(timeZone, at: london))
+
+        let updated = try #require(LocationRule.apply(edinburgh, timeZone: timeZone, at: date, to: state))
+
+        #expect(updated.document.settings.calculationMethod == .london)
+        #expect(updated.document.settings.methodSuggestion(at: .zone(timeZone, at: edinburgh)) == .moonsightingCommittee)
+
+        // Counted as picked by hand from then on, so crossing back and forth no longer flips it
+        let back = try #require(LocationRule.apply(london, timeZone: timeZone, at: date + 60, to: updated))
+        #expect(back.document.settings.calculationMethod == .london)
+        #expect(back.document.settings.methodSuggestion(at: .zone(timeZone, at: london)) == nil)
+    }
+
+    @Test
+    func aManualPlaceOutsideLondonWithAdjustmentsKeepsTheTimetableAndAsks() throws {
+        let timeZone = try #require(TimeZone(identifier: "Europe/London"))
+        let storage = SettingsStorage(defaults: .makeTest())
+        storage.edit {
+            $0.recommendMethod(at: .zone(timeZone, at: london))
+            $0.adjustmentMinutes = AdjustmentMinutes(rawValue: ["asr": 5])
+        }
+
+        let saved = storage.setManualPlace(edinburgh, timeZone: timeZone, regionName: "Edinburgh", at: date)
+
+        #expect(saved.document.settings.calculationMethod == .london)
+        #expect(saved.document.settings.methodSuggestion(at: saved.place) == .moonsightingCommittee)
+    }
+
+    @Test
     func anUpgradeInLondonKeepsTheTimetable() throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/London"))
         var settings = Settings()

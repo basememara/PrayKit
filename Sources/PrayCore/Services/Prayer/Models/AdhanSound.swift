@@ -86,18 +86,6 @@ public extension AdhanSound {
     /// by choosing it.
     static var shuffleChoices: [Self] { allCases.filter { ![.shuffle, .kareemMansouryShia].contains($0) } }
 
-    /// A shuffle draws only from the adhans already on the device, so it never downloads one and never names a file
-    /// a notification would replace with the system sound. A process that can't see the app's sounds, such as an
-    /// extension that reschedules, finds none and takes the default adhan, the one that ships in the app.
-    private var selectedCase: Self {
-        guard case .shuffle = self else { return self }
-
-        // Shuffled first, so each adhan on the device is as likely as any other and the check stops at the first
-        return Self.shuffleChoices
-            .shuffled()
-            .first { FileManager.default.fileExists(atPath: URL.sound(named: $0.file(for: .short)).path) } ?? .default
-    }
-
     var hasFajr: Bool {
         [
             .alAqsa,
@@ -116,24 +104,40 @@ public extension AdhanSound {
     }
 
     func file(for length: Length) -> String {
-        let value = selectedCase
-        let name: String
-
-        switch length {
-        case .short:
-            name = "\(value.rawValue)-short.m4a"
-        case .long:
-            name = "\(value.rawValue).mp3"
-        case .fajr:
-            name = value.hasFajr
-                ? "\(value.rawValue)-fajr.mp3"
-                : "\(value.rawValue).mp3"
-        }
-
-        return name
+        file(for: length) { FileManager.default.fileExists(atPath: URL.sound(named: $0).path) }
     }
 
     func fileURL(for length: Length) -> URL? {
         URL.sound(named: file(for: length))
+    }
+}
+
+extension AdhanSound {
+    /// A shuffle draws only from the adhans whose file in that length is already on the device, so it never downloads
+    /// one and never names a file a notification would replace with the system sound. The length matters: a Mac ships
+    /// every short adhan but downloads the full ones. A process that can't see the app's sounds, such as an extension
+    /// that reschedules, finds none and takes the default adhan, the one that ships in the app.
+    func file(for length: Length, isOnDevice: (String) -> Bool) -> String {
+        guard case .shuffle = self else { return name(for: length) }
+
+        // Shuffled first, so each adhan on the device is as likely as any other and the check stops at the first
+        return Self.shuffleChoices
+            .shuffled()
+            .lazy
+            .map { $0.name(for: length) }
+            .first(where: isOnDevice) ?? Self.default.name(for: length)
+    }
+}
+
+private extension AdhanSound {
+    func name(for length: Length) -> String {
+        switch length {
+        case .short:
+            "\(rawValue)-short.m4a"
+        case .long:
+            "\(rawValue).mp3"
+        case .fajr:
+            hasFajr ? "\(rawValue)-fajr.mp3" : "\(rawValue).mp3"
+        }
     }
 }

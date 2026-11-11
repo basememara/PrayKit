@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import PrayCore
+@testable import PrayCore
 import Testing
 
 struct SoundTests {
@@ -21,6 +21,24 @@ struct SoundTests {
     func aShuffleThatCantSeeTheAppsSoundsPlaysTheDefaultAdhan(length: AdhanSound.Length) {
         // The test runner, like an extension, has no sounds in its bundle or its sounds folder
         #expect(AdhanSound.shuffle.file(for: length) == AdhanSound.default.file(for: length))
+    }
+
+    // A Mac ships every short adhan in the app but downloads the full ones, so a shuffle for the full adhan can't
+    // pick by the short file
+    @Test
+    func aShuffleForTheFullAdhanDrawsOnlyFromFullAdhansOnTheDevice() {
+        let onDevice: Set = ["makkah-short.m4a", "madina-short.m4a", "cairo.mp3", "kuwait-fajr.mp3"]
+
+        #expect(AdhanSound.shuffle.file(for: .long, isOnDevice: onDevice.contains) == "cairo.mp3")
+        #expect(AdhanSound.shuffle.file(for: .fajr, isOnDevice: onDevice.contains) == "kuwait-fajr.mp3")
+        #expect(["makkah-short.m4a", "madina-short.m4a"].contains(AdhanSound.shuffle.file(for: .short, isOnDevice: onDevice.contains)))
+    }
+
+    @Test
+    func aShuffleWithNoFullAdhanOnTheDevicePlaysTheDefaultOne() {
+        let onDevice: Set = ["makkah-short.m4a", "madina-short.m4a"]
+
+        #expect(AdhanSound.shuffle.file(for: .long, isOnDevice: onDevice.contains) == AdhanSound.default.file(for: .long, isOnDevice: { _ in false }))
     }
 
     @Test

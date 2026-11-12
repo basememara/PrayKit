@@ -17,18 +17,23 @@ public extension PolarResolution {
     /// Whether a day at the place can borrow its times with these settings: under every method from 65.5°, and from
     /// 57° under one that times Maghrib by an angle, whose Maghrib can fall within 5 minutes of Isha in summer.
     static func applies(at place: Place, with settings: Settings) -> Bool {
-        let latitude = abs(place.coordinates.latitude)
-        return latitude >= 65.5 || (latitude >= 57 && settings.method(at: place).timesMaghribByAngle(with: settings))
+        applies(latitude: place.coordinates.latitude, method: settings.method(at: place), maghribDegrees: settings.maghribDegrees)
+    }
+
+    /// The same rule for a calculation, which knows the method in use and any custom Maghrib angle.
+    static func applies(latitude: Double, method: CalculationMethod, maghribDegrees: Double?) -> Bool {
+        let latitude = abs(latitude)
+        return latitude >= 65.5 || (latitude >= 57 && method.timesMaghribByAngle(maghribDegrees: maghribDegrees ?? 0))
     }
 }
 
 private extension CalculationMethod {
-    func timesMaghribByAngle(with settings: Settings) -> Bool {
+    func timesMaghribByAngle(maghribDegrees: Double) -> Bool {
         switch self {
         case .tehran, .shia:
             true
         case .custom:
-            settings.maghribDegrees > 0
+            maghribDegrees > 0
         default:
             false
         }

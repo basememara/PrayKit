@@ -329,7 +329,8 @@ extension SnapshotCase {
         SnapshotCase(id: "istanbul.place.hanafi", place: .istanbul, jurisprudence: .hanafi),
         SnapshotCase(id: "karachi.place.hanafi", place: .karachi, jurisprudence: .hanafi),
         SnapshotCase(id: "cairo.place.hanafi", place: .cairo, jurisprudence: .hanafi),
-        SnapshotCase(id: "tromso.place.nearestday", place: .tromso, polarResolution: .nearestDay)
+        SnapshotCase(id: "tromso.place.nearestday", place: .tromso, polarResolution: .nearestDay),
+        SnapshotCase(id: "tromso.ummalqura", place: .tromso, method: .set(.ummAlQura))
     ]
 
     /// A relative Fajr or Isha that can't apply: on the wrong side of sunrise or Maghrib, which saved settings can

@@ -35,31 +35,38 @@ extension PrayerTime {
         filter: PrayerFilter,
         log: LogManager
     ) throws {
-        if [.all, .essential].contains(filter) {
-            guard sunrise < dhuhr else {
-                log.error("Sunrise was invalid due to resulting after dhuhr.")
-                throw PrayError.invalidTimes
-            }
+        guard let (error, message) = orderFailure(sunrise: sunrise, dhuhr: dhuhr, asr: asr, maghrib: maghrib, isha: isha, nextFajr: nextFajr, filter: filter) else {
+            return
         }
 
-        guard dhuhr < asr else {
-            log.error("Dhuhr was invalid due to resulting after asr.")
-            throw PrayError.invalidElevation
+        log.error(message)
+        throw error
+    }
+
+    /// The first time out of order, as `checkOrder` reports it, or `nil` when the day is in order.
+    static func orderFailure(
+        sunrise: Date,
+        dhuhr: Date,
+        asr: Date,
+        maghrib: Date,
+        isha: Date,
+        nextFajr: Date,
+        filter: PrayerFilter
+    ) -> (PrayError, String)? {
+        if [.all, .essential].contains(filter), sunrise >= dhuhr {
+            return (.invalidTimes, "Sunrise was invalid due to resulting after dhuhr.")
         }
 
-        guard asr < maghrib else {
-            log.error("Asr was invalid due to resulting after maghrib.")
-            throw PrayError.invalidElevation
-        }
-
-        guard maghrib < isha else {
-            log.error("Maghrib was invalid due to resulting after isha.")
-            throw PrayError.invalidElevation
-        }
-
-        guard isha < nextFajr else {
-            log.error("Isha was invalid due to resulting after tomorrow's fajr.")
-            throw PrayError.invalidElevation
+        return if dhuhr >= asr {
+            (.invalidElevation, "Dhuhr was invalid due to resulting after asr.")
+        } else if asr >= maghrib {
+            (.invalidElevation, "Asr was invalid due to resulting after maghrib.")
+        } else if maghrib >= isha {
+            (.invalidElevation, "Maghrib was invalid due to resulting after isha.")
+        } else if isha >= nextFajr {
+            (.invalidElevation, "Isha was invalid due to resulting after tomorrow's fajr.")
+        } else {
+            nil
         }
     }
 

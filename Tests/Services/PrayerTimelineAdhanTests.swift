@@ -179,7 +179,9 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 115)
+        // With the iqama timer off, Friday the 25th has no khutba moments (13:30 and its count-up's end at 13:48)
+        #expect(timeline.count == 113)
+        #expect(!timeline.contains { $0.date == time("13:30", on: "2022/02/25") || $0.date == time("13:48", on: "2022/02/25") })
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:21"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("06:58"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("12:19"))

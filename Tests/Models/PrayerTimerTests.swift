@@ -652,12 +652,12 @@ extension PrayerTimerTests {
         let date = friday(hour: 7, minute: 30)
         let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false)
         #expect(prayerTimer.type == .dhuhr)
-        #expect(prayerTimer.countdownDate == friday(hour: 13, minute: 30))
-        #expect(prayerTimer.timerType == .iqama)
+        #expect(prayerTimer.countdownDate == friday(hour: 12, minute: 10))
+        #expect(prayerTimer.timerType == .countdown)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
         #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
-        assertCalculations(for: prayerTimer, minutes: 6 * 60, lastAdhanTime: friday(hour: 7, minute: 20))
+        assertCalculations(for: prayerTimer, minutes: 4 * 60 + 40)
     }
 
     @Test

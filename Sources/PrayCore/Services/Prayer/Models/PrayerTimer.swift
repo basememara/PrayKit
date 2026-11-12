@@ -205,8 +205,12 @@ private extension PrayerTimer.Phase {
             Double(preAdhanMinutes[prayerTime.type] * 60)
         }
 
+        func timerIqama(for prayerTime: PrayerTime) -> Date? {
+            iqamaTimes.timerIqama(for: prayerTime, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
+        }
+
         let warningSeconds = reminderSeconds(of: next)
-        let currentIqama = iqamaTimes.timerIqama(for: current, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
+        let currentIqama = timerIqama(for: current)
         let iqama = currentIqama.flatMap { adhan.isIqamaTimer(at: date, iqamaTime: $0) ? $0 : nil }
         // A prayer with an iqama never counts up, even once its iqama has passed
         let countsUp = currentIqama == nil && current.type != .sunrise && adhan.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
@@ -226,11 +230,11 @@ private extension PrayerTimer.Phase {
             Self(prayerTime: next, kind: .countdown, target: nextAdhan, span: current.dateInterval, warningSeconds: warningSeconds)
         }
 
-        // 1. A Friday with a khutba set, whether or not the iqama timer is on. Jumuah is Friday's Dhuhr, judged by that
-        // prayer's own date rather than the moment's
+        // 1. A Friday with a khutba set and the iqama timer on; with it off, Friday runs as any other day. Jumuah is
+        // Friday's Dhuhr, judged by that prayer's own date rather than the moment's
         if let dhuhr = [current, next].first(where: { $0.type == .dhuhr }),
            dhuhr.dateInterval.start.isJumuah(using: calendar),
-           let khutba = iqamaTimes[dhuhr, using: calendar] {
+           let khutba = timerIqama(for: dhuhr) {
             // Up from Dhuhr's adhan, over the adhan to the khutba
             if countsUp, current.type == .dhuhr {
                 let untilKhutba = DateInterval(start: adhan, end: khutba)
@@ -253,13 +257,13 @@ private extension PrayerTimer.Phase {
             return Self(prayerTime: ordinary.prayerTime, kind: .iqama, target: khutba, span: untilKhutba, warningSeconds: reminderSeconds(of: dhuhr))
         }
 
-        // 2. After Isha with Sunrise after Isha on: down to Fajr's iqama where one is set, whether or not the iqama
-        // timer is on, rather than to sunrise
+        // 2. After Isha with Sunrise after Isha on: down to Fajr's iqama where one is set and the iqama timer is on,
+        // rather than to sunrise
         if sunriseAfterIsha,
            current.type == .isha,
            ordinary.prayerTime.type != .isha,
            let fajr = (prayerDay.times + prayerDay.tomorrow).first(where: { $0.type == .fajr && $0.dateInterval.start >= current.dateInterval.end }),
-           let fajrIqama = iqamaTimes[fajr, using: calendar] {
+           let fajrIqama = timerIqama(for: fajr) {
             return Self(prayerTime: fajr, kind: .iqama, target: fajrIqama, span: DateInterval(start: adhan, end: fajrIqama), warningSeconds: warningSeconds)
         }
 

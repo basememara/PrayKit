@@ -90,7 +90,7 @@ extension PrayerTimerTests {
     }
 
     @Test
-    func afterDhuhrAdhanOnJumuahBeforeTheKhutba() async throws {
+    func afterDhuhrAdhanOnJumuahWithTheTimerOff() async throws {
         let date = friday(hour: 12, minute: 20)
         let prayerTimer = try prayerTimer(at: date, isIqamaTimerEnabled: false)
         #expect(prayerTimer.type == .dhuhr)
@@ -98,7 +98,8 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(!prayerTimer.isNamedJumuah)
+        #expect(prayerTimer.isNamedJumuah)
+        #expect(prayerTimer.stopwatchEnd == friday(hour: 12, minute: 30))
         assertCalculations(for: prayerTimer, minutes: -10)
     }
 

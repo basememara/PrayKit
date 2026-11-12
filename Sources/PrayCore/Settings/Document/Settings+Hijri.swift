@@ -34,11 +34,9 @@ public extension Settings {
         at moment: Date,
         in prayerDay: PrayerDay,
         timeZone: TimeZone,
-        month: HijriMonthWidth = .abbreviated,
         locale: Locale = .current
     ) -> String {
         moment.hijriDayAndMonth(
-            month: month,
             offset: hijriOffset(at: moment, in: prayerDay, timeZone: timeZone),
             timeZone: timeZone,
             locale: locale

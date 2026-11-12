@@ -7,16 +7,14 @@
 
 import Foundation
 import PrayCore
-import Testing
+@testable import PrayServices
 
 /// One row of the settings matrix, each a change to the defaults that takes the scheduler down other branches.
-struct NotificationSettingsRow: Sendable, CustomTestStringConvertible {
+struct NotificationSettingsRow: Sendable {
     let id: String
     let settings: Settings
     /// The branches the row is there for, which the matrix must show it reaching.
     let reaches: Set<ScheduleBranch>
-
-    var testDescription: String { id }
 
     init(_ id: String, reaches: Set<ScheduleBranch>, _ change: (inout Settings) -> Void = { _ in }) {
         var settings = Settings()
@@ -29,18 +27,7 @@ struct NotificationSettingsRow: Sendable, CustomTestStringConvertible {
 
     /// The length of the iqama update reminder's interval, when the row turns it on.
     var iqamaUpdateInterval: TimeInterval? {
-        switch settings.iqamaReminders.updateInterval {
-        case .weekly:
-            7 * 24 * 3600
-        case .biweekly:
-            14 * 24 * 3600
-        case .monthly:
-            30 * 24 * 3600
-        case .bimonthly:
-            60 * 24 * 3600
-        case .off:
-            nil
-        }
+        settings.iqamaReminders.updateInterval.timeInterval
     }
 
     /// The settings a scheduling run reads, as the row has them.
@@ -80,14 +67,16 @@ extension NotificationSettingsRow {
         all.first { $0.id == id }
     }
 
+    static let defaults = NotificationSettingsRow(
+        "defaults",
+        reaches: [
+            .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .reminderRemoved,
+            .iqamaUpdateRemoved, .calibrate, .beaconAdded
+        ]
+    )
+
     private static let sounds = [
-        NotificationSettingsRow(
-            "defaults",
-            reaches: [
-                .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .reminderRemoved,
-                .iqamaUpdateRemoved, .calibrate, .beaconAdded
-            ]
-        ),
+        defaults,
         NotificationSettingsRow("notification-sounds-off", reaches: [.prayerRemoved, .reminderAdded]) { settings in
             Prayer.allCases.forEach { settings.notificationSounds[$0] = .off }
         },
@@ -95,13 +84,6 @@ extension NotificationSettingsRow {
             Prayer.allCases.forEach { settings.reminderSounds[$0] = .off }
             settings.preAdhanMinutes.imsak = 10
             settings.duhaReminder = .minutes(20)
-        },
-        NotificationSettingsRow("all-off", reaches: [.nothingScheduled, .prayerRemoved, .reminderRemoved]) {
-            $0.disablePrayerSounds()
-        },
-        NotificationSettingsRow("sounds-unset", reaches: [.nothingScheduled, .prayerRemoved, .reminderRemoved]) {
-            $0.notificationSounds = NotificationSounds(rawValue: [:])
-            $0.reminderSounds = ReminderSounds(rawValue: [:])
         },
         NotificationSettingsRow("silencing-adhans", reaches: [.prayerAddedSilent]) {
             $0 = $0.silencingAdhans()
@@ -217,7 +199,7 @@ extension NotificationSettingsRow {
     ]
 
     /// Every kind of notification at once, which spends the budget within three days.
-    private static let everythingOn = NotificationSettingsRow(
+    static let everythingOn = NotificationSettingsRow(
         "everything-on",
         reaches: [
             .prayerAdded, .sideTimeAdded, .iqamaAdded, .jumuahIqamaAdded, .reminderAdded, .reminderSilencedByAlarm, .imsakAdded,
@@ -272,12 +254,12 @@ struct ScheduleVariant: Sendable {
     let origin: ScheduleOrigin
 
     var id: String {
-        row.id + (budget == 58 ? "" : ".budget-\(budget)") + (origin == .absent ? "" : ".origin-\(origin.rawValue)")
+        row.id + (budget == NotificationPlan.defaultBudget ? "" : ".budget-\(budget)") + (origin == .absent ? "" : ".origin-\(origin.rawValue)")
     }
 
     /// Every row on each budget, and every stored origin where the row turns the update reminder on.
     static let all: [ScheduleVariant] = NotificationSettingsRow.all.flatMap { row in
-        [58, 20, 7].flatMap { budget in
+        [NotificationPlan.defaultBudget, 20, 7].flatMap { budget in
             (row.iqamaUpdateInterval == nil ? [ScheduleOrigin.absent] : ScheduleOrigin.allCases).map { ScheduleVariant(row: row, budget: budget, origin: $0) }
         }
     }

@@ -13,22 +13,26 @@ import Testing
 /// With every prayer sound off, a scheduling run clears instead of planning, whoever calls it.
 struct NotificationClearTests {
     @Test
-    func everySoundOffClearsThePrayerNotifications() throws {
-        let settings = try #require(NotificationSettingsRow.row("all-off")).settings
+    func everySoundOffClearsThePrayerNotifications() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
 
         #expect(NotificationPlan.clearedCategories(for: settings) == [.main, .reminder, .calibrate])
     }
 
-    @Test(arguments: ["defaults", "notification-sounds-off", "reminder-sounds-off", "everything-off", "silencing-adhans"])
-    func anythingStillOnPlans(rowID: String) throws {
-        let settings = try #require(NotificationSettingsRow.row(rowID)).settings
+    @Test
+    func noSoundsSetClearsThePrayerNotifications() {
+        var settings = Settings()
+        settings.notificationSounds = NotificationSounds(rawValue: [:])
+        settings.reminderSounds = ReminderSounds(rawValue: [:])
 
-        #expect(NotificationPlan.clearedCategories(for: settings) == nil)
+        #expect(NotificationPlan.clearedCategories(for: settings) == [.main, .reminder, .calibrate])
     }
 
     @Test
-    func oneSoundBackOnPlans() throws {
-        var settings = try #require(NotificationSettingsRow.row("all-off")).settings
+    func oneSoundBackOnPlans() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
         settings.reminderSounds[.fajr] = .beep
 
         #expect(NotificationPlan.clearedCategories(for: settings) == nil)

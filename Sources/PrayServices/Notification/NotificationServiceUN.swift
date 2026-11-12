@@ -218,7 +218,7 @@ private extension NotificationServiceUN {
         #if os(iOS)
         case let .region(center, radius):
             try await userNotification.add(
-                region: NotificationPlan.Trigger.homeRegion(center: center, radius: radius),
+                region: Self.homeRegion(center: center, radius: radius),
                 body: body,
                 title: title,
                 sound: sound,
@@ -308,6 +308,19 @@ private extension NotificationServiceUN {
             Self.sound(named: file)
         }
     }
+
+    #if os(iOS)
+    static func homeRegion(center: Coordinates, radius: Double) -> CLCircularRegion {
+        CLCircularRegion(
+            center: center.location,
+            radius: radius,
+            identifier: "Home"
+        ).apply {
+            $0.notifyOnEntry = false
+            $0.notifyOnExit = true
+        }
+    }
+    #endif
 }
 
 private extension NotificationServiceUN {

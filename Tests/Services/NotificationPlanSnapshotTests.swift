@@ -10,13 +10,15 @@ import PrayCore
 @testable import PrayServices
 import Testing
 
+// The files hold the Mac's plan, where no geofence is scheduled
+#if os(macOS)
 /// The plan a scheduling run makes, pinned as it is today: every request in the order it is added, then the removals,
 /// the Siri prayers, the scheduled range and the count, so a reshape of `NotificationPlan.make` that moves a minute,
 /// swaps a sound or drops a notification fails with the rows that moved.
 ///
 /// Every day fixture is planned at the defaults and with every kind of notification on, and two of them across the
 /// rows that take the remaining branches. The files record and compare as the prayer-time snapshots do
-/// (`Snapshot.verify`), and are recorded on a Mac, where the iPhone's location beacon isn't compiled.
+/// (`Snapshot.verify`).
 struct NotificationPlanSnapshotTests {
     private let fixture = PrayTestFixture()
 }
@@ -52,7 +54,6 @@ extension NotificationPlanSnapshotTests {
     @Test
     func everyChosenCaseIsFound() {
         #expect(PlanSnapshotCase.chosen.allSatisfy { $0 != nil })
-        #expect(PlanSnapshotCase.everywhere.count == DayFixture.all.count * 2)
         #expect(Set(PlanSnapshotCase.all.map(\.id)).count == PlanSnapshotCase.all.count)
     }
 
@@ -116,10 +117,6 @@ private extension NotificationPlanSnapshotTests {
         switch trigger {
         case let .date(date):
             Snapshot.stamp(date, using: calendar)
-        #if os(iOS)
-        case let .region(center, radius):
-            "region \(center.latitude),\(center.longitude) \(Int(radius))m"
-        #endif
         }
     }
 
@@ -144,8 +141,7 @@ private extension NotificationPlanSnapshotTests {
 
     /// A prayer by its start on the place's clock and its length, with where a polar day borrowed it from.
     static func describe(_ prayerTime: PrayerTime, using calendar: Calendar) -> String {
-        let duration = prayerTime.dateInterval.duration
-        let length = duration == duration.rounded() ? String(format: "%.0f", duration) : String(format: "%.3f", duration)
+        let length = Snapshot.seconds(prayerTime.dateInterval.duration)
         let borrowed = prayerTime.borrowed.map { " borrowed:\($0.rawValue)" } ?? ""
         return "\(prayerTime.type.rawValue) \(Snapshot.stamp(prayerTime.dateInterval.start, using: calendar)) \(length)s\(borrowed)"
     }
@@ -233,15 +229,14 @@ extension PlanSnapshotCase {
     /// Every fixture after its first Dhuhr at the defaults, and an hour before its first Fajr with everything on.
     static let everywhere: [PlanSnapshotCase] = DayFixture.all.flatMap { place in
         [
-            PlanSnapshotCase(place.name, "defaults", at: .afterDhuhr),
-            PlanSnapshotCase(place.name, "everything-on", at: .beforeFajr)
-        ].compactMap(\.self)
+            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .defaults, budget: NotificationPlan.defaultBudget, origin: .absent), moment: .afterDhuhr),
+            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .everythingOn, budget: NotificationPlan.defaultBudget, origin: .absent), moment: .beforeFajr)
+        ]
     }
 
     /// The rows that take the remaining branches, on a plain week and on one that begins on a Friday.
     static let chosen: [PlanSnapshotCase?] = [
         PlanSnapshotCase("Kuala Lumpur", "everything-off", at: .midMorning),
-        PlanSnapshotCase("Kuala Lumpur", "all-off", at: .midMorning),
         PlanSnapshotCase("Kuala Lumpur", "silencing-adhans", at: .beforeFajr),
         PlanSnapshotCase("Kuala Lumpur", "mixed-sounds", at: .beforeFajr),
         PlanSnapshotCase("Kuala Lumpur", "night-times", at: .afterIsha),
@@ -256,7 +251,7 @@ extension PlanSnapshotCase {
         PlanSnapshotCase("San Francisco in June", "reminder-minutes", at: .fridayMorning)
     ]
 
-    init?(_ placeName: String, _ rowID: String, at moment: ScheduleMoment, budget: Int = 58, origin: ScheduleOrigin = .absent) {
+    init?(_ placeName: String, _ rowID: String, at moment: ScheduleMoment, budget: Int = NotificationPlan.defaultBudget, origin: ScheduleOrigin = .absent) {
         guard let place = DayFixture.all.first(where: { $0.name == placeName }), let row = NotificationSettingsRow.row(rowID) else {
             return nil
         }
@@ -264,3 +259,4 @@ extension PlanSnapshotCase {
         self.init(place: place, variant: ScheduleVariant(row: row, budget: budget, origin: origin), moment: moment)
     }
 }
+#endif

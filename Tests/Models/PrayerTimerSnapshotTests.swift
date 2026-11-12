@@ -80,7 +80,7 @@ extension PrayerTimerSnapshotTests {
                         let byPrayerDay = timer.prayerDay.stage(of: prayerTime, at: timer.date)
                         let byListedDay = timer.listedDay.stage(of: prayerTime, at: timer.date)
                         guard byPrayerDay != byListedDay else { return nil }
-                        return "\(place.name) \(row.id) \(Self.stamp(timer.date, using: calendar)) \(prayerTime.type): \(byPrayerDay), \(byListedDay)"
+                        return "\(place.name) \(row.id) \(Snapshot.stamp(timer.date, using: calendar)) \(prayerTime.type): \(byPrayerDay), \(byListedDay)"
                     }
                 }
             }
@@ -133,39 +133,24 @@ private extension PrayerTimerSnapshotTests {
     }
 
     static func row(at moment: Date, timer: PrayerTimer?, using calendar: Calendar) -> String {
-        guard let timer else { return [stamp(moment, using: calendar), "nil"].joined(separator: "\t") }
+        guard let timer else { return [Snapshot.stamp(moment, using: calendar), "nil"].joined(separator: "\t") }
 
         return [
-            stamp(timer.date, using: calendar),
-            String(stamp(timer.prayerDay.date, using: calendar).prefix(10)),
+            Snapshot.stamp(timer.date, using: calendar),
+            String(Snapshot.stamp(timer.prayerDay.date, using: calendar).prefix(10)),
             timer.type.rawValue,
             timer.timerType.rawValue,
-            stamp(timer.countdownDate, using: calendar),
-            seconds(timer.timeRemaining),
-            seconds(timer.timeDuration),
+            Snapshot.stamp(timer.countdownDate, using: calendar),
+            Snapshot.seconds(timer.timeRemaining),
+            Snapshot.seconds(timer.timeDuration),
             String(format: "%.6f", timer.progressRemaining),
             String(format: "%.6f", timer.dangerZone),
             "\(timer.isDangerZone)",
             "\(timer.isJumuah)",
-            timer.stopwatchEnd.map { stamp($0, using: calendar) } ?? "-",
-            timer.turnover.map { stamp($0, using: calendar) } ?? "-",
+            timer.stopwatchEnd.map { Snapshot.stamp($0, using: calendar) } ?? "-",
+            timer.turnover.map { Snapshot.stamp($0, using: calendar) } ?? "-",
             "\(timer.listsTomorrow)"
         ].joined(separator: "\t")
-    }
-
-    /// A date on the place's clock with its offset from UTC, which tells the two passes of a repeated hour apart.
-    static func stamp(_ date: Date, using calendar: Calendar) -> String {
-        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        let offset = calendar.timeZone.secondsFromGMT(for: date)
-
-        return String(format: "%04d-%02d-%02d ", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
-            + String(format: "%02d:%02d:%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
-            + (offset < 0 ? "-" : "+")
-            + String(format: "%02d%02d", abs(offset) / 3600, abs(offset) % 3600 / 60)
-    }
-
-    static func seconds(_ interval: TimeInterval) -> String {
-        interval == interval.rounded() ? String(format: "%.0f", interval) : String(format: "%.3f", interval)
     }
 }
 

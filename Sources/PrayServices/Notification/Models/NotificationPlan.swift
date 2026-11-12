@@ -6,7 +6,6 @@
 //  Copyright © 2026 Zamzam Inc. All rights reserved.
 //
 
-import CoreLocation
 import Foundation
 import PrayCore
 import UserNotifications
@@ -30,6 +29,8 @@ struct NotificationPlan: Equatable, Sendable {
 
 extension NotificationPlan {
     static let iqamaUpdateIdentifier = "update-interval-iqama-reminder"
+    /// Unofficial limit for scheduling local notifications
+    static let defaultBudget = 58
 
     struct Request: Equatable, Sendable {
         let identifier: String
@@ -94,7 +95,7 @@ extension NotificationPlan {
         requestHash: PrayerRequestHash,
         now: Date,
         iqamaUpdateOrigin: Date?,
-        budget: Int = 58 // Unofficial limit for scheduling local notifications
+        budget: Int = Self.defaultBudget
     ) -> NotificationPlan {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone)
         var draft = Draft(settings: settings, calendar: calendar, now: now, lastScheduled: now + .weeks(1, calendar), counter: budget)
@@ -273,7 +274,7 @@ private extension Draft {
     }
 
     mutating func scheduleCalibrate(with requestHash: PrayerRequestHash) {
-        // Ensure more prayer notifications are schedueled beyond limit
+        // Ensures more prayer notifications are scheduled beyond the limit
         requests.append(
             NotificationPlan.Request(
                 identifier: "calibrate",
@@ -308,7 +309,7 @@ private extension Draft {
     #endif
 }
 
-private extension IqamaReminders.UpdateInterval {
+extension IqamaReminders.UpdateInterval {
     var timeInterval: TimeInterval? {
         switch self {
         case .weekly:
@@ -361,30 +362,13 @@ extension NotificationPlan.Payload {
     func userInfo() throws -> [String: Any] {
         switch self {
         case let .prayerTime(prayerTime):
-            // Encode prayer time for later retrieval
             ["prayer_time": try prayerTime.encode()]
         case let .iqamaUpdateOrigin(date):
             ["origin_at": date.timeIntervalSince1970]
         case let .requestHash(requestHash):
-            // Create hash to ensure duplicate requests only run when necessary
             ["prayer_request_hash": try requestHash.encode()]
         case let .coordinates(coordinates):
             ["coordinates": coordinates.description]
         }
     }
 }
-
-#if os(iOS)
-extension NotificationPlan.Trigger {
-    static func homeRegion(center: Coordinates, radius: Double) -> CLCircularRegion {
-        CLCircularRegion(
-            center: center.location,
-            radius: radius,
-            identifier: "Home"
-        ).apply {
-            $0.notifyOnEntry = false
-            $0.notifyOnExit = true
-        }
-    }
-}
-#endif

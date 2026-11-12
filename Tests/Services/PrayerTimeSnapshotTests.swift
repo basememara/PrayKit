@@ -388,6 +388,21 @@ private extension PrayerAdjustments {
 enum Snapshot {
     static let folder = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent().appending(path: "Snapshots")
 
+    /// A date on the place's clock with its offset from UTC, which tells the two passes of a repeated hour apart.
+    static func stamp(_ date: Date, using calendar: Calendar) -> String {
+        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let offset = calendar.timeZone.secondsFromGMT(for: date)
+
+        return String(format: "%04d-%02d-%02d ", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+            + String(format: "%02d:%02d:%02d", parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0)
+            + (offset < 0 ? "-" : "+")
+            + String(format: "%02d%02d", abs(offset) / 3600, abs(offset) % 3600 / 60)
+    }
+
+    static func seconds(_ interval: TimeInterval) -> String {
+        interval == interval.rounded() ? String(format: "%.0f", interval) : String(format: "%.3f", interval)
+    }
+
     /// Records a missing snapshot, or fails with every row that moved and writes the new one beside it.
     static func verify(_ lines: [String], at url: URL, sourceLocation: SourceLocation = #_sourceLocation) throws {
         let snapshot = lines.joined(separator: "\n") + "\n"

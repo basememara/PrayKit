@@ -44,36 +44,43 @@ public extension PrayerTimer {
     static func placeholder(from prayerDay: PrayerDay) -> PrayerTimer {
         let date = Date.now
 
-        guard let prayerTimer = PrayerTimer(
+        // A day with nothing under way at this moment has no timer, so a sample hour around it stands in
+        guard let prayerTimer = placeholder(at: date, using: prayerDay, preAdhanMinutes: PreAdhanMinutes(rawValue: [:]))
+            ?? placeholder(at: date, using: .sampleHour(around: date), preAdhanMinutes: PreAdhanMinutes(rawValue: [Prayer.asr.rawValue: 30]))
+        else {
+            preconditionFailure("The sample hour has a prayer under way and one to come at its own moment, so it has a timer")
+        }
+
+        return prayerTimer
+    }
+}
+
+private extension PrayerTimer {
+    static func placeholder(at date: Date, using prayerDay: PrayerDay, preAdhanMinutes: PreAdhanMinutes) -> PrayerTimer? {
+        PrayerTimer(
             at: date,
             using: prayerDay,
             iqamaTimes: IqamaTimes(),
             isIqamaTimerEnabled: false,
             stopwatchMinutes: 0,
-            preAdhanMinutes: PreAdhanMinutes(rawValue: [:]),
+            preAdhanMinutes: preAdhanMinutes,
             sunriseAfterIsha: false,
             timeZone: .current,
             isPlaceholder: true
-        ) else {
-            let countdownDate = Date.now + .hours(1)
-            return PrayerTimer(
-                date: date,
-                type: .asr,
-                timerType: .countdown,
-                prayerDay: prayerDay,
-                countdownDate: countdownDate,
-                timeRange: date...countdownDate,
-                timeRemaining: countdownDate.timeIntervalSince(date),
-                timeDuration: DateInterval(start: date, end: countdownDate).duration,
-                progressRemaining: 0.5,
-                dangerZone: 0.25,
-                isDangerZone: false,
-                isJumuah: false,
-                timeZone: .current,
-                isPlaceholder: true
-            )
-        }
+        )
+    }
+}
 
-        return prayerTimer
+private extension PrayerDay {
+    /// Dhuhr half over at the moment and Asr an hour after it, with a reminder zone a quarter of Dhuhr long.
+    static func sampleHour(around date: Date) -> PrayerDay {
+        PrayerDay(
+            date: date.startOfDay(using: .current),
+            times: [
+                PrayerTime(type: .dhuhr, dateInterval: DateInterval(start: date - .hours(1), end: date + .hours(1))),
+                PrayerTime(type: .asr, dateInterval: DateInterval(start: date + .hours(1), end: date + .hours(2)))
+            ],
+            tomorrow: []
+        )
     }
 }

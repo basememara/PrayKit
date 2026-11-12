@@ -514,6 +514,25 @@ extension PrayerDayRuleTests {
         #expect(day.contains(moment))
         #expect(PrayerTimer.mock(at: moment, prayerDay: day) != nil)
     }
+
+    /// A widget placeholder needs a timer even from a day with nothing under way, which gives none of its own.
+    @Test
+    func aPlaceholderFromADayWithoutATimerCountsAnHourToASampleAsr() {
+        let timer = PrayerTimer.placeholder(from: PrayerDay(date: .now, times: [], tomorrow: []))
+
+        #expect(timer.isPlaceholder)
+        #expect(timer.type == .asr)
+        #expect(timer.timerType == .countdown)
+        #expect(abs(timer.countdownDate.timeIntervalSince(timer.date) - 3600) <= 0.001)
+        #expect(abs(timer.timeRemaining - 3600) <= 0.001)
+        #expect(abs(timer.progressRemaining - 0.5) <= 0.0001)
+        #expect(abs(timer.dangerZone - 0.25) <= 0.0001)
+        #expect(!timer.isDangerZone)
+        #expect(!timer.isJumuah)
+        #expect(!timer.isNamedJumuah)
+        #expect(timer.stopwatchEnd == nil)
+        #expect(!timer.listsTomorrow)
+    }
 }
 
 // MARK: - What screens list

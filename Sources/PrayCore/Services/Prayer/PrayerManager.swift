@@ -76,7 +76,8 @@ public extension PrayerManager {
     enum Expanded: Sendable {
         /// Every hour of each prayer, then a step at a time through its last hour.
         case hourly(finalHourStep: TimeInterval)
-        case intervals(TimeInterval)
+        /// Each prayer in that many equal steps, or only its start at 0.
+        case intervals(Int)
         case none // swiftlint:disable:this discouraged_none_name
     }
 
@@ -160,6 +161,38 @@ public extension PrayerManager {
 
 // MARK: - Helpers
 
+extension PrayerManager.Expanded {
+    /// The moments a prayer under way adds to the timeline: the mode's own, then each change in its countdown.
+    func moments(in prayerTime: PrayerTime, settings: Settings, calendar: Calendar) -> [Date] {
+        let window = prayerTime.dateInterval
+        let steps: [Date]
+
+        switch self {
+        case let .hourly(finalHourStep):
+            let iqama = settings.timerIqama(for: prayerTime, using: calendar)
+            let targets = [window.end] + [iqama].compactMap(\.self).filter { window.contains($0) }
+
+            steps = [window.start, window.end - .hours(1)]
+                // Half hours counted back from the next prayer, so a face showing the nearest hour left turns as it changes
+                + Self.dates(from: window.end - .hours(1) - .minutes(30), to: window.start, by: -3600)
+                // The last hour before each moment the timer counts to, in steps, for a face that draws the minutes left
+                // without a live timer
+                + targets.flatMap { Self.dates(from: Swift.max(window.start, $0 - .hours(1)), to: $0, by: finalHourStep) }
+        case let .intervals(count):
+            steps = count > 0 ? Self.dates(from: window.start, to: window.end, by: window.duration / Double(count)) : [window.start]
+        case .none:
+            return []
+        }
+
+        return steps + settings.expandedTimeline(for: prayerTime, using: calendar)
+    }
+
+    /// Strided in seconds since 1970 rather than over `Date`, whose stride adds the step each time and rounds differently.
+    private static func dates(from start: Date, to end: Date, by step: TimeInterval) -> [Date] {
+        stride(from: start.timeIntervalSince1970, to: end.timeIntervalSince1970, by: step).map(Date.init(timeIntervalSince1970:))
+    }
+}
+
 /// How a timeline builds its timers from the settings.
 private struct TimerContext: Sendable {
     let settings: Settings
@@ -172,10 +205,6 @@ private struct TimerContext: Sendable {
     /// A timer from whichever day holds the moment, since a reminder before Fajr belongs to the night before.
     func timer(_ date: Date, in days: [PrayerDay]) -> PrayerTimer? {
         days.first { $0.contains(date) }.flatMap { timer(date, $0) }
-    }
-
-    func expandedTimeline(_ prayerTime: PrayerTime, _ calendar: Calendar) -> [Date] {
-        settings.expandedTimeline(for: prayerTime, using: calendar)
     }
 }
 
@@ -299,15 +328,7 @@ private extension PrayerManager {
                 guard let entry = context.timer(next.dateInterval.start, prayerDay) else { return }
                 result.append(entry)
             }
-
-        switch expanded {
-        case let .hourly(finalHourStep):
-            entries = entries.expandedHourly(using: context, in: days, calendar: calendar, finalHourStep: finalHourStep)
-        case let .intervals(progress):
-            entries = entries.expanded(using: context, in: days, calendar: calendar, progressIntervals: progress)
-        case .none:
-            break
-        }
+            .expanded(by: expanded, using: context, in: days, calendar: calendar)
 
         // Midnight changes no prayer, but it turns the calendar date and, without auto-increment, the Hijri date the
         // faces show, and the turnover, which a late Isha puts after it, turns the lists to tomorrow's. Each goes in
@@ -373,71 +394,15 @@ private extension Array where Element == PrayerTimer {
 }
 
 private extension Array where Element == PrayerTimer {
-    func expanded(using context: TimerContext, in days: [PrayerDay], calendar: Calendar, progressIntervals: TimeInterval) -> Self {
-        reduce(into: []) { result, entry in
-            guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
+    /// The timers of the moments each entry's prayer under way adds, from whichever day holds each, in date order.
+    /// Unexpanded, the entries stay as they are.
+    func expanded(by mode: PrayerManager.Expanded, using context: TimerContext, in days: [PrayerDay], calendar: Calendar) -> Self {
+        if case .none = mode { return self }
 
-            // Add entries to update progress at intervals
-            if progressIntervals > 0 {
-                result += stride(
-                    from: currentPrayer.dateInterval.start.timeIntervalSince1970,
-                    to: currentPrayer.dateInterval.end.timeIntervalSince1970,
-                    by: currentPrayer.dateInterval.duration / progressIntervals
-                ).compactMap { timeInterval in
-                    context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
-                }
-            } else if let prayerTimer = context.timer(currentPrayer.dateInterval.start, in: days) {
-                result.append(prayerTimer)
-            }
-
-            result += context
-                .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, in: days) }
-        }
-        .removeDuplicates()
-        .sorted(by: \.date)
-    }
-}
-
-private extension Array where Element == PrayerTimer {
-    func expandedHourly(using context: TimerContext, in days: [PrayerDay], calendar: Calendar, finalHourStep: TimeInterval) -> Self {
-        reduce(into: []) { result, entry in
-            guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
-
-            result += [
-                context.timer(currentPrayer.dateInterval.start, in: days),
-                context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap(\.self)
-
-            // Half hours counted back from the next prayer, so a face showing the nearest hour left turns as it changes
-            result += stride(
-                from: (currentPrayer.dateInterval.end - .hours(1) - .minutes(30)).timeIntervalSince1970,
-                to: currentPrayer.dateInterval.start.timeIntervalSince1970,
-                by: -3600
-            ).compactMap { timeInterval in
-                context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
-            }
-
-            // The last hour before each moment the timer counts to, in steps, for a face that draws the minutes left
-            // without a live timer
-            let iqama = context.settings.timerIqama(for: currentPrayer, using: calendar)
-            let targets = [currentPrayer.dateInterval.end] + [iqama].compactMap(\.self).filter { currentPrayer.dateInterval.contains($0) }
-
-            result += targets.flatMap { target in
-                stride(
-                    from: Swift.max(currentPrayer.dateInterval.start, target - .hours(1)).timeIntervalSince1970,
-                    to: target.timeIntervalSince1970,
-                    by: finalHourStep
-                ).compactMap { timeInterval in
-                    context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
-                }
-            }
-
-            result += context
-                .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, in: days) }
-        }
-        .removeDuplicates()
-        .sorted(by: \.date)
+        return compactMap { $0.prayerDay.current(at: $0.date) }
+            .flatMap { mode.moments(in: $0, settings: context.settings, calendar: calendar) }
+            .compactMap { context.timer($0, in: days) }
+            .removeDuplicates()
+            .sorted(by: \.date)
     }
 }

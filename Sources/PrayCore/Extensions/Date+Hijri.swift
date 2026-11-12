@@ -52,16 +52,17 @@ public enum HijriMonthWidth: Sendable {
 public extension Date {
     /// The Hijri day then its month, such as 27 Raj., in every locale; a day-and-month template lets the locale put
     /// the month first. The month is written as it stands alone, which English abbreviates differently inside a
-    /// date (Rajb.).
+    /// date (Rajb.). Spaces inside the month are no-break, so a line breaks only between the day and the month
+    /// (2 / Jum. II).
     func hijriDayAndMonth(
         month: HijriMonthWidth = .abbreviated,
         offset: Int = 0,
         timeZone: TimeZone,
         locale: Locale = .current
     ) -> String {
-        ["d", month.template]
-            .map { hijriString(template: $0, offset: offset, timeZone: timeZone, locale: locale) }
-            .joined(separator: " ")
+        let day = hijriString(template: "d", offset: offset, timeZone: timeZone, locale: locale)
+        let monthName = hijriString(template: month.template, offset: offset, timeZone: timeZone, locale: locale)
+        return "\(day) \(monthName.replacing(" ", with: "\u{00A0}"))"
     }
 }
 

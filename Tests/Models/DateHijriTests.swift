@@ -45,8 +45,18 @@ extension DateHijriTests {
         #expect(Self.israMiraj.hijriDayAndMonth(month: .wide, timeZone: .gmt, locale: locale) == expected.wide)
     }
 
+    /// A month written in two words keeps them together with a no-break space, so a narrow cell wraps between the
+    /// day and the month, never inside the month.
+    @Test(arguments: DayAndMonth.twoWordMonth)
+    func aTwoWordMonthWrapsOnlyAfterTheDay(expected: DayAndMonth) {
+        let locale = Locale(identifier: expected.locale)
+
+        #expect(Self.jumadaII.hijriDayAndMonth(timeZone: .gmt, locale: locale) == expected.abbreviated)
+        #expect(Self.jumadaII.hijriDayAndMonth(month: .wide, timeZone: .gmt, locale: locale) == expected.wide)
+    }
+
     /// Arabic and Turkish write the day first already, so through a Hijri year the day-first form is what their own
-    /// day-and-month template writes.
+    /// day-and-month template writes, apart from the no-break spaces inside a month.
     @Test(arguments: ["ar_SA", "ar", "tr_TR"])
     func aDayFirstLocaleKeepsWhatItsOwnTemplateWrites(locale identifier: String) {
         let locale = Locale(identifier: identifier)
@@ -54,7 +64,7 @@ extension DateHijriTests {
             .map { Self.israMiraj + Double($0) * 86_400 }
             .flatMap { day in
                 [(HijriMonthWidth.abbreviated, "MMMd"), (.wide, "MMMMd")].compactMap { width, template in
-                    let dayFirst = day.hijriDayAndMonth(month: width, timeZone: .gmt, locale: locale)
+                    let dayFirst = day.hijriDayAndMonth(month: width, timeZone: .gmt, locale: locale).replacing("\u{00A0}", with: " ")
                     let templated = day.hijriString(template: template, timeZone: .gmt, locale: locale)
                     return dayFirst == templated ? nil : "\(dayFirst) vs \(templated)"
                 }
@@ -80,8 +90,16 @@ extension DateHijriTests {
             DayAndMonth(locale: "ar_SA", abbreviated: "٢٧ رجب", wide: "٢٧ رجب"),
             DayAndMonth(locale: "tr_TR", abbreviated: "27 Recep", wide: "27 Recep")
         ]
+
+        static let twoWordMonth = [
+            DayAndMonth(locale: "en_US", abbreviated: "1 Jum.\u{00A0}II", wide: "1 Jumada\u{00A0}II"),
+            DayAndMonth(locale: "ar_SA", abbreviated: "١ جمادى\u{00A0}الآخرة", wide: "١ جمادى\u{00A0}الآخرة")
+        ]
     }
 
     /// 5 January 2027 at noon UTC, 27 Rajab 1448.
     static let israMiraj = Date(timeIntervalSince1970: 1_799_150_400)
+
+    /// 31 October 2027 at noon UTC, 1 Jumada II 1449.
+    static let jumadaII = Date(timeIntervalSince1970: 1_824_984_000)
 }

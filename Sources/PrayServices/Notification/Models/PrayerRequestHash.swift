@@ -23,6 +23,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let duhaReminder: DuhaType?
     let isGPSEnabled: Bool
     let geofenceRadius: Double
+    let enable24hTimeFormat: Bool
 
     init(request: PrayerAPI.Request, dateInterval: DateInterval, settings: Settings) {
         self.request = request
@@ -36,6 +37,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
         self.duhaReminder = settings.duhaReminder
         self.isGPSEnabled = settings.followsLocation
         self.geofenceRadius = settings.geofenceRadius
+        self.enable24hTimeFormat = settings.enable24hTimeFormat
 
         let calendar = Calendar(
             identifier: .gregorian,

@@ -127,12 +127,11 @@ private extension NotificationServiceUN {
             iqamaUpdateOrigin: iqamaUpdateOrigin
         )
 
-        await apply(plan, timeZone: timeZone, calendar: calendar, regionName: state.place?.regionName)
+        let timeFormatter = DateFormatter.prayerTime(is24Hour: settings.enable24hTimeFormat, using: timeZone)
+        await apply(plan, timeFormatter: timeFormatter, calendar: calendar, regionName: state.place?.regionName)
     }
 
-    func apply(_ plan: NotificationPlan, timeZone: TimeZone, calendar: Calendar, regionName: String?) async {
-        let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: timeZone)
-
+    func apply(_ plan: NotificationPlan, timeFormatter: DateFormatter, calendar: Calendar, regionName: String?) async {
         for removal in plan.removals {
             switch removal {
             case let .identifier(identifier):
@@ -162,7 +161,7 @@ private extension NotificationServiceUN {
 
         for request in plan.requests {
             do {
-                try await add(request, timeFormatStyle: timeFormatStyle, calendar: calendar)
+                try await add(request, timeFormatter: timeFormatter, calendar: calendar)
             } catch {
                 log.error("Failed to create a notifications for \"\(request.identifier)\"", error: error)
             }
@@ -179,7 +178,7 @@ private extension NotificationServiceUN {
         let siriShortcuts = plan.shortcutPrayers.map { prayerTime in
             INRelevantShortcut(
                 for: prayerTime,
-                formatStyle: timeFormatStyle,
+                timeFormatter: timeFormatter,
                 calendar: calendar,
                 region: regionName,
                 localized: localized,
@@ -198,8 +197,8 @@ private extension NotificationServiceUN {
         #endif
     }
 
-    func add(_ request: NotificationPlan.Request, timeFormatStyle: Date.FormatStyle, calendar: Calendar) async throws {
-        let body = request.body.text(localized: localized, timeFormatStyle: timeFormatStyle, calendar: calendar)
+    func add(_ request: NotificationPlan.Request, timeFormatter: DateFormatter, calendar: Calendar) async throws {
+        let body = request.body.text(localized: localized, timeFormatter: timeFormatter, calendar: calendar)
         let title = request.body.title(localized: localized)
         let sound = request.sound.map(Self.sound(for:))
         let category = request.category.rawValue
@@ -352,13 +351,13 @@ public extension PrayerTime {
 private extension INRelevantShortcut {
     convenience init(
         for prayerTime: PrayerTime,
-        formatStyle: Date.FormatStyle,
+        timeFormatter: DateFormatter,
         calendar: Calendar,
         region: String?,
         localized: NotificationServiceLocalizable,
         userInfo: [AnyHashable: Any]
     ) {
-        let title = localized.prayerNotificationBody(for: prayerTime, at: prayerTime.dateInterval.start.formatted(formatStyle), using: calendar)
+        let title = localized.prayerNotificationBody(for: prayerTime, at: timeFormatter.string(from: prayerTime.dateInterval.start), using: calendar)
         let subtitle = region
 
         let userActivity = NSUserActivity(activityType: "io.zamzam.Pray-Watch.prayer-time")

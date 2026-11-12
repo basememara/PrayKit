@@ -328,13 +328,13 @@ private extension IqamaReminders.UpdateInterval {
 // MARK: - Rendering
 
 extension NotificationPlan.Body {
-    /// The words the notification shows, in the app's language and on the place's clock.
-    func text(localized: NotificationServiceLocalizable, timeFormatStyle: Date.FormatStyle, calendar: Calendar) -> String {
+    /// The words the notification shows, in the app's language, with times written by `timeFormatter` on the place's clock.
+    func text(localized: NotificationServiceLocalizable, timeFormatter: DateFormatter, calendar: Calendar) -> String {
         switch self {
         case let .prayer(prayerTime):
             localized.prayerNotificationBody(
                 for: prayerTime,
-                at: prayerTime.dateInterval.start.formatted(timeFormatStyle),
+                at: timeFormatter.string(from: prayerTime.dateInterval.start),
                 using: calendar
             )
         case let .iqama(prayerTime, minutes, isJumuah):
@@ -342,7 +342,7 @@ extension NotificationPlan.Body {
         case let .reminder(prayerTime, minutes):
             localized.prayerNotificationReminder(for: prayerTime, minutes: minutes, using: calendar)
         case let .duha(reminderTime):
-            localized.duhaNotificationBody(at: reminderTime.formatted(timeFormatStyle))
+            localized.duhaNotificationBody(at: timeFormatter.string(from: reminderTime))
         case .iqamaUpdate:
             "Check masjid iqama times"
         case .calibrate:

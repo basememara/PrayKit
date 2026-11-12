@@ -46,6 +46,32 @@ extension SettingsStorageTests {
         #expect(state.place == expectedPlace)
     }
 
+    /// The settings 28.1.0 added, which the first fixture predates.
+    @Test
+    func readsWhat28_1Wrote() {
+        Self.golden28_1.forEach { defaults.set($0.value, forKey: $0.key) }
+
+        let settings = storage.load().document.settings
+        #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["Europe/Istanbul", "America/Winnipeg"]))
+        #expect(settings.polarResolution == .nearestDay)
+        #expect(settings.prayerActivity == .inCar)
+        #expect(settings.matchesAppIcon)
+        #expect(settings.isFullAdhanEnabled)
+        #expect(settings.alarms == [.fajr])
+        #expect(settings.isPlacePinned)
+    }
+
+    @Test
+    func writesWhat28_1Reads() throws {
+        var settings = Settings.everyFieldChanged
+        settings.alarms = [.fajr]
+        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = settings }, place: $0.place) }
+
+        for (key, expected) in Self.golden28_1 {
+            try expectStored(key, equals: expected)
+        }
+    }
+
     /// New installs and upgrades start without the Live Activity, even with the old on/off key set; only a device that
     /// picks a mode has it.
     @Test(arguments: [PrayerActivityMode.always, .inCar])
@@ -298,6 +324,20 @@ private extension SettingsStorageTests {
             "stopwatchMinutes": 20,
             "sunriseAfterIsha": true,
             "theme": "aqua"
+        ]
+    }
+
+    /// What 28.1.0 stores for `Settings.everyFieldChanged` in the settings it added.
+    static var golden28_1: [String: Any] {
+        [
+            // One prayer, since a set's encoded order isn't stable
+            "alarms": Data(#"["fajr"]"#.utf8),
+            "isFullAdhanEnabled": true,
+            "isPlacePinned": true,
+            "manualMethod": Data(#"{"keptTimeZones":["America\/Winnipeg","Europe\/Istanbul"]}"#.utf8),
+            "matchesAppIcon": true,
+            "polarResolution": "AqrabYaum",
+            "prayerActivity": "inCar"
         ]
     }
 

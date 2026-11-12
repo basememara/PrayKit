@@ -344,7 +344,7 @@ extension NotificationPlan.Body {
         case let .duha(reminderTime):
             localized.duhaNotificationBody(at: timeFormatter.string(from: reminderTime))
         case .iqamaUpdate:
-            "Check masjid iqama times"
+            localized.iqamaUpdateNotificationBody
         case .calibrate:
             localized.calibrateNotificationBody
         case .beacon:

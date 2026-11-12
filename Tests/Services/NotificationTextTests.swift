@@ -26,6 +26,12 @@ struct NotificationTextTests {
     func theDuhaReminderIsWrittenOnTheAppsClock(is24Hour: Bool, expected: String) throws {
         #expect(text(of: .duha(at: try date(hour: 7, minute: 45)), is24Hour: is24Hour) == expected)
     }
+
+    @Test
+    func theIqamaUpdateIsWrittenInTheAppsLanguage() throws {
+        let request = try #require(try iqamaUpdateRequest())
+        #expect(text(of: request.body, is24Hour: false) == "Check your masjid's iqama times")
+    }
 }
 
 // MARK: - Helpers
@@ -37,6 +43,27 @@ private extension NotificationTextTests {
 
     func date(hour: Int, minute: Int) throws -> Date {
         try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: hour, minute: minute)))
+    }
+
+    /// The iqama-update request of a plan whose settings have an iqama and a weekly update reminder.
+    func iqamaUpdateRequest() throws -> NotificationPlan.Request? {
+        let place = Place(coordinates: Coordinates(latitude: 43.6510, longitude: -79.3470), timeZone: timeZone, regionName: nil, fixedAt: nil)
+        let now = try date(hour: 12, minute: 0)
+        var settings = Settings()
+        settings.iqamaTimes.asr = .minutes(10)
+        settings.iqamaReminders.updateInterval = .weekly
+        let request = try #require(PrayerAPI.Request(settings: settings, place: place))
+        let week = DateInterval(start: now, duration: 7 * 24 * 3600)
+        let plan = NotificationPlan.make(
+            days: [],
+            settings: settings,
+            request: request,
+            requestHash: PrayerRequestHash(request: request, dateInterval: week, settings: settings),
+            now: now,
+            iqamaUpdateOrigin: nil
+        )
+
+        return plan.requests.first { $0.identifier == NotificationPlan.iqamaUpdateIdentifier }
     }
 
     func text(of body: NotificationPlan.Body, is24Hour: Bool) -> String {
@@ -51,6 +78,7 @@ private struct EnglishNotificationText: NotificationServiceLocalizable {
     let beaconNotificationBody = "Beacon"
     let beaconNotificationTitle = "Beacon title"
     let calibrateNotificationBody = "Calibrate"
+    let iqamaUpdateNotificationBody = "Check your masjid's iqama times"
 
     func prayerNotificationBody(for prayerTime: PrayerTime, at time: String, using calendar: Calendar) -> String {
         "\(prayerTime.type.rawValue.capitalized) at \(time)"

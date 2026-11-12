@@ -392,6 +392,7 @@ public protocol NotificationServiceLocalizable: Sendable {
     var beaconNotificationBody: String { get }
     var beaconNotificationTitle: String { get }
     var calibrateNotificationBody: String { get }
+    var iqamaUpdateNotificationBody: String { get }
 
     /// Names the prayer on its own date in `calendar`, the place's, so a Friday Dhuhr is Jumuah wherever the device is.
     func prayerNotificationBody(for prayerTime: PrayerTime, at time: String, using calendar: Calendar) -> String

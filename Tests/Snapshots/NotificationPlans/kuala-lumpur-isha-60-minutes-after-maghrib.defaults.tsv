@@ -62,6 +62,7 @@ entry	kind	fire	body	sound	level	category	payload
 2026-10-17-asr-reminder	add	2026-10-17 15:56:00+0800	reminder asr 2026-10-17 16:16:00+0800 9840s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
 2026-10-17-maghrib	add	2026-10-17 19:00:00+0800	prayer maghrib 2026-10-17 19:00:00+0800 3600s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
 calibrate	add	2026-10-17 07:00:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+calibrate-beacon	add	region 3.139,101.687 75000m	beacon	default	-	beaconCategory	coordinates 3.139,101.687
 2026-10-12-midnight	remove
 2026-10-12-midnight-reminder	remove
 2026-10-12-lastThird	remove

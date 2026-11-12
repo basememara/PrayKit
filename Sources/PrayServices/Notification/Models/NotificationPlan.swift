@@ -44,9 +44,7 @@ extension NotificationPlan {
 
     enum Trigger: Equatable, Sendable {
         case date(Date)
-        #if os(iOS)
         case region(center: Coordinates, radius: Double)
-        #endif
     }
 
     /// The wording a request shows, named rather than written out, since the words belong to the app's language.
@@ -95,6 +93,7 @@ extension NotificationPlan {
         requestHash: PrayerRequestHash,
         now: Date,
         iqamaUpdateOrigin: Date?,
+        schedulesBeacon: Bool,
         budget: Int = Self.defaultBudget
     ) -> NotificationPlan {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone)
@@ -107,9 +106,10 @@ extension NotificationPlan {
         draft.endRangeWhereTheBudgetStopped()
         draft.scheduleIqamaUpdate(from: iqamaUpdateOrigin ?? now)
         draft.scheduleCalibrate(with: requestHash)
-        #if os(iOS)
-        draft.scheduleBeacon(at: request.coordinates)
-        #endif
+
+        if schedulesBeacon {
+            draft.scheduleBeacon(at: request.coordinates)
+        }
 
         return NotificationPlan(
             requests: draft.requests,
@@ -288,7 +288,6 @@ private extension Draft {
         )
     }
 
-    #if os(iOS)
     mutating func scheduleBeacon(at coordinates: Coordinates) {
         if settings.followsLocation, settings.geofenceRadius > 0 {
             requests.append(
@@ -306,7 +305,6 @@ private extension Draft {
             removals.append(.category(.beacon))
         }
     }
-    #endif
 }
 
 extension IqamaReminders.UpdateInterval {

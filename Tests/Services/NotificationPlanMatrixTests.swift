@@ -54,12 +54,12 @@ extension NotificationPlanMatrixTests {
         }
 
         let missed = NotificationSettingsRow.all.compactMap { row -> String? in
-            let unreached = row.reaches.intersection(ScheduleBranch.compiled).subtracting(reached[row.id] ?? [])
+            let unreached = row.reaches.subtracting(reached[row.id] ?? [])
             return unreached.isEmpty ? nil : "\(row.id) misses \(unreached.map(\.rawValue).sorted().joined(separator: ", "))"
         }
 
         #expect(missed.isEmpty, "Rows that miss a branch they are there for: \(missed.joined(separator: "; "))")
-        #expect(reached.values.reduce(into: Set()) { $0.formUnion($1) } == ScheduleBranch.compiled)
+        #expect(reached.values.reduce(into: Set()) { $0.formUnion($1) } == Set(ScheduleBranch.allCases))
     }
 }
 
@@ -85,6 +85,16 @@ private extension NotificationPlan {
             .filter { (input.settings.notificationSounds[$0.prayerTime.type] ?? .off) == .off }
             .map { "\($0.prefix)-\($0.prayerTime.type)" }
 
+        // The Mac's and the watch's plan, which has no geofence to add or remove
+        let withoutBeacon = NotificationPlan(
+            requests: requests.filter { $0.category != .beacon },
+            removals: removals.filter { $0 != .category(.beacon) },
+            shortcutPrayers: shortcutPrayers,
+            firstScheduled: firstScheduled,
+            lastScheduled: lastScheduled,
+            requested: requested
+        )
+
         let rules: [(name: String, holds: Bool)] = [
             ("an identifier is requested twice", Set(identifiers).count == identifiers.count),
             ("a request is also removed", removed.isDisjoint(with: identifiers)),
@@ -95,7 +105,8 @@ private extension NotificationPlan {
             ("calibrate fires at or before now with budget to spare", requested >= input.budget || fireDates(in: .calibrate).allSatisfy { $0 > input.now }),
             ("calibrate is not requested once", fireDates(in: .calibrate).count == 1),
             ("the budget is overdrawn by more than one", requested <= input.budget + 1),
-            ("the count is not the prayers' requests and the iqama update", requested == requests.count { $0.category != .calibrate && $0.category != .beacon })
+            ("the count is not the prayers' requests and the iqama update", requested == requests.count { $0.category != .calibrate && $0.category != .beacon }),
+            ("the plan without the geofence differs by more than its beacon", input.plan(schedulesBeacon: false) == withoutBeacon)
         ]
 
         return rules.filter { !$0.holds }.map(\.name)

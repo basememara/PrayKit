@@ -44,15 +44,6 @@ enum ScheduleBranch: String, CaseIterable, Sendable {
     /// The iqama update reminder is added with nothing left, so the run asks for one more than its budget.
     case budgetOverdrawn
     case nothingScheduled
-
-    /// The branches this platform compiles: the beacon is the iPhone's alone.
-    static var compiled: Set<ScheduleBranch> {
-        #if os(iOS)
-        Set(allCases)
-        #else
-        Set(allCases).subtracting([.beaconAdded, .beaconRemoved])
-        #endif
-    }
 }
 
 extension NotificationPlan {

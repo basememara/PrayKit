@@ -63,6 +63,7 @@ entry	kind	fire	body	sound	level	category	payload
 2021-01-04-asr-iqama-reminder	add	2021-01-04 14:42:00-0500	iqama asr 2021-01-04 14:37:00-0500 8220s 10m	iqama2.m4a	timeSensitive	reminderCategory	prayer_time
 update-interval-iqama-reminder	add	2021-01-09 05:25:00-0500	iqamaUpdate	default	passive	reminderCategory	origin_at 2021-01-02 05:25:00-0500
 calibrate	add	2021-01-04 02:37:00-0500	calibrate	default	-	calibrateCategory	prayer_request_hash 2021-01-02|2021-01-09
+calibrate-beacon	add	region 43.651,-79.347 75000m	beacon	default	-	beaconCategory	coordinates 43.651,-79.347
 shortcuts	22	isha 01-01 18:18:00	lastThird 01-02 01:54:00	fajr 01-02 06:25:00	sunrise 01-02 07:51:00	dhuhr 01-02 12:23:00	asr 01-02 14:35:00	maghrib 01-02 16:52:00	isha 01-02 18:19:00	midnight 01-02 23:39:00	lastThird 01-03 01:54:00	fajr 01-03 06:25:00	sunrise 01-03 07:51:00	dhuhr 01-03 12:23:00	asr 01-03 14:36:00	maghrib 01-03 16:53:00	isha 01-03 18:20:00	midnight 01-03 23:39:00	lastThird 01-04 01:54:00	fajr 01-04 06:25:00	sunrise 01-04 07:51:00	dhuhr 01-04 12:24:00	asr 01-04 14:37:00
 firstScheduled	2021-01-02 06:25:00-0500
 lastScheduled	2021-01-04 14:37:00-0500

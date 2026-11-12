@@ -4,6 +4,7 @@
 # requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
 entry	kind	fire	body	sound	level	category	payload
 calibrate	add	2026-10-18 22:00:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+calibrate-beacon	add	region 3.139,101.687 75000m	beacon	default	-	beaconCategory	coordinates 3.139,101.687
 2026-10-12-sunrise	remove
 2026-10-12-sunrise-iqama-reminder	remove
 2026-10-12-sunrise-reminder	remove

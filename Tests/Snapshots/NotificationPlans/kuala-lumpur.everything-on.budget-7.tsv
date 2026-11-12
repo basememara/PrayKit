@@ -12,6 +12,7 @@ entry	kind	fire	body	sound	level	category	payload
 2026-10-13-fajr-iqama-reminder	add	2026-10-13 05:51:00+0800	iqama fajr 2026-10-13 05:41:00+0800 4620s 10m	iqama2.m4a	timeSensitive	reminderCategory	prayer_time
 update-interval-iqama-reminder	add	2026-10-19 20:41:00+0800	iqamaUpdate	default	passive	reminderCategory	origin_at 2026-10-12 20:41:00+0800
 calibrate	add	2026-10-12 17:41:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+calibrate-beacon	add	region 3.139,101.687 75000m	beacon	default	-	beaconCategory	coordinates 3.139,101.687
 shortcuts	4	isha 10-12 20:11:00	midnight 10-13 00:22:00	lastThird 10-13 02:08:00	fajr 10-13 05:41:00
 firstScheduled	2026-10-13 00:22:00+0800
 lastScheduled	2026-10-13 05:41:00+0800

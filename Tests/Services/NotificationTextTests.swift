@@ -60,7 +60,8 @@ private extension NotificationTextTests {
             request: request,
             requestHash: PrayerRequestHash(request: request, dateInterval: week, settings: settings),
             now: now,
-            iqamaUpdateOrigin: nil
+            iqamaUpdateOrigin: nil,
+            schedulesBeacon: true
         )
 
         return plan.requests.first { $0.identifier == NotificationPlan.iqamaUpdateIdentifier }

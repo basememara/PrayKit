@@ -63,6 +63,7 @@ entry	kind	fire	body	sound	level	category	payload
 2019-06-16-maghrib-iqama-reminder	add	2019-06-16 20:29:00-0700	iqama maghrib 2019-06-16 20:34:00-0700 5520s 10m	iqama2.m4a	timeSensitive	reminderCategory	prayer_time
 update-interval-iqama-reminder	add	2019-06-21 03:16:00-0700	iqamaUpdate	default	passive	reminderCategory	origin_at 2019-06-14 03:16:00-0700
 calibrate	add	2019-06-16 08:34:00-0700	calibrate	default	-	calibrateCategory	prayer_request_hash 2019-06-14|2019-06-21
+calibrate-beacon	add	region 37.774,-122.431 75000m	beacon	default	-	beaconCategory	coordinates 37.774,-122.431
 shortcuts	23	isha 06-13 22:04:00	lastThird 06-14 01:42:00	fajr 06-14 04:16:00	sunrise 06-14 05:47:00	dhuhr 06-14 13:11:00	asr 06-14 17:04:00	maghrib 06-14 20:33:00	isha 06-14 22:05:00	midnight 06-15 00:25:00	lastThird 06-15 01:42:00	fajr 06-15 04:16:00	sunrise 06-15 05:47:00	dhuhr 06-15 13:11:00	asr 06-15 17:04:00	maghrib 06-15 20:33:00	isha 06-15 22:05:00	midnight 06-16 00:25:00	lastThird 06-16 01:42:00	fajr 06-16 04:16:00	sunrise 06-16 05:47:00	dhuhr 06-16 13:11:00	asr 06-16 17:04:00	maghrib 06-16 20:34:00
 firstScheduled	2019-06-14 04:16:00-0700
 lastScheduled	2019-06-16 20:34:00-0700

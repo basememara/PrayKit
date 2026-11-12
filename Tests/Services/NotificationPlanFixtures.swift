@@ -39,7 +39,8 @@ struct ScheduleInput: Sendable {
         ScheduleInput(days: days, settings: settings, request: request, now: now, iqamaUpdateOrigin: iqamaUpdateOrigin, budget: budget)
     }
 
-    func plan() -> NotificationPlan {
+    /// The iPhone's plan unless asked otherwise, so every branch is taken on every platform the tests run on.
+    func plan(schedulesBeacon: Bool = true) -> NotificationPlan {
         NotificationPlan.make(
             days: days,
             settings: settings,
@@ -47,6 +48,7 @@ struct ScheduleInput: Sendable {
             requestHash: requestHash,
             now: now,
             iqamaUpdateOrigin: iqamaUpdateOrigin,
+            schedulesBeacon: schedulesBeacon,
             budget: budget
         )
     }
@@ -142,10 +144,8 @@ extension NotificationPlan.Request {
         switch trigger {
         case let .date(date):
             date
-        #if os(iOS)
         case .region:
             nil
-        #endif
         }
     }
 }

@@ -63,6 +63,7 @@ entry	kind	fire	body	sound	level	category	payload
 2026-10-15-isha	add	2026-10-15 20:10:00+0800	prayer isha 2026-10-15 20:10:00+0800 34200s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
 update-interval-iqama-reminder	add	2026-10-19 10:00:00+0800	iqamaUpdate	default	passive	reminderCategory	origin_at 2026-10-12 10:00:00+0800
 calibrate	add	2026-10-15 08:10:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+calibrate-beacon	add	region 3.139,101.687 75000m	beacon	default	-	beaconCategory	coordinates 3.139,101.687
 2026-10-12-midnight	remove
 2026-10-12-midnight-reminder	remove
 2026-10-12-lastThird	remove

@@ -10,8 +10,6 @@ import PrayCore
 @testable import PrayServices
 import Testing
 
-// The files hold the Mac's plan, where no geofence is scheduled
-#if os(macOS)
 /// The plan a scheduling run makes, pinned as it is today: every request in the order it is added, then the removals,
 /// the Siri prayers, the scheduled range and the count, so a reshape of `NotificationPlan.make` that moves a minute,
 /// swaps a sound or drops a notification fails with the rows that moved.
@@ -67,7 +65,7 @@ extension NotificationPlanSnapshotTests {
             reached.formUnion(input.plan().branches(for: input))
         }
 
-        let missed = ScheduleBranch.compiled.subtracting(reached).map(\.rawValue).sorted()
+        let missed = Set(ScheduleBranch.allCases).subtracting(reached).map(\.rawValue).sorted()
         #expect(missed.isEmpty, "Branches no snapshot takes: \(missed.joined(separator: ", "))")
     }
 }
@@ -117,6 +115,8 @@ private extension NotificationPlanSnapshotTests {
         switch trigger {
         case let .date(date):
             Snapshot.stamp(date, using: calendar)
+        case let .region(center, radius):
+            "region \(center.latitude),\(center.longitude) \(Int(radius))m"
         }
     }
 
@@ -245,6 +245,7 @@ extension PlanSnapshotCase {
         PlanSnapshotCase("Kuala Lumpur", "everything-on", at: .afterIsha, budget: 7),
         PlanSnapshotCase("Kuala Lumpur", "update-weekly", at: .midMorning, origin: .outside),
         PlanSnapshotCase("Kuala Lumpur", "update-monthly", at: .midMorning, budget: 20, origin: .inside),
+        PlanSnapshotCase("Kuala Lumpur", "gps-off", at: .midMorning),
         PlanSnapshotCase("San Francisco in June", "khutba-only", at: .fridayMorning),
         PlanSnapshotCase("San Francisco in June", "iqamas", at: .fridayAfterDhuhr, budget: 20),
         PlanSnapshotCase("San Francisco in June", "iqamas-reminder-silent", at: .fridayMorning),
@@ -259,4 +260,3 @@ extension PlanSnapshotCase {
         self.init(place: place, variant: ScheduleVariant(row: row, budget: budget, origin: origin), moment: moment)
     }
 }
-#endif

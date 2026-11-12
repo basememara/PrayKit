@@ -62,6 +62,7 @@ entry	kind	fire	body	sound	level	category	payload
 2026-10-17-sunrise	add	2026-10-17 06:58:00+0800	prayer sunrise 2026-10-17 06:58:00+0800 21720s	-	timeSensitive	reminderCategory	prayer_time
 2026-10-17-sunrise-reminder	add	2026-10-17 06:38:00+0800	reminder sunrise 2026-10-17 06:58:00+0800 21720s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
 calibrate	add	2026-10-16 18:58:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+calibrate-beacon	add	region 3.139,101.687 75000m	beacon	default	-	beaconCategory	coordinates 3.139,101.687
 2026-10-11-lastThird	remove
 2026-10-11-lastThird-reminder	remove
 2026-10-12-midnight	remove

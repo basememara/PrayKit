@@ -124,7 +124,8 @@ private extension NotificationServiceUN {
             request: request,
             requestHash: prayerRequestHash,
             now: now,
-            iqamaUpdateOrigin: iqamaUpdateOrigin
+            iqamaUpdateOrigin: iqamaUpdateOrigin,
+            schedulesBeacon: Self.schedulesBeacon
         )
 
         let timeFormatter = DateFormatter.prayerTime(is24Hour: settings.enable24hTimeFormat, using: timeZone)
@@ -227,6 +228,9 @@ private extension NotificationServiceUN {
                 category: category,
                 userInfo: userInfo(for: request.payload)
             )
+        #else
+        case .region:
+            break
         #endif
         }
     }
@@ -307,6 +311,15 @@ private extension NotificationServiceUN {
         case let .file(file):
             Self.sound(named: file)
         }
+    }
+
+    /// The geofence is a region trigger, which only the iPhone's notification center offers.
+    static var schedulesBeacon: Bool {
+        #if os(iOS)
+        true
+        #else
+        false
+        #endif
     }
 
     #if os(iOS)

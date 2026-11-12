@@ -24,6 +24,7 @@ entry	kind	fire	body	sound	level	category	payload
 2019-06-15-maghrib	add	2019-06-15 20:33:00-0700	prayer maghrib 2019-06-15 20:33:00-0700 5520s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
 2019-06-15-maghrib-iqama-reminder	add	2019-06-15 20:28:00-0700	iqama maghrib 2019-06-15 20:33:00-0700 5520s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
 calibrate	add	2019-06-15 08:33:00-0700	calibrate	default	-	calibrateCategory	prayer_request_hash 2019-06-14|2019-06-21
+calibrate-beacon	add	region 37.774,-122.431 75000m	beacon	default	-	beaconCategory	coordinates 37.774,-122.431
 2019-06-14-midnight	remove
 2019-06-14-midnight-reminder	remove
 2019-06-14-lastThird	remove

@@ -291,7 +291,7 @@ extension TimerSettingsRow {
     private static let khutba = IqamaTimes.IqamaType.time(hour: 13, minutes: 30)
 }
 
-private extension DayFixture {
+extension DayFixture {
     /// The fixture's name as a file name.
     var slug: String {
         name.folding(options: .diacriticInsensitive, locale: .posix)

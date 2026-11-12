@@ -1,0 +1,89 @@
+# london-timetable-fajr-90-minutes-before-a-later-sunrise.defaults  lat 51.5074  lon -0.1278  tz Europe/London  method London  adjustments fajr -90 before sunrise, sunrise 3, dhuhr 0, asr 0, maghrib 0, isha 0, elevation -  day 2022-02-25 Friday
+# settings: sound/reminder/minutes fajr adhan/tone/0, sunrise silent/tone/20, dhuhr adhan/tone/20, asr adhan/tone/20, maghrib adhan/tone/20, isha adhan/tone/20, midnight off/off/0, lastThird off/off/0  imsak 0  duha -  alarms -  iqamas -, -, -, -, -, -  iqama reminder iqama 20/60 update off  follows location true radius 75000
+# now 2022-02-25 12:24:00+0000 (5 minutes after Dhuhr)  budget 58  iqama update origin -
+# requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
+entry	kind	fire	body	sound	level	category	payload
+2022-02-25-asr	add	2022-02-25 14:59:00+0000	prayer asr 2022-02-25 14:59:00+0000 9480s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-25-asr-reminder	add	2022-02-25 14:39:00+0000	reminder asr 2022-02-25 14:59:00+0000 9480s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-25-maghrib	add	2022-02-25 17:37:00+0000	prayer maghrib 2022-02-25 17:37:00+0000 5220s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-25-maghrib-reminder	add	2022-02-25 17:17:00+0000	reminder maghrib 2022-02-25 17:37:00+0000 5220s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-25-isha	add	2022-02-25 19:04:00+0000	prayer isha 2022-02-25 19:04:00+0000 37080s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-25-isha-reminder	add	2022-02-25 18:44:00+0000	reminder isha 2022-02-25 19:04:00+0000 37080s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-26-fajr	add	2022-02-26 05:22:00+0000	prayer fajr 2022-02-26 05:22:00+0000 5400s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-26-sunrise	add	2022-02-26 06:52:00+0000	prayer sunrise 2022-02-26 06:52:00+0000 19560s	-	timeSensitive	reminderCategory	prayer_time
+2022-02-26-sunrise-reminder	add	2022-02-26 06:32:00+0000	reminder sunrise 2022-02-26 06:52:00+0000 19560s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-26-dhuhr	add	2022-02-26 12:18:00+0000	prayer dhuhr 2022-02-26 12:18:00+0000 9780s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-26-dhuhr-reminder	add	2022-02-26 11:58:00+0000	reminder dhuhr 2022-02-26 12:18:00+0000 9780s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-26-asr	add	2022-02-26 15:01:00+0000	prayer asr 2022-02-26 15:01:00+0000 9420s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-26-asr-reminder	add	2022-02-26 14:41:00+0000	reminder asr 2022-02-26 15:01:00+0000 9420s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-26-maghrib	add	2022-02-26 17:38:00+0000	prayer maghrib 2022-02-26 17:38:00+0000 5220s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-26-maghrib-reminder	add	2022-02-26 17:18:00+0000	reminder maghrib 2022-02-26 17:38:00+0000 5220s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-26-isha	add	2022-02-26 19:05:00+0000	prayer isha 2022-02-26 19:05:00+0000 36900s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-26-isha-reminder	add	2022-02-26 18:45:00+0000	reminder isha 2022-02-26 19:05:00+0000 36900s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-27-fajr	add	2022-02-27 05:20:00+0000	prayer fajr 2022-02-27 05:20:00+0000 5400s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-27-sunrise	add	2022-02-27 06:50:00+0000	prayer sunrise 2022-02-27 06:50:00+0000 19680s	-	timeSensitive	reminderCategory	prayer_time
+2022-02-27-sunrise-reminder	add	2022-02-27 06:30:00+0000	reminder sunrise 2022-02-27 06:50:00+0000 19680s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-27-dhuhr	add	2022-02-27 12:18:00+0000	prayer dhuhr 2022-02-27 12:18:00+0000 9840s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-27-dhuhr-reminder	add	2022-02-27 11:58:00+0000	reminder dhuhr 2022-02-27 12:18:00+0000 9840s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-27-asr	add	2022-02-27 15:02:00+0000	prayer asr 2022-02-27 15:02:00+0000 9480s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-27-asr-reminder	add	2022-02-27 14:42:00+0000	reminder asr 2022-02-27 15:02:00+0000 9480s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-27-maghrib	add	2022-02-27 17:40:00+0000	prayer maghrib 2022-02-27 17:40:00+0000 5220s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-27-maghrib-reminder	add	2022-02-27 17:20:00+0000	reminder maghrib 2022-02-27 17:40:00+0000 5220s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-27-isha	add	2022-02-27 19:07:00+0000	prayer isha 2022-02-27 19:07:00+0000 36660s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-27-isha-reminder	add	2022-02-27 18:47:00+0000	reminder isha 2022-02-27 19:07:00+0000 36660s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-28-fajr	add	2022-02-28 05:18:00+0000	prayer fajr 2022-02-28 05:18:00+0000 5400s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-28-sunrise	add	2022-02-28 06:48:00+0000	prayer sunrise 2022-02-28 06:48:00+0000 19800s	-	timeSensitive	reminderCategory	prayer_time
+2022-02-28-sunrise-reminder	add	2022-02-28 06:28:00+0000	reminder sunrise 2022-02-28 06:48:00+0000 19800s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-28-dhuhr	add	2022-02-28 12:18:00+0000	prayer dhuhr 2022-02-28 12:18:00+0000 9900s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-28-dhuhr-reminder	add	2022-02-28 11:58:00+0000	reminder dhuhr 2022-02-28 12:18:00+0000 9900s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-28-asr	add	2022-02-28 15:03:00+0000	prayer asr 2022-02-28 15:03:00+0000 9540s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-28-asr-reminder	add	2022-02-28 14:43:00+0000	reminder asr 2022-02-28 15:03:00+0000 9540s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-28-maghrib	add	2022-02-28 17:42:00+0000	prayer maghrib 2022-02-28 17:42:00+0000 5220s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-28-maghrib-reminder	add	2022-02-28 17:22:00+0000	reminder maghrib 2022-02-28 17:42:00+0000 5220s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-02-28-isha	add	2022-02-28 19:09:00+0000	prayer isha 2022-02-28 19:09:00+0000 36420s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-02-28-isha-reminder	add	2022-02-28 18:49:00+0000	reminder isha 2022-02-28 19:09:00+0000 36420s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-01-fajr	add	2022-03-01 05:16:00+0000	prayer fajr 2022-03-01 05:16:00+0000 5400s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-01-sunrise	add	2022-03-01 06:46:00+0000	prayer sunrise 2022-03-01 06:46:00+0000 19920s	-	timeSensitive	reminderCategory	prayer_time
+2022-03-01-sunrise-reminder	add	2022-03-01 06:26:00+0000	reminder sunrise 2022-03-01 06:46:00+0000 19920s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-01-dhuhr	add	2022-03-01 12:18:00+0000	prayer dhuhr 2022-03-01 12:18:00+0000 9960s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-01-dhuhr-reminder	add	2022-03-01 11:58:00+0000	reminder dhuhr 2022-03-01 12:18:00+0000 9960s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-01-asr	add	2022-03-01 15:04:00+0000	prayer asr 2022-03-01 15:04:00+0000 9600s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-01-asr-reminder	add	2022-03-01 14:44:00+0000	reminder asr 2022-03-01 15:04:00+0000 9600s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-01-maghrib	add	2022-03-01 17:44:00+0000	prayer maghrib 2022-03-01 17:44:00+0000 5160s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-01-maghrib-reminder	add	2022-03-01 17:24:00+0000	reminder maghrib 2022-03-01 17:44:00+0000 5160s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-01-isha	add	2022-03-01 19:10:00+0000	prayer isha 2022-03-01 19:10:00+0000 36240s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-01-isha-reminder	add	2022-03-01 18:50:00+0000	reminder isha 2022-03-01 19:10:00+0000 36240s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-02-fajr	add	2022-03-02 05:14:00+0000	prayer fajr 2022-03-02 05:14:00+0000 5400s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-02-sunrise	add	2022-03-02 06:44:00+0000	prayer sunrise 2022-03-02 06:44:00+0000 20040s	-	timeSensitive	reminderCategory	prayer_time
+2022-03-02-sunrise-reminder	add	2022-03-02 06:24:00+0000	reminder sunrise 2022-03-02 06:44:00+0000 20040s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-02-dhuhr	add	2022-03-02 12:18:00+0000	prayer dhuhr 2022-03-02 12:18:00+0000 10080s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-02-dhuhr-reminder	add	2022-03-02 11:58:00+0000	reminder dhuhr 2022-03-02 12:18:00+0000 10080s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-02-asr	add	2022-03-02 15:06:00+0000	prayer asr 2022-03-02 15:06:00+0000 9600s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2022-03-02-asr-reminder	add	2022-03-02 14:46:00+0000	reminder asr 2022-03-02 15:06:00+0000 9600s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2022-03-02-maghrib	add	2022-03-02 17:46:00+0000	prayer maghrib 2022-03-02 17:46:00+0000 5160s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+calibrate	add	2022-03-02 05:46:00+0000	calibrate	default	-	calibrateCategory	prayer_request_hash 2022-02-25|2022-03-04
+2022-02-25-midnight	remove
+2022-02-25-midnight-reminder	remove
+2022-02-25-lastThird	remove
+2022-02-25-lastThird-reminder	remove
+2022-02-26-midnight	remove
+2022-02-26-midnight-reminder	remove
+2022-02-26-lastThird	remove
+2022-02-26-lastThird-reminder	remove
+2022-02-27-midnight	remove
+2022-02-27-midnight-reminder	remove
+2022-02-27-lastThird	remove
+2022-02-27-lastThird-reminder	remove
+2022-02-28-midnight	remove
+2022-02-28-midnight-reminder	remove
+2022-02-28-lastThird	remove
+2022-02-28-lastThird-reminder	remove
+2022-03-01-midnight	remove
+2022-03-01-midnight-reminder	remove
+2022-03-01-lastThird	remove
+2022-03-01-lastThird-reminder	remove
+update-interval-iqama-reminder	remove
+shortcuts	43	dhuhr 02-25 12:19:00	asr 02-25 14:59:00	maghrib 02-25 17:37:00	isha 02-25 19:04:00	midnight 02-25 23:30:00	lastThird 02-26 01:27:00	fajr 02-26 05:22:00	sunrise 02-26 06:52:00	dhuhr 02-26 12:18:00	asr 02-26 15:01:00	maghrib 02-26 17:38:00	isha 02-26 19:05:00	midnight 02-26 23:29:00	lastThird 02-27 01:26:00	fajr 02-27 05:20:00	sunrise 02-27 06:50:00	dhuhr 02-27 12:18:00	asr 02-27 15:02:00	maghrib 02-27 17:40:00	isha 02-27 19:07:00	midnight 02-27 23:29:00	lastThird 02-28 01:25:00	fajr 02-28 05:18:00	sunrise 02-28 06:48:00	dhuhr 02-28 12:18:00	asr 02-28 15:03:00	maghrib 02-28 17:42:00	isha 02-28 19:09:00	midnight 02-28 23:29:00	lastThird 03-01 01:25:00	fajr 03-01 05:16:00	sunrise 03-01 06:46:00	dhuhr 03-01 12:18:00	asr 03-01 15:04:00	maghrib 03-01 17:44:00	isha 03-01 19:10:00	midnight 03-01 23:29:00	lastThird 03-02 01:24:00	fajr 03-02 05:14:00	sunrise 03-02 06:44:00	dhuhr 03-02 12:18:00	asr 03-02 15:06:00	maghrib 03-02 17:46:00
+firstScheduled	2022-02-25 14:59:00+0000
+lastScheduled	2022-03-02 17:46:00+0000
+requested	58

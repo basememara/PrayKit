@@ -1,0 +1,18 @@
+# kuala-lumpur.everything-on.budget-7  lat 3.139  lon 101.6869  tz Asia/Kuala_Lumpur  method JAKIM  adjustments -  day 2026-10-12 Monday
+# settings: sound/reminder/minutes fajr adhan/tone/30, sunrise tone/tone/15, dhuhr adhan/tone/20, asr adhan/tone/25, maghrib adhan/tone/10, isha adhan/tone/35, midnight tone/beep/10, lastThird chime/tone/20  imsak 10  duha 25 mins  alarms fajr+sunrise  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder iqama2 10/45 update weekly  follows location true radius 75000
+# now 2026-10-12 20:41:00+0800 (30 minutes after Isha)  budget 7  iqama update origin -
+# requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
+entry	kind	fire	body	sound	level	category	payload
+2026-10-12-isha-iqama-reminder	add	2026-10-12 20:50:00+0800	iqama isha 2026-10-12 20:11:00+0800 34200s 10m	iqama2.m4a	timeSensitive	reminderCategory	prayer_time
+2026-10-12-midnight	add	2026-10-13 00:22:00+0800	prayer midnight 2026-10-13 00:22:00+0800 6360s	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-10-12-midnight-reminder	add	2026-10-13 00:12:00+0800	reminder midnight 2026-10-13 00:22:00+0800 6360s 10m	beep.m4a	timeSensitive	reminderCategory	prayer_time
+2026-10-12-lastThird	add	2026-10-13 02:08:00+0800	prayer lastThird 2026-10-13 02:08:00+0800 12780s	chime.m4a	timeSensitive	reminderCategory	prayer_time
+2026-10-12-lastThird-reminder	add	2026-10-13 01:48:00+0800	reminder lastThird 2026-10-13 02:08:00+0800 12780s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-10-13-fajr	add	2026-10-13 05:41:00+0800	prayer fajr 2026-10-13 05:41:00+0800 4620s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-10-13-fajr-iqama-reminder	add	2026-10-13 05:51:00+0800	iqama fajr 2026-10-13 05:41:00+0800 4620s 10m	iqama2.m4a	timeSensitive	reminderCategory	prayer_time
+update-interval-iqama-reminder	add	2026-10-19 20:41:00+0800	iqamaUpdate	default	passive	reminderCategory	origin_at 2026-10-12 20:41:00+0800
+calibrate	add	2026-10-12 17:41:00+0800	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
+shortcuts	4	isha 10-12 20:11:00	midnight 10-13 00:22:00	lastThird 10-13 02:08:00	fajr 10-13 05:41:00
+firstScheduled	2026-10-13 00:22:00+0800
+lastScheduled	2026-10-13 05:41:00+0800
+requested	8

@@ -1,0 +1,35 @@
+# san-francisco-in-june.iqamas.budget-20  lat 37.773972  lon -122.431297  tz America/Los_Angeles  method ISNA  adjustments -  day 2019-06-14 Friday
+# settings: sound/reminder/minutes fajr adhan/tone/0, sunrise silent/tone/20, dhuhr adhan/tone/20, asr adhan/tone/20, maghrib adhan/tone/20, isha adhan/tone/20, midnight off/off/0, lastThird off/off/0  imsak 0  duha -  alarms -  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder iqama 10/45 update off  follows location true radius 75000
+# now 2019-06-14 13:16:00-0700 (Friday, 5 minutes after Dhuhr)  budget 20  iqama update origin -
+# requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
+entry	kind	fire	body	sound	level	category	payload
+2019-06-14-asr	add	2019-06-14 17:04:00-0700	prayer asr 2019-06-14 17:04:00-0700 12540s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-14-asr-iqama-reminder	add	2019-06-14 17:09:00-0700	iqama asr 2019-06-14 17:04:00-0700 12540s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-14-asr-reminder	add	2019-06-14 16:44:00-0700	reminder asr 2019-06-14 17:04:00-0700 12540s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-14-maghrib	add	2019-06-14 20:33:00-0700	prayer maghrib 2019-06-14 20:33:00-0700 5520s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-14-maghrib-iqama-reminder	add	2019-06-14 20:28:00-0700	iqama maghrib 2019-06-14 20:33:00-0700 5520s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-14-maghrib-reminder	add	2019-06-14 20:13:00-0700	reminder maghrib 2019-06-14 20:33:00-0700 5520s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-14-isha	add	2019-06-14 22:05:00-0700	prayer isha 2019-06-14 22:05:00-0700 22260s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-14-isha-reminder	add	2019-06-14 21:45:00-0700	reminder isha 2019-06-14 22:05:00-0700 22260s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-fajr	add	2019-06-15 04:16:00-0700	prayer fajr 2019-06-15 04:16:00-0700 5460s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-15-fajr-iqama-reminder	add	2019-06-15 04:26:00-0700	iqama fajr 2019-06-15 04:16:00-0700 5460s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-sunrise	add	2019-06-15 05:47:00-0700	prayer sunrise 2019-06-15 05:47:00-0700 26640s	-	timeSensitive	reminderCategory	prayer_time
+2019-06-15-sunrise-reminder	add	2019-06-15 05:27:00-0700	reminder sunrise 2019-06-15 05:47:00-0700 26640s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-dhuhr	add	2019-06-15 13:11:00-0700	prayer dhuhr 2019-06-15 13:11:00-0700 13980s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-15-dhuhr-iqama-reminder	add	2019-06-15 13:20:00-0700	iqama dhuhr 2019-06-15 13:11:00-0700 13980s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-dhuhr-reminder	add	2019-06-15 12:51:00-0700	reminder dhuhr 2019-06-15 13:11:00-0700 13980s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-asr	add	2019-06-15 17:04:00-0700	prayer asr 2019-06-15 17:04:00-0700 12540s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-15-asr-iqama-reminder	add	2019-06-15 17:09:00-0700	iqama asr 2019-06-15 17:04:00-0700 12540s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-asr-reminder	add	2019-06-15 16:44:00-0700	reminder asr 2019-06-15 17:04:00-0700 12540s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2019-06-15-maghrib	add	2019-06-15 20:33:00-0700	prayer maghrib 2019-06-15 20:33:00-0700 5520s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2019-06-15-maghrib-iqama-reminder	add	2019-06-15 20:28:00-0700	iqama maghrib 2019-06-15 20:33:00-0700 5520s 10m	iqama.m4a	timeSensitive	reminderCategory	prayer_time
+calibrate	add	2019-06-15 08:33:00-0700	calibrate	default	-	calibrateCategory	prayer_request_hash 2019-06-14|2019-06-21
+2019-06-14-midnight	remove
+2019-06-14-midnight-reminder	remove
+2019-06-14-lastThird	remove
+2019-06-14-lastThird-reminder	remove
+update-interval-iqama-reminder	remove
+shortcuts	11	dhuhr 06-14 13:11:00	asr 06-14 17:04:00	maghrib 06-14 20:33:00	isha 06-14 22:05:00	midnight 06-15 00:25:00	lastThird 06-15 01:42:00	fajr 06-15 04:16:00	sunrise 06-15 05:47:00	dhuhr 06-15 13:11:00	asr 06-15 17:04:00	maghrib 06-15 20:33:00
+firstScheduled	2019-06-14 17:04:00-0700
+lastScheduled	2019-06-15 20:33:00-0700
+requested	20

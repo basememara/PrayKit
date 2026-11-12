@@ -1,0 +1,89 @@
+# reykjavik-maghrib-after-midnight.defaults  lat 64.1466  lon -21.9426  tz Atlantic/Reykjavik  method Moon  adjustments -  day 2026-06-20 Saturday
+# settings: sound/reminder/minutes fajr adhan/tone/0, sunrise silent/tone/20, dhuhr adhan/tone/20, asr adhan/tone/20, maghrib adhan/tone/20, isha adhan/tone/20, midnight off/off/0, lastThird off/off/0  imsak 0  duha -  alarms -  iqamas -, -, -, -, -, -  iqama reminder iqama 20/60 update off  follows location true radius 75000
+# now 2026-06-20 13:39:00+0000 (5 minutes after Dhuhr)  budget 58  iqama update origin -
+# requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
+entry	kind	fire	body	sound	level	category	payload
+2026-06-20-asr	add	2026-06-20 18:22:00+0000	prayer asr 2026-06-20 18:22:00+0000 20700s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-20-asr-reminder	add	2026-06-20 18:02:00+0000	reminder asr 2026-06-20 18:22:00+0000 20700s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-20-maghrib	add	2026-06-21 00:07:00+0000	prayer maghrib 2026-06-21 00:07:00+0000 1260s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-20-maghrib-reminder	add	2026-06-20 23:47:00+0000	reminder maghrib 2026-06-21 00:07:00+0000 1260s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-20-isha	add	2026-06-21 00:28:00+0000	prayer isha 2026-06-21 00:28:00+0000 7380s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-20-isha-reminder	add	2026-06-21 00:08:00+0000	reminder isha 2026-06-21 00:28:00+0000 7380s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-21-fajr	add	2026-06-21 02:31:00+0000	prayer fajr 2026-06-21 02:31:00+0000 1440s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-21-sunrise	add	2026-06-21 02:55:00+0000	prayer sunrise 2026-06-21 02:55:00+0000 38400s	-	timeSensitive	reminderCategory	prayer_time
+2026-06-21-sunrise-reminder	add	2026-06-21 02:35:00+0000	reminder sunrise 2026-06-21 02:55:00+0000 38400s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-21-dhuhr	add	2026-06-21 13:35:00+0000	prayer dhuhr 2026-06-21 13:35:00+0000 17280s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-21-dhuhr-reminder	add	2026-06-21 13:15:00+0000	reminder dhuhr 2026-06-21 13:35:00+0000 17280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-21-asr	add	2026-06-21 18:23:00+0000	prayer asr 2026-06-21 18:23:00+0000 20640s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-21-asr-reminder	add	2026-06-21 18:03:00+0000	reminder asr 2026-06-21 18:23:00+0000 20640s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-21-maghrib	add	2026-06-22 00:07:00+0000	prayer maghrib 2026-06-22 00:07:00+0000 1320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-21-maghrib-reminder	add	2026-06-21 23:47:00+0000	reminder maghrib 2026-06-22 00:07:00+0000 1320s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-21-isha	add	2026-06-22 00:29:00+0000	prayer isha 2026-06-22 00:29:00+0000 7320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-21-isha-reminder	add	2026-06-22 00:09:00+0000	reminder isha 2026-06-22 00:29:00+0000 7320s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-22-fajr	add	2026-06-22 02:31:00+0000	prayer fajr 2026-06-22 02:31:00+0000 1440s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-22-sunrise	add	2026-06-22 02:55:00+0000	prayer sunrise 2026-06-22 02:55:00+0000 38400s	-	timeSensitive	reminderCategory	prayer_time
+2026-06-22-sunrise-reminder	add	2026-06-22 02:35:00+0000	reminder sunrise 2026-06-22 02:55:00+0000 38400s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-22-dhuhr	add	2026-06-22 13:35:00+0000	prayer dhuhr 2026-06-22 13:35:00+0000 17280s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-22-dhuhr-reminder	add	2026-06-22 13:15:00+0000	reminder dhuhr 2026-06-22 13:35:00+0000 17280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-22-asr	add	2026-06-22 18:23:00+0000	prayer asr 2026-06-22 18:23:00+0000 20640s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-22-asr-reminder	add	2026-06-22 18:03:00+0000	reminder asr 2026-06-22 18:23:00+0000 20640s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-22-maghrib	add	2026-06-23 00:07:00+0000	prayer maghrib 2026-06-23 00:07:00+0000 1320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-22-maghrib-reminder	add	2026-06-22 23:47:00+0000	reminder maghrib 2026-06-23 00:07:00+0000 1320s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-22-isha	add	2026-06-23 00:29:00+0000	prayer isha 2026-06-23 00:29:00+0000 7320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-22-isha-reminder	add	2026-06-23 00:09:00+0000	reminder isha 2026-06-23 00:29:00+0000 7320s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-23-fajr	add	2026-06-23 02:31:00+0000	prayer fajr 2026-06-23 02:31:00+0000 1500s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-23-sunrise	add	2026-06-23 02:56:00+0000	prayer sunrise 2026-06-23 02:56:00+0000 38340s	-	timeSensitive	reminderCategory	prayer_time
+2026-06-23-sunrise-reminder	add	2026-06-23 02:36:00+0000	reminder sunrise 2026-06-23 02:56:00+0000 38340s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-23-dhuhr	add	2026-06-23 13:35:00+0000	prayer dhuhr 2026-06-23 13:35:00+0000 17280s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-23-dhuhr-reminder	add	2026-06-23 13:15:00+0000	reminder dhuhr 2026-06-23 13:35:00+0000 17280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-23-asr	add	2026-06-23 18:23:00+0000	prayer asr 2026-06-23 18:23:00+0000 20640s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-23-asr-reminder	add	2026-06-23 18:03:00+0000	reminder asr 2026-06-23 18:23:00+0000 20640s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-23-maghrib	add	2026-06-24 00:07:00+0000	prayer maghrib 2026-06-24 00:07:00+0000 1320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-23-maghrib-reminder	add	2026-06-23 23:47:00+0000	reminder maghrib 2026-06-24 00:07:00+0000 1320s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-23-isha	add	2026-06-24 00:29:00+0000	prayer isha 2026-06-24 00:29:00+0000 7380s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-23-isha-reminder	add	2026-06-24 00:09:00+0000	reminder isha 2026-06-24 00:29:00+0000 7380s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-24-fajr	add	2026-06-24 02:32:00+0000	prayer fajr 2026-06-24 02:32:00+0000 1440s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-24-sunrise	add	2026-06-24 02:56:00+0000	prayer sunrise 2026-06-24 02:56:00+0000 38340s	-	timeSensitive	reminderCategory	prayer_time
+2026-06-24-sunrise-reminder	add	2026-06-24 02:36:00+0000	reminder sunrise 2026-06-24 02:56:00+0000 38340s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-24-dhuhr	add	2026-06-24 13:35:00+0000	prayer dhuhr 2026-06-24 13:35:00+0000 17280s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-24-dhuhr-reminder	add	2026-06-24 13:15:00+0000	reminder dhuhr 2026-06-24 13:35:00+0000 17280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-24-asr	add	2026-06-24 18:23:00+0000	prayer asr 2026-06-24 18:23:00+0000 20640s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-24-asr-reminder	add	2026-06-24 18:03:00+0000	reminder asr 2026-06-24 18:23:00+0000 20640s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-24-maghrib	add	2026-06-25 00:07:00+0000	prayer maghrib 2026-06-25 00:07:00+0000 1260s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-24-maghrib-reminder	add	2026-06-24 23:47:00+0000	reminder maghrib 2026-06-25 00:07:00+0000 1260s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-24-isha	add	2026-06-25 00:28:00+0000	prayer isha 2026-06-25 00:28:00+0000 7440s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-24-isha-reminder	add	2026-06-25 00:08:00+0000	reminder isha 2026-06-25 00:28:00+0000 7440s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-25-fajr	add	2026-06-25 02:32:00+0000	prayer fajr 2026-06-25 02:32:00+0000 1500s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-25-sunrise	add	2026-06-25 02:57:00+0000	prayer sunrise 2026-06-25 02:57:00+0000 38280s	-	timeSensitive	reminderCategory	prayer_time
+2026-06-25-sunrise-reminder	add	2026-06-25 02:37:00+0000	reminder sunrise 2026-06-25 02:57:00+0000 38280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-25-dhuhr	add	2026-06-25 13:35:00+0000	prayer dhuhr 2026-06-25 13:35:00+0000 17280s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-25-dhuhr-reminder	add	2026-06-25 13:15:00+0000	reminder dhuhr 2026-06-25 13:35:00+0000 17280s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-25-asr	add	2026-06-25 18:23:00+0000	prayer asr 2026-06-25 18:23:00+0000 20580s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+2026-06-25-asr-reminder	add	2026-06-25 18:03:00+0000	reminder asr 2026-06-25 18:23:00+0000 20580s 20m	tone.m4a	timeSensitive	reminderCategory	prayer_time
+2026-06-25-maghrib	add	2026-06-26 00:06:00+0000	prayer maghrib 2026-06-26 00:06:00+0000 1320s	al.aqsa-short.m4a	timeSensitive	mainCategory	prayer_time
+calibrate	add	2026-06-25 12:06:00+0000	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-06-20|2026-06-27
+2026-06-20-midnight	remove
+2026-06-20-midnight-reminder	remove
+2026-06-20-lastThird	remove
+2026-06-20-lastThird-reminder	remove
+2026-06-21-midnight	remove
+2026-06-21-midnight-reminder	remove
+2026-06-21-lastThird	remove
+2026-06-21-lastThird-reminder	remove
+2026-06-22-midnight	remove
+2026-06-22-midnight-reminder	remove
+2026-06-22-lastThird	remove
+2026-06-22-lastThird-reminder	remove
+2026-06-23-midnight	remove
+2026-06-23-midnight-reminder	remove
+2026-06-23-lastThird	remove
+2026-06-23-lastThird-reminder	remove
+2026-06-24-midnight	remove
+2026-06-24-midnight-reminder	remove
+2026-06-24-lastThird	remove
+2026-06-24-lastThird-reminder	remove
+update-interval-iqama-reminder	remove
+shortcuts	43	dhuhr 06-20 13:34:00	asr 06-20 18:22:00	maghrib 06-21 00:07:00	isha 06-21 00:28:00	midnight 06-21 01:19:00	lastThird 06-21 01:43:00	fajr 06-21 02:31:00	sunrise 06-21 02:55:00	dhuhr 06-21 13:35:00	asr 06-21 18:23:00	maghrib 06-22 00:07:00	isha 06-22 00:29:00	midnight 06-22 01:19:00	lastThird 06-22 01:43:00	fajr 06-22 02:31:00	sunrise 06-22 02:55:00	dhuhr 06-22 13:35:00	asr 06-22 18:23:00	maghrib 06-23 00:07:00	isha 06-23 00:29:00	midnight 06-23 01:19:00	lastThird 06-23 01:43:00	fajr 06-23 02:31:00	sunrise 06-23 02:56:00	dhuhr 06-23 13:35:00	asr 06-23 18:23:00	maghrib 06-24 00:07:00	isha 06-24 00:29:00	midnight 06-24 01:20:00	lastThird 06-24 01:44:00	fajr 06-24 02:32:00	sunrise 06-24 02:56:00	dhuhr 06-24 13:35:00	asr 06-24 18:23:00	maghrib 06-25 00:07:00	isha 06-25 00:28:00	midnight 06-25 01:20:00	lastThird 06-25 01:44:00	fajr 06-25 02:32:00	sunrise 06-25 02:57:00	dhuhr 06-25 13:35:00	asr 06-25 18:23:00	maghrib 06-26 00:06:00
+firstScheduled	2026-06-20 18:22:00+0000
+lastScheduled	2026-06-26 00:06:00+0000
+requested	58

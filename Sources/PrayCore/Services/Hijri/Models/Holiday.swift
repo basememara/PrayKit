@@ -61,7 +61,7 @@ public extension [Holiday] {
     /// midnight has passed; `calendar` sets the zone the day turns in.
     func upcoming(after date: Date, offset: Int, calendar: Calendar) -> [Holiday.Occurrence] {
         let today = calendar.startOfDay(for: date)
-        guard let year = date.hijri(offSet: offset, timeZone: calendar.timeZone).year else { return [] }
+        guard let year = date.hijri(offset: offset, timeZone: calendar.timeZone).year else { return [] }
 
         return compactMap { holiday in
             guard let thisYear = holiday.occurrence(inYear: year, offset: offset, timeZone: calendar.timeZone) else { return nil }
@@ -73,7 +73,7 @@ public extension [Holiday] {
     /// The Hijri year's holidays in order, or once every one has passed, next year's.
     func year(holding date: Date, offset: Int, calendar: Calendar) -> [Holiday.Occurrence] {
         let today = calendar.startOfDay(for: date)
-        guard let year = date.hijri(offSet: offset, timeZone: calendar.timeZone).year else { return [] }
+        guard let year = date.hijri(offset: offset, timeZone: calendar.timeZone).year else { return [] }
         let occurrences = { (year: Int) in
             compactMap { $0.occurrence(inYear: year, offset: offset, timeZone: calendar.timeZone) }.sorted { $0.date < $1.date }
         }

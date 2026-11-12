@@ -327,7 +327,7 @@ extension PrayerDayRuleTests {
         let june21 = try #require(days.first)
 
         #expect(isha.prayerTime.dateInterval.start == ishaBegins)
-        #expect(isha.prefix == june21.date.shortString(timeZone: calendar.timeZone, calendar: calendar, locale: .posix))
+        #expect(isha.prefix == june21.date.shortString(calendar: calendar))
 
         // The calendar days from now leave that Isha out
         let calendarDays = try await fixture.prayerManager.fetch(between: week, with: request)

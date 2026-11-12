@@ -28,7 +28,7 @@ extension PolarResolutionTests {
     @Test
     func aMidnightSunDayBorrowsFromTheChosenSource() async throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/Oslo"))
-        let day = try #require(Date(year: 2026, month: 6, day: 21, hour: 12, timeZone: timeZone))
+        let day = try #require(Date(year: 2026, month: 6, day: 21, hour: 12, calendar: Calendar(identifier: .gregorian, timeZone: timeZone)))
 
         let nearestLatitude = try await fixture.prayerManager.fetch(for: day, with: request(at: tromso, in: timeZone, method: .northAmerica))
         let nearestDay = try await fixture.prayerManager.fetch(
@@ -45,7 +45,7 @@ extension PolarResolutionTests {
     func aDayThePlaceCanCalculateIsItsOwn() async throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/London"))
         let day = try await fixture.prayerManager.fetch(
-            for: try #require(Date(year: 2026, month: 6, day: 21, hour: 12, timeZone: timeZone)),
+            for: try #require(Date(year: 2026, month: 6, day: 21, hour: 12, calendar: Calendar(identifier: .gregorian, timeZone: timeZone))),
             with: request(at: london, in: timeZone, method: .moonsightingCommittee, polarResolution: .nearestDay)
         )
 
@@ -104,7 +104,7 @@ extension PolarResolutionTests {
     func noDayBorrowsBelowWhereItApplies(method: CalculationMethod, latitude: Double) throws {
         let service = PrayerServiceAdhan(log: fixture.log)
         let calendar = Calendar(identifier: .gregorian, timeZone: utc)
-        let start = try #require(Date(year: 2026, month: 1, day: 1, hour: 12, timeZone: utc))
+        let start = try #require(Date(year: 2026, month: 1, day: 1, hour: 12, calendar: calendar))
         let request = request(at: Coordinates(latitude: latitude, longitude: 18.9553), in: utc, method: method)
 
         let borrowed = (0..<365)

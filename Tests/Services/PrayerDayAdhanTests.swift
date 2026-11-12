@@ -25,16 +25,17 @@ extension PrayerDayAdhanTests {
             longitude: -79.347015,
             method: .northAmerica
         )
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
         // Then
-        #expect(prayerDay.times[.fajr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 6, minute: 25, timeZone: timeZone))
-        #expect(prayerDay.times[.sunrise]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 7, minute: 51, timeZone: timeZone))
-        #expect(prayerDay.times[.dhuhr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 12, minute: 23, timeZone: timeZone))
-        #expect(prayerDay.times[.asr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 14, minute: 35, timeZone: timeZone))
-        #expect(prayerDay.times[.maghrib]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 16, minute: 52, timeZone: timeZone))
-        #expect(prayerDay.times[.isha]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 18, minute: 19, timeZone: timeZone))
-        #expect(prayerDay.times[.midnight]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 23, minute: 39, timeZone: timeZone))
-        #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2021, month: 1, day: 3, hour: 1, minute: 54, timeZone: timeZone))
+        #expect(prayerDay.times[.fajr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 6, minute: 25, calendar: calendar))
+        #expect(prayerDay.times[.sunrise]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 7, minute: 51, calendar: calendar))
+        #expect(prayerDay.times[.dhuhr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 12, minute: 23, calendar: calendar))
+        #expect(prayerDay.times[.asr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 14, minute: 35, calendar: calendar))
+        #expect(prayerDay.times[.maghrib]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 16, minute: 52, calendar: calendar))
+        #expect(prayerDay.times[.isha]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 18, minute: 19, calendar: calendar))
+        #expect(prayerDay.times[.midnight]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 23, minute: 39, calendar: calendar))
+        #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2021, month: 1, day: 3, hour: 1, minute: 54, calendar: calendar))
 
         let startDate = (prayerDay.times[.fajr]?.dateInterval.start ?? .now) - 60
         // The minute before Fajr belongs to the day before, so this day has no prayer under way yet
@@ -96,16 +97,17 @@ extension PrayerDayAdhanTests {
             longitude: -0.118092,
             method: .london
         )
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
         // Then
-        #expect(prayerDay.times[.fajr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 5, minute: 15, timeZone: timeZone))
-        #expect(prayerDay.times[.sunrise]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 6, minute: 52, timeZone: timeZone))
-        #expect(prayerDay.times[.dhuhr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 12, minute: 19, timeZone: timeZone))
-        #expect(prayerDay.times[.asr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 14, minute: 59, timeZone: timeZone))
-        #expect(prayerDay.times[.maghrib]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 17, minute: 37, timeZone: timeZone))
-        #expect(prayerDay.times[.isha]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 19, minute: 4, timeZone: timeZone))
-        #expect(prayerDay.times[.midnight]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 23, minute: 25, timeZone: timeZone))
-        #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2022, month: 2, day: 26, hour: 1, minute: 20, timeZone: timeZone))
+        #expect(prayerDay.times[.fajr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 5, minute: 15, calendar: calendar))
+        #expect(prayerDay.times[.sunrise]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 6, minute: 52, calendar: calendar))
+        #expect(prayerDay.times[.dhuhr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 12, minute: 19, calendar: calendar))
+        #expect(prayerDay.times[.asr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 14, minute: 59, calendar: calendar))
+        #expect(prayerDay.times[.maghrib]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 17, minute: 37, calendar: calendar))
+        #expect(prayerDay.times[.isha]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 19, minute: 4, calendar: calendar))
+        #expect(prayerDay.times[.midnight]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 23, minute: 25, calendar: calendar))
+        #expect(prayerDay.times[.lastThird]?.dateInterval.start == Date(year: 2022, month: 2, day: 26, hour: 1, minute: 20, calendar: calendar))
 
         let startDate = (prayerDay.times[.fajr]?.dateInterval.start ?? .now) - 60
         // The minute before Fajr belongs to the day before, so this day has no prayer under way yet

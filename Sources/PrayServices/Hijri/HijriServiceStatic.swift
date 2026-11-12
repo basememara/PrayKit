@@ -112,8 +112,7 @@ public extension HijriServiceStatic {
 
 private extension HijriServiceStatic {
     func fetch(with request: HijriAPI.FetchTimelineRequest) async -> [Date] {
-        var calendar = Date.islamicCalendar
-        calendar.timeZone = request.timeZone
+        let calendar = Calendar(identifier: .islamicUmmAlQura, timeZone: request.timeZone)
 
         let startAfterDate = request.startDate.startOfDay(using: calendar) - .days(1, calendar)
         let dateComponent = calendar.dateComponents([.hour, .minute, .second], from: startAfterDate)

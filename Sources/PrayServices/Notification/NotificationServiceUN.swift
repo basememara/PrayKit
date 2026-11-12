@@ -59,7 +59,7 @@ extension NotificationServiceUN {
     /// its reminders all being earlier.
     static func prayersToNotify(in prayerDays: [PrayerDay], from now: Date, calendar: Calendar) -> [(prefix: String, prayerTime: PrayerTime)] {
         prayerDays.flatMap { prayerDay in
-            let prefix = prayerDay.date.shortString(timeZone: calendar.timeZone, calendar: calendar, locale: .posix)
+            let prefix = prayerDay.date.shortString(calendar: calendar)
             return prayerDay.times.filter { $0.dateInterval.end > now }.map { (prefix, $0) }
         }
     }
@@ -433,9 +433,9 @@ public extension NotificationServiceUN {
         let state = storage.load()
         let timeInterval = timeInterval ?? TimeInterval(state.document.settings.snoozeMinutes * 60)
         let date = Date(timeIntervalSinceNow: timeInterval)
-        let identifier = "\(date.shortString(timeZone: state.timeZone, locale: .posix))-\(prayerTime.type)-snooze"
-        let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
         let calendar = state.placeCalendar
+        let identifier = "\(date.shortString(calendar: calendar))-\(prayerTime.type)-snooze"
+        let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
 
         do {
             try await userNotification.add(

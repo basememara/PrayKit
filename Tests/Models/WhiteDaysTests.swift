@@ -17,7 +17,7 @@ struct WhiteDaysTests {
     /// The Hijri year, month and day each white day falls on, as the app shows it.
     private func hijriDays(_ dates: [Date], offset: Int = 0) -> [[Int]] {
         dates.map { date in
-            let components = date.hijri(offSet: offset, timeZone: timeZone)
+            let components = date.hijri(offset: offset, timeZone: timeZone)
             return [components.year ?? 0, components.month ?? 0, components.day ?? 0]
         }
     }

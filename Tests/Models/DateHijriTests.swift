@@ -19,13 +19,13 @@ struct DateHijriTests {
     func autoIncrementFollowsTheLocationDay() throws {
         let timeZone = try #require(TimeZone(identifier: "America/New_York"))
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
-        let noon = try #require(Date(year: 2022, month: 3, day: 16, hour: 12, timeZone: timeZone))
+        let noon = try #require(Date(year: 2022, month: 3, day: 16, hour: 12, calendar: calendar))
         let prayerDay = PrayerDay.mock(at: noon, calendar: calendar)
 
-        let afterMaghrib = try #require(Date(year: 2022, month: 3, day: 16, hour: 21, timeZone: timeZone))
-        let beforeMidnight = try #require(Date(year: 2022, month: 3, day: 16, hour: 23, minute: 59, timeZone: timeZone))
-        let afterMidnight = try #require(Date(year: 2022, month: 3, day: 17, hour: 0, minute: 30, timeZone: timeZone))
-        let beforeMaghrib = try #require(Date(year: 2022, month: 3, day: 16, hour: 18, timeZone: timeZone))
+        let afterMaghrib = try #require(Date(year: 2022, month: 3, day: 16, hour: 21, calendar: calendar))
+        let beforeMidnight = try #require(Date(year: 2022, month: 3, day: 16, hour: 23, minute: 59, calendar: calendar))
+        let afterMidnight = try #require(Date(year: 2022, month: 3, day: 17, hour: 0, minute: 30, calendar: calendar))
+        let beforeMaghrib = try #require(Date(year: 2022, month: 3, day: 16, hour: 18, calendar: calendar))
 
         #expect(afterMaghrib.hijriDayOffset(for: prayerDay, hijriDayOffset: 2, autoIncrementHijri: true, timeZone: timeZone) == 3)
         #expect(beforeMidnight.hijriDayOffset(for: prayerDay, hijriDayOffset: 2, autoIncrementHijri: true, timeZone: timeZone) == 3)

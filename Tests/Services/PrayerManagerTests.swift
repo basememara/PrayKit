@@ -25,8 +25,8 @@ extension PrayerManagerTests {
         // Given
         let timeZone = try #require(TimeZone(identifier: "America/New_York"))
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone, locale: .posix)
-        let start = try #require(Date(year: 2021, month: 1, day: 2, timeZone: timeZone))
-        let end = try #require(Date(year: 2021, month: 1, day: 11, timeZone: timeZone))
+        let start = try #require(Date(year: 2021, month: 1, day: 2, calendar: calendar))
+        let end = try #require(Date(year: 2021, month: 1, day: 11, calendar: calendar))
 
         // When
         let prayerDays = try await prayerManager.fetch(
@@ -42,8 +42,8 @@ extension PrayerManagerTests {
         #expect(Set(days).count == days.count, "A day was fetched twice")
 
         let first = try #require(prayerDays.first)
-        #expect(first.times[.fajr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 6, minute: 25, timeZone: timeZone))
-        #expect(first.times[.maghrib]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 16, minute: 52, timeZone: timeZone))
+        #expect(first.times[.fajr]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 6, minute: 25, calendar: calendar))
+        #expect(first.times[.maghrib]?.dateInterval.start == Date(year: 2021, month: 1, day: 2, hour: 16, minute: 52, calendar: calendar))
 
         // Every day must carry a full set of times, or a notification silently goes unscheduled
         for prayerDay in prayerDays {
@@ -57,8 +57,9 @@ extension PrayerManagerTests {
     func londonRangeIsConsistentUnderConcurrentFanOut() async throws {
         // Given
         let timeZone = try #require(TimeZone(identifier: "GMT"))
-        let start = try #require(Date(year: 2022, month: 2, day: 25, timeZone: timeZone))
-        let end = try #require(Date(year: 2022, month: 3, day: 6, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let start = try #require(Date(year: 2022, month: 2, day: 25, calendar: calendar))
+        let end = try #require(Date(year: 2022, month: 3, day: 6, calendar: calendar))
         let interval = DateInterval(start: start, end: end)
         let request = PrayerAPI.Request.london(timeZone: timeZone)
 
@@ -76,16 +77,17 @@ extension PrayerManagerTests {
         }
 
         let opener = try #require(left.first)
-        #expect(opener.times[.fajr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 5, minute: 15, timeZone: timeZone))
-        #expect(opener.times[.maghrib]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 17, minute: 37, timeZone: timeZone))
+        #expect(opener.times[.fajr]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 5, minute: 15, calendar: calendar))
+        #expect(opener.times[.maghrib]?.dateInterval.start == Date(year: 2022, month: 2, day: 25, hour: 17, minute: 37, calendar: calendar))
     }
 
     @Test
     func londonRangeSpanningAYearBoundaryLoadsBothTimetables() async throws {
         // Given
         let timeZone = try #require(TimeZone(identifier: "GMT"))
-        let start = try #require(Date(year: 2022, month: 12, day: 29, timeZone: timeZone))
-        let end = try #require(Date(year: 2023, month: 1, day: 3, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let start = try #require(Date(year: 2022, month: 12, day: 29, calendar: calendar))
+        let end = try #require(Date(year: 2023, month: 1, day: 3, calendar: calendar))
 
         // When
         let prayerDays = try await prayerManager.fetch(

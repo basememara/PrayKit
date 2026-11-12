@@ -52,9 +52,10 @@ struct SettingsSoundsTests {
     @Test
     func theAdhanPlaysWithTheDuaaAfterItAndTheTakbeeratOnEid() throws {
         let timeZone = try #require(TimeZone(identifier: "Asia/Riyadh"))
-        let day = try #require(Date(year: 2026, month: 10, day: 31, hour: 12, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let day = try #require(Date(year: 2026, month: 10, day: 31, hour: 12, calendar: calendar))
         // The second day of Eid al-Fitr 1447
-        let eid = try #require(Date(year: 2026, month: 3, day: 21, hour: 12, timeZone: timeZone))
+        let eid = try #require(Date(year: 2026, month: 3, day: 21, hour: 12, calendar: calendar))
         var settings = Settings()
         settings.notificationAdhan[.dhuhr] = .makkah
         settings.adhanDuaa = .off

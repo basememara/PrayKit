@@ -31,8 +31,9 @@ extension HijriServiceStaticTests {
     func offsetIncrementsAfterMaghribWhenAutoIncrementIsOn() async throws {
         // Given
         let timeZone = try #require(TimeZone(identifier: "America/New_York"))
-        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, timeZone: timeZone))
-        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, calendar: calendar))
+        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, calendar: calendar))
 
         // When
         saveManualAddress(
@@ -54,8 +55,9 @@ extension HijriServiceStaticTests {
     func offsetHoldsAllDayWhenAutoIncrementIsOff() async throws {
         // Given
         let timeZone = try #require(TimeZone(identifier: "America/New_York"))
-        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, timeZone: timeZone))
-        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let beforeMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 2, calendar: calendar))
+        let afterMaghrib = try #require(Date(year: 2022, month: 03, day: 16, hour: 20, calendar: calendar))
 
         // When
         saveManualAddress(
@@ -76,7 +78,8 @@ extension HijriServiceStaticTests {
     func timelineIncrementsAtTheFirstMaghrib() async throws {
         // Given
         let timeZone = try #require(TimeZone(identifier: "America/New_York"))
-        let startDate = try #require(Date(year: 2022, month: 3, day: 16, hour: 2, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let startDate = try #require(Date(year: 2022, month: 3, day: 16, hour: 2, calendar: calendar))
 
         let request = HijriAPI.FetchTimelineRequest(
             startDate: startDate,
@@ -106,7 +109,8 @@ extension HijriServiceStaticTests {
     func timelineWaitsForAMaghribAfterMidnight() async throws {
         // Given: Reykjavik in June, where each day's Maghrib begins just after the next midnight
         let timeZone = try #require(TimeZone(identifier: "Atlantic/Reykjavik"))
-        let startDate = try #require(Date(year: 2026, month: 6, day: 21, hour: 12, timeZone: timeZone))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let startDate = try #require(Date(year: 2026, month: 6, day: 21, hour: 12, calendar: calendar))
         let request = HijriAPI.FetchTimelineRequest(startDate: startDate, timeZone: timeZone, limit: 8)
 
         // When
@@ -120,7 +124,7 @@ extension HijriServiceStaticTests {
         let timeline = try await hijriService.fetch(with: request)
 
         // Then: each midnight holds the previous Hijri day until that Maghrib turns it
-        let midnight = try #require(Date(year: 2026, month: 6, day: 21, hour: 0, timeZone: timeZone))
+        let midnight = try #require(Date(year: 2026, month: 6, day: 21, hour: 0, calendar: calendar))
         #expect(timeline.prefix(4).map(\.hijriOffset) == [1, 2, 1, 2])
         #expect(timeline.first?.date == midnight)
         #expect(zip(timeline, timeline.dropFirst()).allSatisfy { $0.date < $1.date })

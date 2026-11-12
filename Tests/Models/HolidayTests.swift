@@ -31,7 +31,7 @@ struct HolidayTests {
     @Test
     func withoutAnOffsetTheHolidayFallsOnItsUmmAlQuraDay() throws {
         let date = try #require(eid.date(inYear: 1448, offset: 0, timeZone: calendar.timeZone))
-        let hijri = Date.islamicCalendar.dateComponents([.year, .month, .day], from: date)
+        let hijri = Calendar(identifier: .islamicUmmAlQura, timeZone: .current).dateComponents([.year, .month, .day], from: date)
 
         #expect(hijri.year == 1448)
         #expect(hijri.month == 10)
@@ -41,12 +41,12 @@ struct HolidayTests {
     /// The app shows the Hijri date of the day `offset` days on, so the holiday is the day it shows 1 Shawwal.
     @Test
     func anOffsetMovesTheHolidayToTheDayThatShowsIt() throws {
-        let calendar = Date.islamicCalendar
+        let calendar = Calendar(identifier: .islamicUmmAlQura, timeZone: .current)
         let unshifted = try #require(eid.date(inYear: 1448, offset: 0, timeZone: calendar.timeZone))
 
         for offset in [-2, -1, 1, 2] {
             let date = try #require(eid.date(inYear: 1448, offset: offset, timeZone: calendar.timeZone))
-            let shown = date.hijri(components: [.year, .month, .day], offSet: offset)
+            let shown = date.hijri(components: [.year, .month, .day], offset: offset, timeZone: calendar.timeZone)
 
             #expect(calendar.dateComponents([.day], from: unshifted, to: date).day == -offset)
             #expect(shown.month == 10)
@@ -62,7 +62,7 @@ struct HolidayTests {
 
         #expect(next.holiday.id == "isra_miraj")
         #expect(next.date == place.startOfDay(for: next.date))
-        #expect(next.date.hijri(offSet: 0, timeZone: timeZone).day == 27)
+        #expect(next.date.hijri(offset: 0, timeZone: timeZone).day == 27)
     }
 
     @Test

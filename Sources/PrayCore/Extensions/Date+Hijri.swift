@@ -19,7 +19,7 @@ public extension Date {
     ) -> String {
         hijriString(
             template: template,
-            offSet: self.hijriDayOffset(
+            offset: self.hijriDayOffset(
                 for: prayerDay,
                 hijriDayOffset: hijriDayOffset,
                 autoIncrementHijri: autoIncrementHijri,
@@ -59,8 +59,7 @@ public extension Date {
     /// The day a Hijri date falls on as the app shows it, at its midnight in `timeZone`: the app shows the Hijri date
     /// of the day `offset` days on, so each Hijri day comes `offset` days before its Umm al-Qura day.
     init?(hijriYear year: Int, month: Int, day: Int, offset: Int, timeZone: TimeZone) {
-        var calendar = Date.islamicCalendar
-        calendar.timeZone = timeZone
+        let calendar = Calendar(identifier: .islamicUmmAlQura, timeZone: timeZone)
         guard let date = DateComponents(calendar: calendar, year: year, month: month, day: day).date
             .flatMap({ calendar.date(byAdding: .day, value: -offset, to: $0) }) else { return nil }
         self = date
@@ -72,7 +71,7 @@ public extension Date {
     /// still to come or under way, else the next month's. Dhu'l-Hijjah's are passed over for Muharram's, since its
     /// 13th is a day of tashreeq.
     func whiteDays(offset: Int, timeZone: TimeZone) -> [Date] {
-        let today = hijri(offSet: offset, timeZone: timeZone)
+        let today = hijri(offset: offset, timeZone: timeZone)
         guard let year = today.year, let month = today.month, let day = today.day else { return [] }
         let next = { (year: Int, month: Int) in month == 12 ? (year + 1, 1) : (year, month + 1) }
         let current = day <= 15 ? (year, month) : next(year, month)

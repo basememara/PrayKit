@@ -741,7 +741,7 @@ extension PrayerTimerTests {
     }
 
     func today(day: Int = 26, hour: Int, minute: Int) -> Date {
-        Date(year: 2022, month: 11, day: day, hour: hour, minute: minute, timeZone: timeZone) ?? .now
+        Date(year: 2022, month: 11, day: day, hour: hour, minute: minute, calendar: calendar) ?? .now
     }
 
     func friday(hour: Int, minute: Int) -> Date {

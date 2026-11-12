@@ -133,7 +133,7 @@ public extension Settings {
     /// the prayer has no adhan file.
     func adhanPlaylist(for prayer: Prayer, at date: Date, timeZone: TimeZone) -> [URL] {
         guard let adhan = adhanURL(for: prayer) else { return [] }
-        let isEid = date.isEid(offSet: hijriDayOffset, timeZone: timeZone)
+        let isEid = date.isEid(offset: hijriDayOffset, timeZone: timeZone)
         return [adhan] + [adhanDuaa.fileURL, isEid ? NotificationSound.takbeerEid.fileURL : nil].compactMap(\.self)
     }
 

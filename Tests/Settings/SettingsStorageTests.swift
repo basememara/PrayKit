@@ -38,6 +38,7 @@ extension SettingsStorageTests {
         expected.matchesAppIcon = Settings().matchesAppIcon
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         expected.alarms = Settings().alarms
+        expected.isPlacePinned = Settings().isPlacePinned
 
         let state = storage.load()
         #expect(state.document.settings == expected)

@@ -56,6 +56,7 @@ extension Settings {
         settings.matchesAppIcon = true
         settings.isFullAdhanEnabled = true
         settings.alarms = [.fajr, .sunrise]
+        settings.isPlacePinned = true
         return settings
     }()
 
@@ -67,6 +68,7 @@ extension Settings {
         settings.matchesAppIcon = Settings().matchesAppIcon
         settings.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         settings.alarms = Settings().alarms
+        settings.isPlacePinned = Settings().isPlacePinned
         return settings
     }
 }

@@ -9,16 +9,16 @@
 import CoreLocation.CLLocation
 import Foundation
 
-/// How a GPS fix updates the device's place: only while GPS is on, jitter under a kilometre is ignored unless the
-/// time zone changed, a first place proposes its recommended method, and arriving in a new time zone, or anywhere
-/// that recommends another method, switches to it unless one was picked by hand or minutes were adjusted, which
-/// ask instead.
+/// How a GPS fix updates the device's place: only while the device follows its location, jitter under a kilometre is
+/// ignored unless the time zone changed, a first place proposes its recommended method, and arriving in a new time
+/// zone, or anywhere that recommends another method, switches to it unless one was picked by hand or minutes were
+/// adjusted, which ask instead.
 public enum LocationRule {
     private static let significantDistance: CLLocationDistance = 1_000
 
     /// The state after a fix taken in `timeZone` at `date`, or `nil` when the fix changes nothing worth saving.
     public static func apply(_ coordinates: Coordinates, timeZone: TimeZone, at date: Date, to state: DeviceState) -> DeviceState? {
-        guard state.document.settings.isGPSEnabled else { return nil }
+        guard state.document.settings.followsLocation else { return nil }
 
         let place = state.place
         let hasMoved = place.map { CLLocation(coordinates).distance(from: CLLocation($0.coordinates)) >= significantDistance } ?? true
@@ -36,12 +36,25 @@ public enum LocationRule {
         let document = if place == nil {
             state.document.proposing { $0.recommendMethod(at: newPlace) }
         } else if followsThePlace, hasChangedTimeZone || recommendsAnother {
-            state.document.editing(at: date) { $0.followPlace(newPlace) }
+            state.document.editing(at: date) { $0.followPlace(newPlace, from: $0.method(at: place)) }
         } else {
             state.document
         }
 
         return DeviceState(document: document, place: newPlace)
+    }
+}
+
+public extension Settings {
+    /// Whether this device takes its place from its location: GPS is on for the account and no place is pinned here.
+    var followsLocation: Bool {
+        isGPSEnabled && !isPlacePinned
+    }
+
+    /// Has this device follow its location, which turns GPS on for the account and lets go of a place pinned here.
+    mutating func followLocation() {
+        isGPSEnabled = true
+        isPlacePinned = false
     }
 }
 
@@ -65,10 +78,12 @@ public extension Settings {
         manualMethod?.keptTimeZones.insert(CalculationMethod.area(at: place))
     }
 
-    /// Follows the place's recommended method, unless minutes adjusted for this method's times would move another's:
-    /// then the method stays, counted as picked by hand, so the place asks instead.
-    mutating func followPlace(_ place: Place) {
-        guard Self.placeMethod(at: place) == calculationMethod || adjustments.isEmpty else {
+    /// Follows the place's recommended method, unless minutes adjusted for the times of `current`, the method in
+    /// use until now, would move another's: then that method stays, counted as picked by hand, so the place asks
+    /// instead.
+    mutating func followPlace(_ place: Place, from current: CalculationMethod) {
+        guard Self.placeMethod(at: place) == current || adjustments.isEmpty else {
+            calculationMethod = current
             manualMethod = ManualMethod(keptTimeZones: [])
             return
         }
@@ -76,11 +91,19 @@ public extension Settings {
         recommendMethod(at: place)
     }
 
-    /// The method the times are calculated with: the one chosen, unless it's a city's timetable away from its time
-    /// zone, whose times would be read on another clock, where the place's own applies.
+    /// The method the times are calculated with. One that follows the place is the place's own, whatever is stored:
+    /// the stored method syncs, the place doesn't, so it may have followed another device somewhere else. One picked
+    /// by hand is the one chosen, unless it's a city's timetable away from its time zone, whose times would be read
+    /// on another clock, where the place's own applies.
     func method(at place: Place?) -> CalculationMethod {
-        guard let place, !calculationMethod.isReadable(in: place.timeZone) else { return calculationMethod }
-        return Self.placeMethod(at: place)
+        guard let place else { return calculationMethod }
+        guard manualMethod != nil, calculationMethod.isReadable(in: place.timeZone) else { return Self.placeMethod(at: place) }
+        return calculationMethod
+    }
+
+    /// The method to show as chosen: the one picked by hand or, while it follows the place, the place's.
+    func chosenMethod(at place: Place?) -> CalculationMethod {
+        manualMethod == nil ? method(at: place) : calculationMethod
     }
 
     /// The method a place recommends over one picked by hand, unless the user kept theirs there.
@@ -94,15 +117,16 @@ public extension Settings {
 
     /// Upgrades settings saved before picks were recorded, when the time zone alone set the method: one that differs
     /// from the zone's was picked by hand and is kept where the user is, and any other follows the place from now on.
+    /// The place's own method follows too, which is what another of the account's devices upgrades its zone's to.
     mutating func upgradeMethod(at place: Place) {
         guard manualMethod == nil else { return }
 
-        guard calculationMethod == Self.placeMethod(for: place.timeZone, at: nil) else {
+        guard [Self.placeMethod(for: place.timeZone, at: nil), Self.placeMethod(at: place)].contains(calculationMethod) else {
             manualMethod = ManualMethod(keptTimeZones: [CalculationMethod.area(at: place)])
             return
         }
 
-        followPlace(place)
+        followPlace(place, from: calculationMethod)
     }
 }
 
@@ -117,9 +141,9 @@ extension Settings {
 }
 
 public extension SettingsStorage {
-    /// Saves a place picked by hand. GPS turns off so no fix replaces it, and, as on arriving somewhere new,
-    /// the method recommended for its time zone applies, unless the method was picked by hand too or minutes were
-    /// adjusted.
+    /// Saves a place picked by hand and pins it to this device, so no fix replaces it while the account's other
+    /// devices go on following their location. As on arriving somewhere new, the method recommended for it applies,
+    /// unless the method was picked by hand too or minutes were adjusted.
     @discardableResult
     func setManualPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
         let place = Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
@@ -127,10 +151,10 @@ public extension SettingsStorage {
         return update { state in
             DeviceState(
                 document: state.document.editing(at: date) {
-                    $0.isGPSEnabled = false
+                    $0.isPlacePinned = true
 
                     guard $0.manualMethod == nil else { return }
-                    $0.followPlace(place)
+                    $0.followPlace(place, from: $0.method(at: state.place))
                 },
                 place: place
             )
@@ -146,7 +170,7 @@ public extension SettingsStorage {
         return update { state in
             DeviceState(
                 document: state.document
-                    .editing(at: date) { $0.isGPSEnabled = false }
+                    .editing(at: date) { $0.isPlacePinned = true }
                     .proposing { $0.recommendMethod(at: place) },
                 place: place
             )

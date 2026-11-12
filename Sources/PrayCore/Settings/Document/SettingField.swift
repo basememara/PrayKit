@@ -47,7 +47,8 @@ extension Settings {
         SettingField(.prayerActivity, \.prayerActivity, .string, synced: false),
         SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false),
         SettingField(.isFullAdhanEnabled, \.isFullAdhanEnabled, .bool, synced: false),
-        SettingField(.alarms, \.alarms, .json, synced: false)
+        SettingField(.alarms, \.alarms, .json, synced: false),
+        SettingField(.isPlacePinned, \.isPlacePinned, .bool, synced: false)
     ]
 }
 

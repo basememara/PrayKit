@@ -34,7 +34,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
         self.iqamaTimes = settings.iqamaTimes
         self.iqamaReminders = settings.iqamaReminders
         self.duhaReminder = settings.duhaReminder
-        self.isGPSEnabled = settings.isGPSEnabled
+        self.isGPSEnabled = settings.followsLocation
         self.geofenceRadius = settings.geofenceRadius
 
         let calendar = Calendar(

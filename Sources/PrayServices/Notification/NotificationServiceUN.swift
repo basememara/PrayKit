@@ -347,7 +347,7 @@ private extension NotificationServiceUN {
         }))
 
         #if os(iOS)
-        if settings.isGPSEnabled, settings.geofenceRadius > 0 {
+        if settings.followsLocation, settings.geofenceRadius > 0 {
             let region = CLCircularRegion(
                 center: request.coordinates.location,
                 radius: settings.geofenceRadius,

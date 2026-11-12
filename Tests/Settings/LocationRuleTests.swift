@@ -51,6 +51,42 @@ struct LocationRuleTests {
     }
 
     @Test
+    func aFollowersMethodIsReadFromThisDevicesPlace() throws {
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let home = Place(coordinates: Coordinates(latitude: 3.139, longitude: 101.687), timeZone: timeZone, regionName: nil, fixedAt: date)
+        var settings = Settings()
+        // As stored by another of the account's devices, following its own place
+        settings.calculationMethod = .ummAlQura
+
+        #expect(settings.method(at: home) == .jakim)
+        #expect(settings.chosenMethod(at: home) == .jakim)
+
+        settings.pickMethod(.ummAlQura, at: home)
+
+        #expect(settings.method(at: home) == .ummAlQura)
+        #expect(settings.chosenMethod(at: home) == .ummAlQura)
+    }
+
+    @Test
+    func aPlacePickedHerePinsThisDeviceAndLeavesGPSOnForTheOthers() throws {
+        let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
+        let storage = SettingsStorage(defaults: .makeTest())
+
+        let picked = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Toronto", at: date)
+
+        #expect(picked.document.settings.isGPSEnabled)
+        #expect(picked.document.settings.isPlacePinned)
+        #expect(!picked.document.settings.followsLocation)
+        #expect(picked.document.wireFields[SettingKey.isPlacePinned.rawValue] == nil)
+        #expect(LocationRule.apply(Coordinates(latitude: 45.5, longitude: -73.6), timeZone: timeZone, at: date + 60, to: picked) == nil)
+
+        var settings = picked.document.settings
+        settings.followLocation()
+
+        #expect(settings.followsLocation)
+    }
+
+    @Test
     func jitterUnderAKilometreIsIgnored() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
         let state = DeviceState(place: Place(coordinates: toronto, timeZone: timeZone, regionName: "Toronto", fixedAt: date))
@@ -277,7 +313,7 @@ extension LocationRuleTests {
     }
 
     @Test
-    func aManualPlaceTurnsGPSOffAndTakesItsRecommendedMethod() throws {
+    func aManualPlaceIsPinnedHereAndTakesItsRecommendedMethod() throws {
         let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
         let storage = SettingsStorage(defaults: .makeTest())
         storage.edit { $0.calculationMethod = .muslimWorldLeague }
@@ -285,7 +321,8 @@ extension LocationRuleTests {
         let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
 
         #expect(saved.place == Place(coordinates: toronto, timeZone: timeZone, regionName: "Kuala Lumpur", fixedAt: date))
-        #expect(!saved.document.settings.isGPSEnabled)
+        #expect(saved.document.settings.isPlacePinned)
+        #expect(saved.document.settings.isGPSEnabled)
         #expect(saved.document.settings.calculationMethod == .jakim)
         #expect(storage.load() == saved)
     }
@@ -302,7 +339,7 @@ extension LocationRuleTests {
         let manual = storage.setManualPlace(Coordinates(latitude: 48.857, longitude: 2.352), timeZone: paris, regionName: "Paris", at: date + 60)
         #expect(manual.document.settings.calculationMethod == .muslimWorldLeague)
 
-        storage.edit { $0.isGPSEnabled = true }
+        storage.edit { $0.followLocation() }
         let back = storage.saveLocation(kualaLumpurCoordinates, timeZone: kualaLumpur, at: date + 120)
 
         #expect(back.document.settings.calculationMethod == .jakim)
@@ -317,7 +354,7 @@ extension LocationRuleTests {
 
         let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
 
-        #expect(!saved.document.settings.isGPSEnabled)
+        #expect(saved.document.settings.isPlacePinned)
         #expect(saved.document.settings.calculationMethod == .northAmerica)
         #expect(saved.document.settings.methodSuggestion(at: .zone(timeZone)) == .jakim)
     }

@@ -77,7 +77,7 @@ extension PolarResolutionTests {
     @Test(arguments: [CalculationMethod.tehran, .shia])
     func aMaghribByAngleCanBorrowFrom57Degrees(method: CalculationMethod) {
         var settings = Settings()
-        settings.calculationMethod = method
+        settings.pickMethod(method, at: nil)
 
         #expect(PolarResolution.applies(at: place(latitude: 59.3), with: settings))
         #expect(!PolarResolution.applies(at: place(latitude: 56.9), with: settings))
@@ -86,7 +86,7 @@ extension PolarResolutionTests {
     @Test
     func aCustomMaghribAngleCountsAsTimingMaghribByAngle() {
         var settings = Settings()
-        settings.calculationMethod = .custom
+        settings.pickMethod(.custom, at: nil)
         #expect(!PolarResolution.applies(at: place(latitude: 59.3), with: settings))
 
         settings.maghribDegrees = 4

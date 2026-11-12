@@ -83,14 +83,15 @@ extension SetUpTests {
 
 extension SetUpTests {
     @Test
-    func settingUpAPlaceProposesItsMethodAndTurnsGPSOff() throws {
+    func settingUpAPlaceProposesItsMethodAndPinsThePlaceHere() throws {
         let kualaLumpur = try #require(kualaLumpur)
         let storage = SettingsStorage(defaults: .makeTest())
 
         let set = storage.setUpPlace(coordinates, timeZone: kualaLumpur, regionName: "Kuala Lumpur", at: date)
 
         #expect(set.place == Place(coordinates: coordinates, timeZone: kualaLumpur, regionName: "Kuala Lumpur", fixedAt: date))
-        #expect(!set.document.settings.isGPSEnabled)
+        #expect(set.document.settings.isGPSEnabled)
+        #expect(set.document.settings.isPlacePinned)
         #expect(set.document.settings.calculationMethod == .jakim)
         #expect(set.document.revision(of: .calculationMethod) == .legacy)
         #expect(storage.load() == set)

@@ -16,7 +16,7 @@ struct PrayerRequestHashTests {
     private static let notificationKeys: Set<SettingKey> = [
         .calculationMethod, .juristicMethod, .fajrDegrees, .maghribDegrees, .ishaDegrees, .elevationRule,
         .adjustmentMinutes, .adjustmentElevation, .polarResolution, .isGPSEnabled, .geofenceRadius, .iqamaTimes, .iqamaReminders,
-        .preAdhanMinutes, .duhaReminder, .notificationAdhan, .notificationSounds, .reminderSounds, .alarms
+        .preAdhanMinutes, .duhaReminder, .notificationAdhan, .notificationSounds, .reminderSounds, .alarms, .isPlacePinned
     ]
 
     @Test(arguments: SettingKey.allCases)
@@ -26,6 +26,11 @@ struct PrayerRequestHashTests {
         let interval = DateInterval(start: Date(timeIntervalSince1970: 1_800_000_000), duration: 7 * 24 * 3600)
         var changed = Settings()
         field.copy(from: .everyFieldChanged, into: &changed)
+
+        // A stored method counts once it's picked by hand; one that follows the place is read from the place
+        if key == .calculationMethod {
+            changed.manualMethod = Settings.everyFieldChanged.manualMethod
+        }
 
         let before = PrayerRequestHash(request: try #require(PrayerAPI.Request(settings: Settings(), place: place)), dateInterval: interval, settings: Settings())
         let after = PrayerRequestHash(request: try #require(PrayerAPI.Request(settings: changed, place: place)), dateInterval: interval, settings: changed)

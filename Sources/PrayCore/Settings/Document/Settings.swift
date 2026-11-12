@@ -103,6 +103,9 @@ public struct Settings: Codable, Equatable, Sendable {
     public var theme: AppTheme = .default
 
     // Device
+    /// Whether this device keeps a place picked on it. The GPS switch syncs as the account's privacy choice, so a
+    /// city picked on one device is kept here rather than by turning location off everywhere.
+    public var isPlacePinned = false
     public var prayerActivity: PrayerActivityMode = .off
     public var matchesAppIcon = false
     public var isFullAdhanEnabled = false
@@ -150,6 +153,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case matchesAppIcon
     case isFullAdhanEnabled
     case alarms
+    case isPlacePinned
 }
 
 public extension SettingKey {

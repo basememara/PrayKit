@@ -209,6 +209,11 @@ public extension PrayerTimer {
     var listedTimes: [PrayerTime] {
         listedDay.times
     }
+
+    /// The listed day's rows at the timer's moment, with Friday read on the place's calendar.
+    func listed(iqamaTimes: IqamaTimes) -> [ListedPrayer] {
+        listedDay.listed(at: date, iqamaTimes: iqamaTimes, using: Calendar(identifier: .gregorian, timeZone: timeZone))
+    }
 }
 
 // MARK: - Types

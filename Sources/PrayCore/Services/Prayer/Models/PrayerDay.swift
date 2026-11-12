@@ -116,6 +116,20 @@ extension PrayerDay {
     }
 }
 
+public extension PrayerDay {
+    /// This day's times in time order, as a list's rows at a moment. Ask the day being listed (`listedDay`, or
+    /// `PrayerTimer.listed`): the day a timer counts in, asked past its own span, reads the prayer under way as passed.
+    func listed(at time: Date, iqamaTimes: IqamaTimes, using calendar: Calendar) -> [ListedPrayer] {
+        times.sorted(by: \.dateInterval.start).map {
+            ListedPrayer(
+                prayerTime: $0,
+                khutba: $0.isJumuah(using: calendar) ? iqamaTimes[$0, using: calendar] : nil,
+                stage: stage(of: $0, at: time)
+            )
+        }
+    }
+}
+
 public extension PrayerTime {
     /// The time a list shows for this prayer: on a Friday, by its own date, Dhuhr shows the khutba when one is set.
     func listedStart(iqamaTimes: IqamaTimes, using calendar: Calendar) -> Date {
@@ -127,6 +141,16 @@ public extension PrayerTime {
     func acceptsSnooze(of interval: TimeInterval, at date: Date) -> Bool {
         date + interval < dateInterval.end
     }
+}
+
+/// One row of a day's list: a prayer and where it stands at the moment the list was asked for.
+public struct ListedPrayer: Identifiable, Equatable, Sendable {
+    public let prayerTime: PrayerTime
+    /// When the khutba begins, on a Friday's Dhuhr with one set: the time some faces show in place of the adhan.
+    public let khutba: Date?
+    public let stage: PrayerStage
+
+    public var id: Prayer { prayerTime.type }
 }
 
 public enum PrayerStage: Equatable, Sendable {

@@ -111,9 +111,6 @@ public extension PrayerTimer {
 
     var isJumuah: Bool { phase.prayerTime.isJumuah(using: Calendar(identifier: .gregorian, timeZone: timeZone)) }
 
-    /// Whether the face names the prayer Jumuah: Friday's Dhuhr.
-    var isNamedJumuah: Bool { isJumuah }
-
     /// When the count-up after the adhan stops, while it runs.
     var stopwatchEnd: Date? {
         if case let .countUp(end) = phase.kind { end } else { nil }

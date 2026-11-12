@@ -72,7 +72,6 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -8)
     }
 
@@ -85,7 +84,6 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -10)
     }
 
@@ -98,7 +96,6 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(prayerTimer.isJumuah)
-        #expect(prayerTimer.isNamedJumuah)
         #expect(prayerTimer.stopwatchEnd == friday(hour: 12, minute: 30))
         assertCalculations(for: prayerTimer, minutes: -10)
     }
@@ -112,7 +109,6 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -15)
     }
 
@@ -125,7 +121,6 @@ extension PrayerTimerTests {
         #expect(prayerTimer.timerType == .stopwatch)
         #expect(!(prayerTimer.isDangerZone))
         #expect(!(prayerTimer.isJumuah))
-        #expect(prayerTimer.isNamedJumuah == prayerTimer.isJumuah)
         assertCalculations(for: prayerTimer, minutes: -5)
     }
 }

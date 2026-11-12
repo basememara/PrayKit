@@ -98,7 +98,7 @@ private extension PrayerTimerSnapshotTests {
 
     static let columns = [
         "date", "day", "type", "timerType", "countdownDate", "timeRemaining", "timeDuration", "progressRemaining", "dangerZone",
-        "isDangerZone", "isJumuah", "isNamedJumuah", "stopwatchEnd", "turnover", "listsTomorrow"
+        "isDangerZone", "isJumuah", "stopwatchEnd", "turnover", "listsTomorrow"
     ]
 
     /// The fixture's day and the one before it, which holds the moments before its Fajr.
@@ -147,7 +147,6 @@ private extension PrayerTimerSnapshotTests {
             String(format: "%.6f", timer.dangerZone),
             "\(timer.isDangerZone)",
             "\(timer.isJumuah)",
-            "\(timer.isNamedJumuah)",
             timer.stopwatchEnd.map { stamp($0, using: calendar) } ?? "-",
             timer.turnover.map { stamp($0, using: calendar) } ?? "-",
             "\(timer.listsTomorrow)"

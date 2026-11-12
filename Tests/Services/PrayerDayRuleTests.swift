@@ -529,7 +529,6 @@ extension PrayerDayRuleTests {
         #expect(abs(timer.dangerZone - 0.25) <= 0.0001)
         #expect(!timer.isDangerZone)
         #expect(!timer.isJumuah)
-        #expect(!timer.isNamedJumuah)
         #expect(timer.stopwatchEnd == nil)
         #expect(!timer.listsTomorrow)
     }

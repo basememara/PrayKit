@@ -63,7 +63,7 @@ extension NotificationPlanSnapshotTests {
 
         for snapshotCase in PlanSnapshotCase.all {
             let input = try await snapshotCase.input(using: fixture.prayerManager)
-            reached.formUnion(try input.planned().branches(for: input))
+            reached.formUnion(input.plan().branches(for: input))
         }
 
         let missed = ScheduleBranch.compiled.subtracting(reached).map(\.rawValue).sorted()

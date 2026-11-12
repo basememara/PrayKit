@@ -50,25 +50,6 @@ struct ScheduleInput: Sendable {
             budget: budget
         )
     }
-
-    /// The plan as the applier hands it to the notification center: worded, with each `userInfo` built.
-    func planned() throws -> ScheduleOutcome {
-        try plan().outcome(localized: LocalizedStub(), timeZone: request.timeZone, calendar: calendar)
-    }
-
-    func legacy() async -> ScheduleOutcome {
-        await LegacyNotificationSchedule.schedule(
-            prayerDays: days,
-            settings: settings,
-            request: request,
-            now: now,
-            iqamaUpdateOrigin: iqamaUpdateOrigin,
-            prayerRequestHash: requestHash,
-            localized: LocalizedStub(),
-            budget: budget,
-            userNotification: LegacyNotificationRecorder()
-        )
-    }
 }
 
 extension DayFixture {
@@ -148,172 +129,23 @@ enum ScheduleOrigin: String, CaseIterable, Sendable {
     }
 }
 
-// MARK: - Wording
+// MARK: - Requests
 
-/// Wording that carries its arguments, so two runs that word a notification differently never read the same.
-struct LocalizedStub: NotificationServiceLocalizable {
-    let beaconNotificationBody = "beacon body"
-    let beaconNotificationTitle = "beacon title"
-    let calibrateNotificationBody = "calibrate body"
-
-    func prayerNotificationBody(for prayerTime: PrayerTime, at time: String, using calendar: Calendar) -> String {
-        "prayer \(Self.describe(prayerTime)) at \(time) jumuah \(prayerTime.isJumuah(using: calendar))"
+extension NotificationPlan.Request {
+    /// The prayer a request is for; the iqama update, calibrate and the beacon are for none.
+    var prayerTime: PrayerTime? {
+        guard case let .prayerTime(prayerTime) = payload else { return nil }
+        return prayerTime
     }
 
-    func prayerNotificationReminder(for prayerTime: PrayerTime, using calendar: Calendar) -> String {
-        "snooze \(Self.describe(prayerTime)) jumuah \(prayerTime.isJumuah(using: calendar))"
-    }
-
-    func prayerNotificationReminder(for prayerTime: PrayerTime, minutes: Int, using calendar: Calendar) -> String {
-        "reminder \(Self.describe(prayerTime)) minutes \(minutes) jumuah \(prayerTime.isJumuah(using: calendar))"
-    }
-
-    func iqamaNotificationBody(for prayerTime: PrayerTime, minutes: Int, isJumuah: Bool) -> String {
-        "iqama \(Self.describe(prayerTime)) minutes \(minutes) jumuah \(isJumuah)"
-    }
-
-    func duhaNotificationBody(at time: String) -> String {
-        "duha at \(time)"
-    }
-
-    private static func describe(_ prayerTime: PrayerTime) -> String {
-        "\(prayerTime.type.rawValue) \(prayerTime.dateInterval.start.timeIntervalSince1970) \(prayerTime.dateInterval.duration)"
-    }
-}
-
-// MARK: - Plan as an outcome
-
-extension NotificationPlan {
-    func outcome(localized: NotificationServiceLocalizable, timeZone: TimeZone, calendar: Calendar) throws -> ScheduleOutcome {
-        let timeFormatStyle = Date.FormatStyle(date: .omitted, time: .shortened, timeZone: timeZone)
-
-        let removed = removals.map { removal -> ScheduleEntry in
-            switch removal {
-            case let .identifier(identifier):
-                .removeIdentifier(identifier)
-            case let .category(category):
-                .removeCategory(category.rawValue)
-            }
-        }
-
-        let added = try requests.map { request in
-            ScheduleEntry.add(
-                ScheduleEntry.Notification(
-                    identifier: request.identifier,
-                    trigger: ScheduleEntry.Trigger(request.trigger),
-                    body: request.body.text(localized: localized, timeFormatStyle: timeFormatStyle, calendar: calendar),
-                    title: request.body.title(localized: localized),
-                    sound: request.sound.map(ScheduleEntry.Sound.init),
-                    interruptionLevel: request.interruptionLevel,
-                    category: request.category.rawValue,
-                    userInfo: ScheduleEntry.values(of: try request.payload.userInfo())
-                )
-            )
-        }
-
-        return ScheduleOutcome(
-            entries: removed + added,
-            shortcutPrayers: shortcutPrayers,
-            firstScheduled: firstScheduled,
-            lastScheduled: lastScheduled,
-            requested: requested
-        )
-    }
-}
-
-private extension ScheduleEntry.Trigger {
-    init(_ trigger: NotificationPlan.Trigger) {
+    var fireDate: Date? {
         switch trigger {
         case let .date(date):
-            self = .date(date)
+            date
         #if os(iOS)
-        case let .region(center, radius):
-            self = .region(ScheduleEntry.Region(NotificationPlan.Trigger.homeRegion(center: center, radius: radius)))
+        case .region:
+            nil
         #endif
-        }
-    }
-}
-
-private extension ScheduleEntry.Sound {
-    init(_ sound: NotificationPlan.Sound) {
-        switch sound {
-        case .default:
-            self = .default
-        case let .file(file):
-            self = .file(file)
-        }
-    }
-}
-
-extension ScheduleOutcome {
-    /// Where another outcome first parts from this one, or `nil` when they are the same.
-    func firstDifference(from other: ScheduleOutcome) -> String? {
-        let shared = min(entries.count, other.entries.count)
-
-        if let index = (0..<shared).first(where: { entries[$0] != other.entries[$0] }) {
-            return "entry \(index): \(other.entries[index]) became \(entries[index])"
-        }
-
-        guard entries.count == other.entries.count else {
-            let extra = entries.count > shared ? "gained \(entries[shared])" : "lost \(other.entries[shared])"
-            return "\(other.entries.count) entries became \(entries.count): \(extra)"
-        }
-
-        guard shortcutPrayers == other.shortcutPrayers else {
-            return "\(other.shortcutPrayers.count) Siri prayers became \(shortcutPrayers.count), or changed"
-        }
-
-        guard firstScheduled == other.firstScheduled, lastScheduled == other.lastScheduled else {
-            return "scheduled \(String(describing: other.firstScheduled)) to \(other.lastScheduled) became \(String(describing: firstScheduled)) to \(lastScheduled)"
-        }
-
-        return requested == other.requested ? nil : "requested \(other.requested) became \(requested)"
-    }
-}
-
-extension ScheduleEntry: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case let .add(notification):
-            "add \(notification)"
-        case let .removeIdentifier(identifier):
-            "remove \(identifier)"
-        case let .removeCategory(category):
-            "remove category \(category)"
-        }
-    }
-}
-
-extension ScheduleEntry.Notification: CustomStringConvertible {
-    var description: String {
-        let values = userInfo.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }
-
-        return [
-            identifier,
-            "\(trigger)",
-            "\"\(body)\"",
-            "title \(title ?? "-")",
-            "sound \(sound.map { "\($0)" } ?? "-")",
-            "level \(interruptionLevel?.name ?? "-")",
-            category,
-            "userInfo \(values.joined(separator: ", "))"
-        ].joined(separator: " | ")
-    }
-}
-
-extension ScheduleEntry.Value: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case let .prayerTime(prayerTime):
-            "\(prayerTime.type.rawValue) \(prayerTime.dateInterval.start) for \(prayerTime.dateInterval.duration)s"
-        case let .requestHash(requestHash):
-            requestHash.id
-        case let .number(number):
-            "\(number)"
-        case let .text(text):
-            text
-        case let .unreadable(value):
-            "unreadable \(value)"
         }
     }
 }

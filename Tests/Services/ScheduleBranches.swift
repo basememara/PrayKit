@@ -55,24 +55,17 @@ enum ScheduleBranch: String, CaseIterable, Sendable {
     }
 }
 
-extension ScheduleOutcome {
-    /// The branches the run took, read from what it added and removed.
+extension NotificationPlan {
+    /// The branches the run took, read from what it adds and removes.
     func branches(for input: ScheduleInput) -> Set<ScheduleBranch> {
-        let added = entries.compactMap { entry -> ScheduleEntry.Notification? in
-            guard case let .add(notification) = entry else { return nil }
-            return notification
-        }
+        let addedIdentifiers = Set(requests.map(\.identifier))
 
-        let addedIdentifiers = Set(added.map(\.identifier))
-
-        let removed = entries.compactMap { entry -> ScheduleBranch? in
-            switch entry {
-            case let .removeIdentifier(identifier):
-                ScheduleEntryKind(identifier).removed
-            case .removeCategory:
+        let removed = removals.compactMap { removal -> ScheduleBranch? in
+            switch removal {
+            case let .identifier(identifier):
+                ScheduleRequestKind(identifier).removed
+            case .category:
                 .beaconRemoved
-            case .add:
-                nil
             }
         }
 
@@ -82,11 +75,11 @@ extension ScheduleOutcome {
             firstScheduled == nil ? .nothingScheduled : nil
         ]
 
-        return Set(added.flatMap { $0.branches(for: input, addedIdentifiers: addedIdentifiers) } + removed + overall.compactMap(\.self))
+        return Set(requests.flatMap { $0.branches(for: input, addedIdentifiers: addedIdentifiers) } + removed + overall.compactMap(\.self))
     }
 }
 
-private enum ScheduleEntryKind {
+private enum ScheduleRequestKind {
     case prayer
     case iqama
     case reminder
@@ -137,24 +130,14 @@ private enum ScheduleEntryKind {
     }
 }
 
-private extension ScheduleEntry.Notification {
-    var prayerTime: PrayerTime? {
-        guard case let .prayerTime(prayerTime) = userInfo["prayer_time"] else { return nil }
-        return prayerTime
-    }
-
-    var date: Date? {
-        guard case let .date(date) = trigger else { return nil }
-        return date
-    }
-
+private extension NotificationPlan.Request {
     func branches(for input: ScheduleInput, addedIdentifiers: Set<String>) -> [ScheduleBranch] {
         let isJumuah = prayerTime?.isJumuah(using: input.calendar) ?? false
         let hasBegun = prayerTime.map { $0.dateInterval.start <= input.now } ?? false
 
-        switch ScheduleEntryKind(identifier) {
+        switch ScheduleRequestKind(identifier) {
         case .prayer:
-            return [category == NotificationCategory.main.rawValue ? .prayerAdded : .sideTimeAdded] + (sound == nil ? [.prayerAddedSilent] : [])
+            return [category == .main ? .prayerAdded : .sideTimeAdded] + (sound == nil ? [.prayerAddedSilent] : [])
         case .iqama:
             let prayerIdentifier = String(identifier.dropLast("-iqama-reminder".count))
             let replaces = isJumuah && !hasBegun && !addedIdentifiers.contains(prayerIdentifier) && input.settings.notificationSounds[.dhuhr] != .off
@@ -169,13 +152,13 @@ private extension ScheduleEntry.Notification {
 
             return [.reminderAdded]
                 + (isSilenced ? [.reminderSilencedByAlarm] : [])
-                + (isJumuah && date != fromDhuhr ? [.jumuahReminderBeforeKhutba] : [])
+                + (isJumuah && fireDate != fromDhuhr ? [.jumuahReminderBeforeKhutba] : [])
         case .imsak:
             return [.imsakAdded]
         case .duha:
             return [.duhaAdded]
         case .iqamaUpdate:
-            return [userInfo["origin_at"] == .number(input.now.timeIntervalSince1970) ? .iqamaUpdateStartsNow : .iqamaUpdateKeepsOrigin]
+            return [payload == .iqamaUpdateOrigin(input.now) ? .iqamaUpdateStartsNow : .iqamaUpdateKeepsOrigin]
         case .calibrate:
             return [.calibrate]
         case .beacon:

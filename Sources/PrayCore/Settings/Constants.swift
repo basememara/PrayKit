@@ -87,5 +87,5 @@ public struct Constants: Distribution, Sendable {
 }
 
 public extension Constants {
-    var itunesURL: URL { URL(safeString: "https://itunes.apple.com/app/id\(itunesID)") }
+    var itunesURL: URL { URL(safeString: "https://itunes.apple.com/app").appending(path: "id\(itunesID)") }
 }

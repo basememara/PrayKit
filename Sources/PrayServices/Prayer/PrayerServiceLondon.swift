@@ -271,8 +271,15 @@ private extension PrayerServiceLondon {
         } else {
             // Retrieve remotely from endpoint
             log.warning("Fetching Unified London Prayer Timetable for '\(key)' from network...")
-            let urlFormat = "https://www.londonprayertimes.com/api/times/?key=%@&year=%@&24hours=true&format=json"
-            let url = URL(safeString: String(format: urlFormat, apiKey, key))
+            let url = URL(safeString: "https://www.londonprayertimes.com/api/times/").appending(
+                queryItems: [
+                    URLQueryItem(name: "key", value: apiKey),
+                    URLQueryItem(name: "year", value: key),
+                    URLQueryItem(name: "24hours", value: "true"),
+                    URLQueryItem(name: "format", value: "json")
+                ]
+            )
+
             let urlRequest = URLRequest(url: url)
             let urlResponse = try await networkManager.send(urlRequest)
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from network successfully")

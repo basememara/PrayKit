@@ -66,6 +66,22 @@ extension PrayerServiceLondonTests {
         #expect(isha.dateInterval.end == nextFajr)
         #expect(defaults.object(forKey: String(lastYear + 1)) != nil, "A published year is saved")
     }
+
+    @Test
+    func aYearThatIsNotBundledIsAskedForWithTheKeyAndTheYear() async throws {
+        // Given
+        let place = london(2019)
+        let api = TimetableAPI()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "abc-123_XYZ", log: log, defaults: .makeTest())
+
+        // When
+        await #expect(throws: PrayError.self) {
+            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(await api.requestedURLs == ["https://www.londonprayertimes.com/api/times/?key=abc-123_XYZ&year=2019&24hours=true&format=json"])
+    }
 }
 
 // MARK: - Helpers
@@ -81,12 +97,15 @@ private actor TimetableAPI: NetworkService {
     static let unpublished = #"{"city":"london","times":{}}"#
 
     private var published: Int?
+    private(set) var requestedURLs = [String]()
 
     func publish(_ year: Int) {
         published = year
     }
 
     func send(_ request: URLRequest) async throws -> NetworkResponse {
+        requestedURLs.append(request.url?.absoluteString ?? "")
+
         let body = published.map { year in
             #"""
             {"city":"london","times":{"\#(year)-01-01":{"date":"\#(year)-01-01",

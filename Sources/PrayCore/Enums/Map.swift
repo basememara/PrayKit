@@ -7,6 +7,7 @@
 //
 
 import CoreLocation
+import ZamzamCore
 
 public enum Map: Int, Equatable, CaseIterable, Sendable {
     case apple
@@ -22,22 +23,19 @@ extension Map: Identifiable {
 // MARK: - Services
 
 public extension Map {
-    func nearestMasjidURL(from coordinate: CLLocationCoordinate2D? = nil) -> String {
-        var url = ""
-
-        switch self {
+    /// The map's search for mosques, centered on the coordinate when one is given.
+    func nearestMasjidURL(from coordinate: CLLocationCoordinate2D? = nil) -> URL {
+        let (search, center): (URL, String) = switch self {
         case .apple:
-            url = "http://maps.apple.com/?q=mosque"
-            if let coordinate {
-                url += "&sll=\(coordinate.latitude),\(coordinate.longitude)"
-            }
+            (URL(safeString: "http://maps.apple.com/?q=mosque"), "sll")
         case .google:
-            url = "https://www.google.com/maps/search/?api=1&query=mosque"
-            if let coordinate {
-                url += "&center=\(coordinate.latitude),\(coordinate.longitude)"
-            }
+            (URL(safeString: "https://www.google.com/maps/search/?api=1&query=mosque"), "center")
         }
 
-        return url
+        guard let coordinate else { return search }
+
+        return search.appending(
+            queryItems: [URLQueryItem(name: center, value: "\(coordinate.latitude),\(coordinate.longitude)")]
+        )
     }
 }

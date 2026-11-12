@@ -227,7 +227,7 @@ private extension PrayerManager {
         let day = try await fetch(for: date, using: calendar, with: request)
 
         guard let fajr = day.times[.fajr], let isha = day.times[.isha] else {
-            log.error("Could not find the prayer day for \(instant, formatter: .zuluFormatter) without its Fajr and Isha")
+            log.error("Could not find the prayer day for \(instant.formatted(.iso8601)) without its Fajr and Isha")
             throw PrayError.invalidTimes
         }
 
@@ -240,7 +240,7 @@ private extension PrayerManager {
         }
 
         guard day.contains(instant) else {
-            log.error("Could not find the prayer day for \(instant, formatter: .zuluFormatter)")
+            log.error("Could not find the prayer day for \(instant.formatted(.iso8601))")
             throw PrayError.invalidTimes
         }
 
@@ -256,7 +256,7 @@ private extension PrayerManager {
         // A timetable answers a day past its end with no times (London's, past its last bundled year). The day after
         // may still be empty, so the last day of a timetable keeps its own times.
         guard !times.isEmpty else {
-            log.warning("No prayer times for \(date, formatter: .zuluFormatter)")
+            log.warning("No prayer times for \(date.formatted(.iso8601))")
             throw PrayError.invalidTimes
         }
 
@@ -285,12 +285,12 @@ private extension PrayerManager {
         let days = [previousDay, prayerDay].compactMap(\.self)
 
         guard let currentPrayer = prayerDay.current(at: date) else {
-            log.error("Could not retrieve current prayer from prayer day for \(date, formatter: .zuluFormatter)")
+            log.error("Could not retrieve current prayer from prayer day for \(date.formatted(.iso8601))")
             return seed
         }
 
         guard let currentEntry = context.timer(currentPrayer.dateInterval.start, prayerDay) else {
-            log.error("Could not initialize prayer timer from prayer day for \(date, formatter: .zuluFormatter)")
+            log.error("Could not initialize prayer timer from prayer day for \(date.formatted(.iso8601))")
             return seed
         }
 
@@ -339,7 +339,7 @@ private extension PrayerManager {
         do {
             nextDay = try await fetch(for: prayerDay.date.tomorrow(using: calendar), using: calendar, with: request)
         } catch {
-            log.error("Could not fetch prayers for the day after \(prayerDay.date, formatter: .zuluFormatter)", error: error)
+            log.error("Could not fetch prayers for the day after \(prayerDay.date.formatted(.iso8601))", error: error)
             return resultSeed.prefix(limit).array
         }
 

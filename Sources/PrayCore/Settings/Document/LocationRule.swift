@@ -10,8 +10,9 @@ import CoreLocation.CLLocation
 import Foundation
 
 /// How a GPS fix updates the device's place: only while GPS is on, jitter under a kilometre is ignored unless the
-/// time zone changed, and arriving in a new time zone, or anywhere that recommends another method, switches to its
-/// recommended method unless one was picked by hand or minutes were adjusted, which ask instead.
+/// time zone changed, a first place proposes its recommended method, and arriving in a new time zone, or anywhere
+/// that recommends another method, switches to it unless one was picked by hand or minutes were adjusted, which
+/// ask instead.
 public enum LocationRule {
     private static let significantDistance: CLLocationDistance = 1_000
 
@@ -32,9 +33,13 @@ public enum LocationRule {
         let followsThePlace = state.document.settings.manualMethod == nil
         let recommendsAnother = place.map { Settings.placeMethod(at: $0) != Settings.placeMethod(at: newPlace) } ?? false
 
-        let document = followsThePlace && (hasChangedTimeZone || recommendsAnother)
-            ? state.document.editing(at: date) { $0.followPlace(newPlace) }
-            : state.document
+        let document = if place == nil {
+            state.document.proposing { $0.recommendMethod(at: newPlace) }
+        } else if followsThePlace, hasChangedTimeZone || recommendsAnother {
+            state.document.editing(at: date) { $0.followPlace(newPlace) }
+        } else {
+            state.document
+        }
 
         return DeviceState(document: document, place: newPlace)
     }

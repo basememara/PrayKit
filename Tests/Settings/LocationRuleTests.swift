@@ -16,16 +16,38 @@ struct LocationRuleTests {
     private let date = Date(timeIntervalSince1970: 1_800_000_000)
 
     @Test
-    func theFirstFixSavesThePlaceAndKeepsTheMethod() throws {
-        let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
-        var settings = Settings()
-        settings.calculationMethod = .jakim
-        let state = DeviceState(document: SettingsDocument(settings: settings))
+    func theFirstFixSavesThePlaceAndProposesItsMethod() throws {
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let kualaLumpur = Coordinates(latitude: 3.139, longitude: 101.687)
 
-        let saved = try #require(LocationRule.apply(toronto, timeZone: timeZone, at: date, to: state))
+        let saved = try #require(LocationRule.apply(kualaLumpur, timeZone: timeZone, at: date, to: DeviceState()))
 
-        #expect(saved.place == Place(coordinates: toronto, timeZone: timeZone, regionName: nil, fixedAt: date))
+        #expect(saved.place == Place(coordinates: kualaLumpur, timeZone: timeZone, regionName: nil, fixedAt: date))
         #expect(saved.document.settings.calculationMethod == .jakim)
+        #expect(saved.document.revision(of: .calculationMethod) == .legacy)
+    }
+
+    @Test
+    func theFirstFixKeepsAMethodAlreadyChosen() throws {
+        let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
+        let picked = SettingsDocument().editing(at: date - 60) { $0.pickMethod(.jakim, at: nil) }
+
+        let saved = try #require(LocationRule.apply(toronto, timeZone: timeZone, at: date, to: DeviceState(document: picked)))
+
+        #expect(saved.document == picked)
+    }
+
+    @Test
+    func aFirstFixOutsideLondonLeavesTheTimeZonesProposal() throws {
+        let timeZone = try #require(TimeZone(identifier: "Europe/London"))
+        let edinburgh = Coordinates(latitude: 55.9533, longitude: -3.1883)
+        var settings = Settings()
+        settings.calculationMethod = .london
+        let proposedByZone = SettingsDocument(settings: settings)
+
+        let saved = try #require(LocationRule.apply(edinburgh, timeZone: timeZone, at: date, to: DeviceState(document: proposedByZone)))
+
+        #expect(saved.document.settings.calculationMethod == .moonsightingCommittee)
     }
 
     @Test

@@ -52,11 +52,30 @@ extension SetUpTests {
     }
 
     @Test
-    func theFirstDeviceStillSuppliesItsProposedMethod() throws {
+    func aRecordCreatedAfterTheProposalCarriesItToTheNextDevice() throws {
         let kualaLumpur = try #require(kualaLumpur)
-        let proposed = SettingsDocument().proposing { $0.recommendMethod(at: .zone(kualaLumpur)) }
+        let first = SettingsDocument().proposing { $0.recommendMethod(at: .zone(kualaLumpur)) }
+        let record = first.wireFields
 
-        #expect(proposed.keysMissing(from: [:]).contains(.calculationMethod))
+        let second = SettingsDocument().merging(SettingsDocument(wireFields: record, base: Settings(), modifiedAt: date, previous: nil))
+        let stamped = SettingsDocument(wireFields: second.wireFields, base: first.settings, modifiedAt: date + 60, previous: record)
+
+        #expect(second.settings.calculationMethod == .jakim)
+        #expect(first.merging(stamped).settings.calculationMethod == .jakim)
+    }
+
+    @Test
+    func aRecordCreatedBeforeTheProposalOverwritesItOnceAnotherDeviceDatesIt() throws {
+        let kualaLumpur = try #require(kualaLumpur)
+        let record = SettingsDocument().wireFields
+        let first = SettingsDocument().proposing { $0.recommendMethod(at: .zone(kualaLumpur)) }
+        let server = SettingsDocument(wireFields: record, base: first.settings, modifiedAt: date, previous: record)
+
+        let second = SettingsDocument().merging(SettingsDocument(wireFields: record, base: Settings(), modifiedAt: date, previous: nil))
+        let stamped = SettingsDocument(wireFields: second.wireFields, base: first.settings, modifiedAt: date + 60, previous: record)
+
+        #expect(first.keysNewer(than: server).isEmpty)
+        #expect(first.merging(stamped).settings.calculationMethod == .moonsightingCommittee)
     }
 }
 

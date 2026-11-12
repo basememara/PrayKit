@@ -47,7 +47,8 @@ public struct NotificationServiceUN: NotificationService, @unchecked Sendable {
 
 public extension NotificationServiceUN {
     /// Schedules local notifications for prayers, one run at a time: a call during a run waits for it and
-    /// one more run, so the last call always schedules from the latest settings.
+    /// one more run, so the last call always schedules from the latest settings. With every prayer sound off, a run
+    /// clears the pending prayer notifications instead.
     func schedulePrayers(silencingAdhans: Bool) async {
         await flight.run { await scheduleOnce(silencingAdhans: silencingAdhans) }
     }
@@ -68,6 +69,14 @@ extension NotificationServiceUN {
 private extension NotificationServiceUN {
     func scheduleOnce(silencingAdhans: Bool) async {
         let state = storage.load()
+
+        // First, since clearing needs no place and must not wait on the request hash
+        if let categories = NotificationPlan.clearedCategories(for: state.document.settings) {
+            log.debug("Prayer sounds disabled, clearing notifications")
+            await userNotification.removePending(withCategories: categories.map(\.rawValue))
+            return
+        }
+
         let settings = silencingAdhans ? state.document.settings.silencingAdhans() : state.document.settings
 
         guard let request = PrayerAPI.Request(settings: settings, place: state.place) else {

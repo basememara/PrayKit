@@ -82,6 +82,11 @@ extension NotificationPlan {
 // MARK: - Decision
 
 extension NotificationPlan {
+    /// The categories a run clears in place of a plan, when every prayer sound is off; `nil` when it plans.
+    static func clearedCategories(for settings: Settings) -> [NotificationCategory]? {
+        settings.isPrayerSoundsDisabled ? [.main, .reminder, .calibrate] : nil
+    }
+
     static func make(
         days: [PrayerDay],
         settings: Settings,

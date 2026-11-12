@@ -79,7 +79,7 @@ private extension NotificationServiceUN {
         let timeZone = request.timeZone
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
-        let dateInterval = DateInterval(start: .now, end: .now + .weeks(1))
+        let dateInterval = DateInterval(start: .now, end: .now + .weeks(1, calendar))
         let prayerRequestHash = PrayerRequestHash(request: request, dateInterval: dateInterval, settings: settings)
         let iqamaUpdateIntervalIdentifier = "update-interval-iqama-reminder"
         let iqamaUpdateIntervalOriginAt = (await userNotification.get(withIdentifier: iqamaUpdateIntervalIdentifier)?
@@ -404,7 +404,7 @@ private extension NotificationServiceUN {
         let pendingCount = await userNotification.pendingNotificationRequests().count
         let scheduledRange = "\(firstScheduledDate?.formatted() ?? "none") to \(lastScheduledDate.formatted())"
         log.info("Requested \(58 - counter) notifications for prayers from \(scheduledRange), \(pendingCount) pending in the notification center")
-        scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2))
+        scheduleBackgroundRefreshTask(at: lastScheduledDate - .days(2, calendar))
 
         #if !os(macOS)
         // Awaited here rather than donated from a `Task`, which would have sent

@@ -20,7 +20,6 @@ public struct PrayerServiceAdhan: PrayerService {
 }
 
 public extension PrayerServiceAdhan {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func calculate(
         for date: Date,
         using calendar: Calendar,
@@ -48,58 +47,32 @@ public extension PrayerServiceAdhan {
                 date: calendar.dateComponents([.year, .month, .day], from: date.tomorrow(using: calendar)),
                 calculationParameters: parameters
             )
-            .map({ makeFajrPrayerTime(with: request, from: $0) })?
-            .dateInterval.start
+            .map({ fajrTime(with: request, from: $0) })
         else {
             log.error("Could not initialize tomorrow prayer times from adhan library.")
             throw PrayError.invalidParameters
         }
 
-        let fajrPrayerTime = makeFajrPrayerTime(with: request, from: prayers)
-        var times = [fajrPrayerTime]
-
-        if [.all, .essential].contains(request.filter) {
-            guard prayers.sunrise < prayers.dhuhr else {
-                log.error("Sunrise was invalid due to resulting after dhuhr.")
-                throw PrayError.invalidTimes
-            }
-
-            times.append(
-                PrayerTime(
-                    type: .sunrise,
-                    dateInterval: .init(
-                        start: prayers.sunrise,
-                        end: prayers.dhuhr
-                    )
-                )
-            )
-        }
-
-        guard prayers.dhuhr < prayers.asr else {
-            log.error("Dhuhr was invalid due to resulting after asr.")
-            throw PrayError.invalidElevation
-        }
-
-        guard prayers.asr < prayers.maghrib else {
-            log.error("Asr was invalid due to resulting after maghrib.")
-            throw PrayError.invalidElevation
-        }
-
-        guard prayers.maghrib < prayers.isha else {
-            log.error("Maghrib was invalid due to resulting after isha.")
-            throw PrayError.invalidElevation
-        }
-
-        guard prayers.isha < tomorrowFajrTime else {
-            log.error("Isha was invalid due to resulting after tomorrow's fajr.")
-            throw PrayError.invalidElevation
-        }
+        try PrayerTime.checkOrder(
+            sunrise: prayers.sunrise,
+            dhuhr: prayers.dhuhr,
+            asr: prayers.asr,
+            maghrib: prayers.maghrib,
+            isha: prayers.isha,
+            nextFajr: tomorrowFajrTime,
+            filter: request.filter,
+            log: log
+        )
 
         let ishaTime: Date = {
             if let adjustments = request.adjustments, adjustments.isha != 0, adjustments.isIshaMaghribRelative {
                 // Like a relative Fajr past sunrise, one outside Maghrib to the next Fajr keeps the method's time
-                let isha = prayers.maghrib + .minutes(adjustments.isha)
-                return prayers.maghrib < isha && isha < tomorrowFajrTime ? isha : prayers.isha
+                return PrayerTime.relativeIsha(
+                    minutes: adjustments.isha,
+                    maghrib: prayers.maghrib,
+                    nextFajr: tomorrowFajrTime,
+                    otherwise: prayers.isha
+                )
             }
 
             guard request.method == .ummAlQuraRamadan,
@@ -113,40 +86,16 @@ public extension PrayerServiceAdhan {
             return isha < tomorrowFajrTime ? isha : prayers.isha
         }()
 
-        times.append(contentsOf: [
-            PrayerTime(
-                type: .dhuhr,
-                dateInterval: .init(
-                    start: prayers.dhuhr,
-                    end: prayers.asr
-                )
-            ),
-            PrayerTime(
-                type: .asr,
-                dateInterval: .init(
-                    start: prayers.asr,
-                    end: prayers.maghrib
-                )
-            ),
-            PrayerTime(
-                type: .maghrib,
-                dateInterval: .init(
-                    start: prayers.maghrib,
-                    end: ishaTime
-                )
-            ),
-            PrayerTime(
-                type: .isha,
-                dateInterval: .init(
-                    start: ishaTime,
-                    end: tomorrowFajrTime
-                )
-            )
-        ])
-
-        if [.all, .sunnah].contains(request.filter) {
-            times.append(contentsOf: PrayerTime.night(from: prayers.maghrib, to: tomorrowFajrTime))
-        }
+        let times = PrayerTime.day(
+            fajr: fajrTime(with: request, from: prayers),
+            sunrise: prayers.sunrise,
+            dhuhr: prayers.dhuhr,
+            asr: prayers.asr,
+            maghrib: prayers.maghrib,
+            isha: ishaTime,
+            nextFajr: tomorrowFajrTime,
+            filter: request.filter
+        )
 
         guard let borrowed = day.borrowed else { return times }
         return times.map { PrayerTime(type: $0.type, dateInterval: $0.dateInterval, borrowed: borrowed) }
@@ -173,17 +122,8 @@ private extension PrayerServiceAdhan {
         return PrayerTimes(coordinates: coordinates, date: date, calculationParameters: parameters).map { ($0, resolution) }
     }
 
-    func makeFajrPrayerTime(with request: PrayerAPI.Request, from prayers: PrayerTimes) -> PrayerTime {
-        PrayerTime(
-            type: .fajr,
-            dateInterval: .init(
-                start: {
-                    guard let adjustments = request.adjustments, adjustments.fajr != 0, adjustments.isFajrSunriseRelative else { return prayers.fajr }
-                    let fajr = prayers.sunrise + .minutes(adjustments.fajr)
-                    return fajr < prayers.sunrise ? fajr : prayers.fajr
-                }(),
-                end: prayers.sunrise
-            )
-        )
+    func fajrTime(with request: PrayerAPI.Request, from prayers: PrayerTimes) -> Date {
+        guard let adjustments = request.adjustments, adjustments.fajr != 0, adjustments.isFajrSunriseRelative else { return prayers.fajr }
+        return PrayerTime.relativeFajr(minutes: adjustments.fajr, sunrise: prayers.sunrise, otherwise: prayers.fajr)
     }
 }

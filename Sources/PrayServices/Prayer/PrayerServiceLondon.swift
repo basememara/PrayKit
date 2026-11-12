@@ -105,11 +105,12 @@ public extension PrayerServiceLondon {
                 tomorrowFajrTime = (tomorrowFajrTime + .minutes(adjustments.fajr)).roundedMinute
 
                 if adjustments.isFajrSunriseRelative {
-                    let fajr = sunriseTime + .minutes(adjustments.fajr)
-                    fajrTime = fajr < sunriseTime ? fajr : fajrTime
-
-                    let tomorrowFajr = tomorrowSunriseTime + .minutes(adjustments.fajr)
-                    tomorrowFajrTime = tomorrowFajr < tomorrowSunriseTime ? tomorrowFajr : tomorrowFajrTime
+                    fajrTime = PrayerTime.relativeFajr(minutes: adjustments.fajr, sunrise: sunriseTime, otherwise: fajrTime)
+                    tomorrowFajrTime = PrayerTime.relativeFajr(
+                        minutes: adjustments.fajr,
+                        sunrise: tomorrowSunriseTime,
+                        otherwise: tomorrowFajrTime
+                    )
                 }
             }
 
@@ -129,8 +130,12 @@ public extension PrayerServiceLondon {
                 ishaTime = (ishaTime + .minutes(adjustments.isha)).roundedMinute
 
                 if adjustments.isIshaMaghribRelative {
-                    let isha = magribTime + .minutes(adjustments.isha)
-                    ishaTime = magribTime < isha && isha < tomorrowFajrTime ? isha : ishaTime
+                    ishaTime = PrayerTime.relativeIsha(
+                        minutes: adjustments.isha,
+                        maghrib: magribTime,
+                        nextFajr: tomorrowFajrTime,
+                        otherwise: ishaTime
+                    )
                 }
             }
         }
@@ -140,91 +145,27 @@ public extension PrayerServiceLondon {
             throw PrayError.invalidTimes
         }
 
-        var times = [PrayerTime]()
-
-        times.append(
-            PrayerTime(
-                type: .fajr,
-                dateInterval: .init(
-                    start: fajrTime,
-                    end: sunriseTime
-                )
-            )
+        try PrayerTime.checkOrder(
+            sunrise: sunriseTime,
+            dhuhr: dhuhrTime,
+            asr: asrTime,
+            maghrib: magribTime,
+            isha: ishaTime,
+            nextFajr: tomorrowFajrTime,
+            filter: request.filter,
+            log: log
         )
 
-        if [.all, .essential].contains(request.filter) {
-            guard sunriseTime < dhuhrTime else {
-                log.error("Sunrise was invalid due to resulting after dhuhr.")
-                throw PrayError.invalidTimes
-            }
-
-            times.append(
-                PrayerTime(
-                    type: .sunrise,
-                    dateInterval: .init(
-                        start: sunriseTime,
-                        end: dhuhrTime
-                    )
-                )
-            )
-        }
-
-        guard dhuhrTime < asrTime else {
-            log.error("Dhuhr was invalid due to resulting after asr.")
-            throw PrayError.invalidElevation
-        }
-
-        guard asrTime < magribTime else {
-            log.error("Asr was invalid due to resulting after maghrib.")
-            throw PrayError.invalidElevation
-        }
-
-        guard magribTime < ishaTime else {
-            log.error("Maghrib was invalid due to resulting after isha.")
-            throw PrayError.invalidElevation
-        }
-
-        guard ishaTime < tomorrowFajrTime else {
-            log.error("Isha was invalid due to resulting after tomorrow's fajr.")
-            throw PrayError.invalidElevation
-        }
-
-        times.append(contentsOf: [
-            PrayerTime(
-                type: .dhuhr,
-                dateInterval: .init(
-                    start: dhuhrTime,
-                    end: asrTime
-                )
-            ),
-            PrayerTime(
-                type: .asr,
-                dateInterval: .init(
-                    start: asrTime,
-                    end: magribTime
-                )
-            ),
-            PrayerTime(
-                type: .maghrib,
-                dateInterval: .init(
-                    start: magribTime,
-                    end: ishaTime
-                )
-            ),
-            PrayerTime(
-                type: .isha,
-                dateInterval: .init(
-                    start: ishaTime,
-                    end: tomorrowFajrTime
-                )
-            )
-        ])
-
-        if [.all, .sunnah].contains(request.filter) {
-            times.append(contentsOf: PrayerTime.night(from: magribTime, to: tomorrowFajrTime))
-        }
-
-        return times
+        return PrayerTime.day(
+            fajr: fajrTime,
+            sunrise: sunriseTime,
+            dhuhr: dhuhrTime,
+            asr: asrTime,
+            maghrib: magribTime,
+            isha: ishaTime,
+            nextFajr: tomorrowFajrTime,
+            filter: request.filter
+        )
     }
 }
 

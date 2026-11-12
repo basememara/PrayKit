@@ -253,6 +253,12 @@ struct ScheduleVariant: Sendable {
     let budget: Int
     let origin: ScheduleOrigin
 
+    init(row: NotificationSettingsRow, budget: Int = NotificationPlan.defaultBudget, origin: ScheduleOrigin = .absent) {
+        self.row = row
+        self.budget = budget
+        self.origin = origin
+    }
+
     var id: String {
         row.id + (budget == NotificationPlan.defaultBudget ? "" : ".budget-\(budget)") + (origin == .absent ? "" : ".origin-\(origin.rawValue)")
     }

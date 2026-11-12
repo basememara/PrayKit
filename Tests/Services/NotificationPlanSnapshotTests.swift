@@ -229,8 +229,8 @@ extension PlanSnapshotCase {
     /// Every fixture after its first Dhuhr at the defaults, and an hour before its first Fajr with everything on.
     static let everywhere: [PlanSnapshotCase] = DayFixture.all.flatMap { place in
         [
-            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .defaults, budget: NotificationPlan.defaultBudget, origin: .absent), moment: .afterDhuhr),
-            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .everythingOn, budget: NotificationPlan.defaultBudget, origin: .absent), moment: .beforeFajr)
+            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .defaults), moment: .afterDhuhr),
+            PlanSnapshotCase(place: place, variant: ScheduleVariant(row: .everythingOn), moment: .beforeFajr)
         ]
     }
 

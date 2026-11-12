@@ -121,3 +121,46 @@ extension PrayerTimerTests {
         #expect(fridays.count == 3)
     }
 }
+
+// MARK: - A Reminder Longer Than Its Prayer's Own Time
+
+extension PrayerTimerTests {
+    /// The reminder falls in the time before the prayer, where the count to it turns red, so a reminder longer than
+    /// the prayer's own time still needs its moment: Fajr's 90 minutes for sahoor over an 80-minute Fajr.
+    @Test
+    func theTimelineHoldsAReminderLongerThanItsPrayersOwnTime() async throws {
+        let prayerManager = PrayTestFixture().prayerManager
+        var checked = [Prayer]()
+
+        for place in DayFixture.all {
+            let calendar = try place.calendar()
+            let days = try await place.days(2, using: prayerManager)
+
+            for prayerTime in try #require(days.last).times.filter(\.type.isEssential) {
+                let start = prayerTime.dateInterval.start
+                let holdingDay = try #require(days.first { $0.contains(start - 1) })
+                let previous = try #require(holdingDay.current(at: start - 1))
+                let windowBefore = start.timeIntervalSince(previous.dateInterval.start)
+                let reminderMinutes = Int((prayerTime.dateInterval.duration / 60).rounded(.up)) + 10
+                var settings = Settings()
+
+                // Past the count-up after the previous adhan, which never turns red
+                guard Double((reminderMinutes + settings.stopwatchMinutes) * 60) < windowBefore else { continue }
+
+                settings.preAdhanMinutes = PreAdhanMinutes(rawValue: [prayerTime.type.rawValue: reminderMinutes])
+                let reminder = start - .minutes(reminderMinutes)
+                let atReminder = try #require(PrayerTimer(at: reminder, using: holdingDay, settings: settings, timeZone: calendar.timeZone))
+                let aSecondBefore = try #require(PrayerTimer(at: reminder - 1, using: holdingDay, settings: settings, timeZone: calendar.timeZone))
+                let label = "\(place.name) \(prayerTime.type) \(reminderMinutes) min"
+
+                checked.append(prayerTime.type)
+                #expect(settings.expandedTimeline(for: prayerTime, using: calendar).contains(reminder), "\(label)")
+                #expect(atReminder.countdownDate == start, "\(label)")
+                #expect(atReminder.isDangerZone, "\(label)")
+                #expect(!aSecondBefore.isDangerZone, "\(label)")
+            }
+        }
+
+        #expect(Set(checked).isSuperset(of: [.fajr, .maghrib]), "\(checked)")
+    }
+}

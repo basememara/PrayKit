@@ -25,14 +25,9 @@ public extension Settings {
         let iqama = timerIqama(for: prayerTime, using: calendar)
         let khutba = prayerTime.isJumuah(using: calendar) ? iqama : nil
 
-        // The count to the khutba runs from sunrise's adhan, so its warning begins inside it even before Dhuhr's adhan
-        let reminder: Date? = if let khutba {
-            khutba - .minutes(reminderMinutes)
-        } else if duration > Double(reminderMinutes) * 60 {
-            start - .minutes(reminderMinutes)
-        } else {
-            nil
-        }
+        // The reminder falls in the time before the prayer, where the count to it turns red, however long the prayer's
+        // own time; the count to the khutba runs from sunrise's adhan, so its warning begins even before Dhuhr's adhan
+        let reminder = (khutba ?? start) - .minutes(reminderMinutes)
 
         return [
             start,

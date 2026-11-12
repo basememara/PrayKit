@@ -10,27 +10,6 @@ import Foundation.NSDate
 import ZamzamCore
 
 public extension Date {
-    func hijriString(
-        for prayerDay: PrayerDay?,
-        hijriDayOffset: Int,
-        autoIncrementHijri: Bool,
-        timeZone: TimeZone,
-        template: String = "yyyyMMMMd"
-    ) -> String {
-        hijriString(
-            template: template,
-            offset: self.hijriDayOffset(
-                for: prayerDay,
-                hijriDayOffset: hijriDayOffset,
-                autoIncrementHijri: autoIncrementHijri,
-                timeZone: timeZone
-            ),
-            timeZone: timeZone
-        )
-    }
-}
-
-public extension Date {
     /// The days to add to this instant's calendar date for its Hijri date. With auto-increment, the Hijri day turns at
     /// Maghrib rather than midnight, so it counts from the date of the prayer day holding the instant, a day on once
     /// that day's Maghrib has begun, whichever side of midnight the instant falls.

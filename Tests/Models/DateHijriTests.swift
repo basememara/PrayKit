@@ -45,8 +45,6 @@ extension DateHijriTests {
         #expect(Self.israMiraj.hijriDayAndMonth(month: .wide, timeZone: .gmt, locale: locale) == expected.wide)
     }
 
-    /// A month written in two words keeps them together with a no-break space, so a narrow cell wraps between the
-    /// day and the month, never inside the month.
     @Test(arguments: DayAndMonth.twoWordMonth)
     func aTwoWordMonthWrapsOnlyAfterTheDay(expected: DayAndMonth) {
         let locale = Locale(identifier: expected.locale)
@@ -100,6 +98,5 @@ extension DateHijriTests {
     /// 5 January 2027 at noon UTC, 27 Rajab 1448.
     static let israMiraj = Date(timeIntervalSince1970: 1_799_150_400)
 
-    /// 31 October 2027 at noon UTC, 1 Jumada II 1449.
     static let jumadaII = Date(timeIntervalSince1970: 1_824_984_000)
 }

@@ -16,9 +16,8 @@ struct SettingsHijriTests {
 }
 
 extension SettingsHijriTests {
-    /// With auto-increment the date is a day on from the plain offset's on one side of Maghrib and not the other.
     @Test(arguments: DayFixture.all)
-    func theSweepCrossesTheMaghribTurn(place: DayFixture) async throws {
+    func autoIncrementTurnsTodaysDateAtMaghrib(place: DayFixture) async throws {
         let timeZone = try place.request().timeZone
         let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
         let maghrib = try #require(day.times[.maghrib]).dateInterval.start

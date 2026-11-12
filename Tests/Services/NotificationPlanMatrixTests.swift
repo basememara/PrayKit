@@ -85,7 +85,6 @@ private extension NotificationPlan {
             .filter { (input.settings.notificationSounds[$0.prayerTime.type] ?? .off) == .off }
             .map { "\($0.prefix)-\($0.prayerTime.type)" }
 
-        // The Mac's and the watch's plan, which has no geofence to add or remove
         let withoutBeacon = NotificationPlan(
             requests: requests.filter { $0.category != .beacon },
             removals: removals.filter { $0 != .category(.beacon) },

@@ -15,12 +15,19 @@ public enum DuhaType: Equatable, Codable, Sendable {
     case minutes(Int)
 }
 
-public extension DuhaType {
-    /// The time of day `date` reads in `calendar`.
-    init(date: Date, using calendar: Calendar) {
-        self = .time(hour: calendar.component(.hour, from: date), minutes: calendar.component(.minute, from: date))
+extension DuhaType: TimeOrMinutes {
+    public var timeOfDay: (hour: Int, minutes: Int)? {
+        guard case let .time(hour, minutes) = self else { return nil }
+        return (hour, minutes)
     }
 
+    public var minutesAfterStart: Int? {
+        guard case let .minutes(minutes) = self else { return nil }
+        return minutes
+    }
+}
+
+public extension DuhaType {
     func date(from sunriseDateInterval: DateInterval, using calendar: Calendar) -> Date? {
         let startTime = sunriseDateInterval.start
         let endTime = sunriseDateInterval.end

@@ -132,12 +132,19 @@ public extension IqamaTimes {
     }
 }
 
-public extension IqamaTimes.IqamaType {
-    /// The time of day `date` reads in `calendar`.
-    init(date: Date, using calendar: Calendar) {
-        self = .time(hour: calendar.component(.hour, from: date), minutes: calendar.component(.minute, from: date))
+extension IqamaTimes.IqamaType: TimeOrMinutes {
+    public var timeOfDay: (hour: Int, minutes: Int)? {
+        guard case let .time(hour, minutes) = self else { return nil }
+        return (hour, minutes)
     }
 
+    public var minutesAfterStart: Int? {
+        guard case let .minutes(minutes) = self else { return nil }
+        return minutes
+    }
+}
+
+public extension IqamaTimes.IqamaType {
     /// Where this iqama falls in a prayer's time, whichever prayer's setting it is: nil when that time can't hold it.
     func date(for prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
         let startTime = prayerTime.dateInterval.start

@@ -14,14 +14,23 @@ public extension DateFormatter {
     /// Creates the formatter every prayer time is written with, on the clock of a place's time zone.
     ///
     /// A 24-hour time is written as the locale writes one, such as 23:43, and `showsPeriod` has no effect on it. A
-    /// 12-hour time without its period, 8:43 for 8:43 AM, is the locale's 12-hour time with AM and PM blanked, so it
-    /// keeps whatever the locale writes beside them: in US English, the narrow no-break space before them. Without a
-    /// `locale` the formatter keeps its own, the device's with the user's 12 or 24-hour choice.
+    /// 12-hour time without its period, 8:43 for 8:43 AM, is the locale's 12-hour time with AM and PM and the space
+    /// beside them taken out of its pattern; a locale that writes a time of day in their place, such as Chinese, keeps
+    /// it. Without a `locale` the formatter keeps its own, the device's with the user's 12 or 24-hour choice.
     static func prayerTime(is24Hour: Bool, showsPeriod: Bool = true, using timeZone: TimeZone, locale: Locale? = nil) -> DateFormatter {
         DateFormatter(dateFormatTemplate: is24Hour ? "Hmm" : "hmm", timeZone: timeZone, locale: locale).apply {
-            guard !is24Hour, !showsPeriod else { return }
-            $0.amSymbol = ""
-            $0.pmSymbol = ""
+            guard !is24Hour, !showsPeriod, let pattern = $0.dateFormat else { return }
+            $0.dateFormat = pattern.removingPeriodField()
         }
+    }
+}
+
+private extension String {
+    // Quoted text in a date pattern is literal, so the AM and PM field (`a`) is only looked for outside it
+    func removingPeriodField() -> String {
+        split(separator: "'", omittingEmptySubsequences: false)
+            .enumerated()
+            .map { index, part in index.isMultiple(of: 2) ? part.replacing(/\s*a+\s*/, with: "") : part }
+            .joined(separator: "'")
     }
 }

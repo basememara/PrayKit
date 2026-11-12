@@ -440,8 +440,8 @@ private extension Array where Element == PrayerTimer {
                 context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }
 
-            // The last hour in steps, for a face that draws the minutes left without a live timer: before the next
-            // prayer, and before an iqama or khutba the timer counts to inside this window
+            // The last hour before each moment the timer counts to, in steps, for a face that draws the minutes left
+            // without a live timer
             let iqama = context.settings.isIqamaTimerEnabled ? context.settings.iqamaTimes[currentPrayer, using: calendar] : nil
             let targets = [currentPrayer.dateInterval.end] + [iqama].compactMap(\.self).filter { currentPrayer.dateInterval.contains($0) }
 

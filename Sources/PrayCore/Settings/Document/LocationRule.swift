@@ -92,9 +92,8 @@ public extension Settings {
     }
 
     /// The method the times are calculated with. One that follows the place is the place's own, whatever is stored:
-    /// the stored method syncs, the place doesn't, so it may have followed another device somewhere else. One picked
-    /// by hand is the one chosen, unless it's a city's timetable away from its time zone, whose times would be read
-    /// on another clock, where the place's own applies.
+    /// the stored method syncs and may have followed another device elsewhere. One picked by hand is kept, unless it's
+    /// a city's timetable away from its time zone, whose times would be read on another clock: then the place's applies.
     func method(at place: Place?) -> CalculationMethod {
         guard let place else { return calculationMethod }
         guard manualMethod != nil, calculationMethod.isReadable(in: place.timeZone) else { return Self.placeMethod(at: place) }
@@ -117,7 +116,7 @@ public extension Settings {
 
     /// Upgrades settings saved before picks were recorded, when the time zone alone set the method: one that differs
     /// from the zone's was picked by hand and is kept where the user is, and any other follows the place from now on.
-    /// The place's own method follows too, which is what another of the account's devices upgrades its zone's to.
+    /// A method already the place's own follows too: another of the account's devices may have upgraded and synced first.
     mutating func upgradeMethod(at place: Place) {
         guard manualMethod == nil else { return }
 

@@ -23,9 +23,10 @@ extension PrayerTime {
         return maghrib < isha && isha < nextFajr ? isha : fallback
     }
 
-    /// Throws unless sunrise (when the filter lists it), Dhuhr, Asr, Maghrib and Isha follow one another and Isha
-    /// begins before the next Fajr.
+    /// Throws unless Fajr comes before sunrise, sunrise (when the filter lists it), Dhuhr, Asr, Maghrib and Isha follow
+    /// one another, and Isha begins before the next Fajr.
     static func checkOrder(
+        fajr: Date,
         sunrise: Date,
         dhuhr: Date,
         asr: Date,
@@ -35,7 +36,16 @@ extension PrayerTime {
         filter: PrayerFilter,
         log: LogManager
     ) throws {
-        guard let (error, message) = orderFailure(sunrise: sunrise, dhuhr: dhuhr, asr: asr, maghrib: maghrib, isha: isha, nextFajr: nextFajr, filter: filter) else {
+        guard let (error, message) = orderFailure(
+            fajr: fajr,
+            sunrise: sunrise,
+            dhuhr: dhuhr,
+            asr: asr,
+            maghrib: maghrib,
+            isha: isha,
+            nextFajr: nextFajr,
+            filter: filter
+        ) else {
             return
         }
 
@@ -45,6 +55,7 @@ extension PrayerTime {
 
     /// The first time out of order, as `checkOrder` reports it, or `nil` when the day is in order.
     static func orderFailure(
+        fajr: Date,
         sunrise: Date,
         dhuhr: Date,
         asr: Date,
@@ -53,6 +64,10 @@ extension PrayerTime {
         nextFajr: Date,
         filter: PrayerFilter
     ) -> (PrayError, String)? {
+        if fajr >= sunrise {
+            return (.invalidTimes, "Fajr was invalid due to resulting after sunrise.")
+        }
+
         if [.all, .essential].contains(filter), sunrise >= dhuhr {
             return (.invalidTimes, "Sunrise was invalid due to resulting after dhuhr.")
         }

@@ -133,51 +133,34 @@ extension PolarResolutionTests {
         #expect(day.borrowed == resolution)
     }
 
+    // Every day has times, and each hands over to the next at the very Fajr that day begins with, so the days tile
     @Test(arguments: [
         (Coordinates(latitude: 69.6492, longitude: 18.9553), "Europe/Oslo"),
         (Coordinates(latitude: 68.9585, longitude: 33.0827), "Europe/Moscow")
     ], PolarResolution.allCases)
-    func everyDayOfTheYearHasTimesNearThePolarCircle(place: (Coordinates, String), resolution: PolarResolution) throws {
+    func everyDayOfTheYearHasTimesAndMeetsTheNextNearThePolarCircle(place: (Coordinates, String), resolution: PolarResolution) throws {
         let service = PrayerServiceAdhan(log: fixture.log)
         let timeZone = try #require(TimeZone(identifier: place.1))
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
         let start = try #require(Date(year: 2026, month: 1, day: 1, hour: 12, calendar: calendar))
+        let dates = (0...365).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+        let label = Date.ISO8601FormatStyle(timeZone: timeZone).year().month().day()
 
-        try CalculationMethod.allCases.filter { ![.custom, .london].contains($0) }.forEach { method in
+        CalculationMethod.allCases.filter { ![.custom, .london].contains($0) }.forEach { method in
             let request = request(at: place.0, in: timeZone, method: method, polarResolution: resolution)
-            let failed = (0..<365)
-                .compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
-                .filter { (try? service.calculate(for: $0, using: calendar, with: request)) == nil }
-                .map { $0.formatted(Date.ISO8601FormatStyle(timeZone: timeZone).year().month().day()) }
-
-            #expect(failed.isEmpty, "\(method.rawValue): \(failed)")
-        }
-    }
-
-    // A borrowed day must still hand over to the next day at that day's own Fajr, so the days tile with no gap
-    @Test(arguments: [
-        (Coordinates(latitude: 69.6492, longitude: 18.9553), "Europe/Oslo"),
-        (Coordinates(latitude: 68.9585, longitude: 33.0827), "Europe/Moscow")
-    ], PolarResolution.allCases)
-    func everyNightEndsAtTheNextDaysFajrNearThePolarCircle(place: (Coordinates, String), resolution: PolarResolution) throws {
-        let service = PrayerServiceAdhan(log: fixture.log)
-        let timeZone = try #require(TimeZone(identifier: place.1))
-        let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
-        let start = try #require(Date(year: 2026, month: 1, day: 1, hour: 12, calendar: calendar))
-
-        try CalculationMethod.allCases.filter { ![.custom, .london].contains($0) }.forEach { method in
-            let request = request(at: place.0, in: timeZone, method: method, polarResolution: resolution)
-            let days = (0...365).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
-            let gaps = zip(days, days.dropFirst()).compactMap { today, tomorrow -> String? in
-                guard let end = (try? service.calculate(for: today, using: calendar, with: request))?.map(\.dateInterval.end).max(),
-                      let fajr = (try? service.calculate(for: tomorrow, using: calendar, with: request))?.first(where: { $0.type == .fajr })?.dateInterval.start,
+            let days = dates.map { try? service.calculate(for: $0, using: calendar, with: request) }
+            let missing = zip(dates, days).filter { $0.1 == nil }.map { $0.0.formatted(label) }
+            let gaps = zip(dates, zip(days, days.dropFirst())).compactMap { date, pair -> String? in
+                guard let end = pair.0?.map(\.dateInterval.end).max(),
+                      let fajr = pair.1?.first(where: { $0.type == .fajr })?.dateInterval.start,
                       end != fajr
                 else { return nil }
 
-                return today.formatted(Date.ISO8601FormatStyle(timeZone: timeZone).year().month().day())
+                return date.formatted(label)
             }
 
-            #expect(gaps.isEmpty, "\(method.rawValue): \(gaps)")
+            #expect(missing.isEmpty, "\(method.rawValue) has no times on \(missing)")
+            #expect(gaps.isEmpty, "\(method.rawValue) misses the next Fajr after \(gaps)")
         }
     }
 }

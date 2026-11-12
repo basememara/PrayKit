@@ -41,12 +41,8 @@ public extension PrayerServiceAdhan {
         let tomorrowFajrTime = fajrTime(with: request, from: tomorrow.times)
         let (prayers, borrowed) = days.fitted(today, before: tomorrowFajrTime, on: date)
 
-        guard prayers.fajr < prayers.sunrise else {
-            log.error("Fajr was invalid due to resulting after sunrise.")
-            throw PrayError.invalidTimes
-        }
-
         try PrayerTime.checkOrder(
+            fajr: prayers.fajr,
             sunrise: prayers.sunrise,
             dhuhr: prayers.dhuhr,
             asr: prayers.asr,
@@ -106,24 +102,6 @@ private extension PrayerServiceAdhan {
         let maghrib: Date
         let isha: Date
 
-        init(_ times: PrayerTimes) {
-            fajr = times.fajr
-            sunrise = times.sunrise
-            dhuhr = times.dhuhr
-            asr = times.asr
-            maghrib = times.maghrib
-            isha = times.isha
-        }
-
-        private init(fajr: Date, sunrise: Date, dhuhr: Date, asr: Date, maghrib: Date, isha: Date) {
-            self.fajr = fajr
-            self.sunrise = sunrise
-            self.dhuhr = dhuhr
-            self.asr = asr
-            self.maghrib = maghrib
-            self.isha = isha
-        }
-
         /// Another day's times relabelled onto this one, whole UTC days apart, as adhan-swift shifts a nearest day.
         func shifted(days: Int) -> Self {
             let interval = TimeInterval(days) * 86_400
@@ -143,7 +121,8 @@ private extension PrayerServiceAdhan {
         }
 
         func isOrdered(nextFajr: Date, filter: PrayerFilter) -> Bool {
-            fajr < sunrise && PrayerTime.orderFailure(
+            PrayerTime.orderFailure(
+                fajr: fajr,
                 sunrise: sunrise,
                 dhuhr: dhuhr,
                 asr: asr,
@@ -216,6 +195,12 @@ private extension PrayerServiceAdhan {
 }
 
 // MARK: - Helpers
+
+private extension PrayerServiceAdhan.RawDay {
+    init(_ times: PrayerTimes) {
+        self.init(fajr: times.fajr, sunrise: times.sunrise, dhuhr: times.dhuhr, asr: times.asr, maghrib: times.maghrib, isha: times.isha)
+    }
+}
 
 private extension PrayerServiceAdhan.DaySource {
     func day(on date: Date, at latitude: Double) -> PrayerServiceAdhan.RawDay? {

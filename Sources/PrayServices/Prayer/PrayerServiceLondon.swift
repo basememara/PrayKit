@@ -140,12 +140,8 @@ public extension PrayerServiceLondon {
             }
         }
 
-        guard fajrTime < sunriseTime else {
-            log.error("Fajr was invalid due to resulting after sunrise.")
-            throw PrayError.invalidTimes
-        }
-
         try PrayerTime.checkOrder(
+            fajr: fajrTime,
             sunrise: sunriseTime,
             dhuhr: dhuhrTime,
             asr: asrTime,

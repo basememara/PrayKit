@@ -9,20 +9,13 @@
 import Foundation.NSDateInterval
 
 public protocol HijriService: Sendable {
-    func fetchOffset(for time: Date) async throws -> Int
-    func fetch(with request: HijriAPI.FetchHolidaysRequest) -> [Holiday]
+    func fetchOffset(for time: Date) async -> Int
     func fetch(with request: HijriAPI.FetchTimelineRequest) async throws -> [HijriAPI.TimelineEntry]
 }
 
 // MARK: - Namespace
 
 public enum HijriAPI {}
-
-public extension HijriAPI {
-    struct FetchHolidaysRequest: Sendable {
-        public init() {}
-    }
-}
 
 public extension HijriAPI {
     struct FetchTimelineRequest: Sendable {

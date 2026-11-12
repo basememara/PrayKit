@@ -44,10 +44,10 @@ extension HijriServiceStaticTests {
         )
 
         // Then
-        let offsetBeforeMaghrib = try await hijriService.fetchOffset(for: beforeMaghrib)
+        let offsetBeforeMaghrib = await hijriService.fetchOffset(for: beforeMaghrib)
         #expect(offsetBeforeMaghrib == 2)
 
-        let offsetAfterMaghrib = try await hijriService.fetchOffset(for: afterMaghrib)
+        let offsetAfterMaghrib = await hijriService.fetchOffset(for: afterMaghrib)
         #expect(offsetAfterMaghrib == 3)
     }
 
@@ -68,8 +68,8 @@ extension HijriServiceStaticTests {
         )
 
         // Then
-        #expect(try await hijriService.fetchOffset(for: beforeMaghrib) == 1)
-        #expect(try await hijriService.fetchOffset(for: afterMaghrib) == 1)
+        #expect(await hijriService.fetchOffset(for: beforeMaghrib) == 1)
+        #expect(await hijriService.fetchOffset(for: afterMaghrib) == 1)
     }
 }
 

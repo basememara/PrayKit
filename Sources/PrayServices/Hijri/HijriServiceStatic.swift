@@ -21,24 +21,7 @@ public struct HijriServiceStatic: HijriService {
 }
 
 public extension HijriServiceStatic {
-    static let holidays: [Holiday] = [
-        Holiday(id: "new_year", month: 1, day: 1),
-        Holiday(id: "ashura", month: 1, day: 10),
-        Holiday(id: "isra_miraj", month: 7, day: 27),
-        Holiday(id: "ramadan", month: 9, day: 1),
-        Holiday(id: "eid_fitr", month: 10, day: 1),
-        Holiday(id: "hajj", month: 12, day: 8),
-        Holiday(id: "arafah", month: 12, day: 9),
-        Holiday(id: "eid_al_adha", month: 12, day: 10)
-    ]
-
-    func fetch(with request: HijriAPI.FetchHolidaysRequest) -> [Holiday] {
-        Self.holidays
-    }
-}
-
-public extension HijriServiceStatic {
-    func fetchOffset(for time: Date) async throws -> Int {
+    func fetchOffset(for time: Date) async -> Int {
         let state = storage.load()
         let settings = state.document.settings
 

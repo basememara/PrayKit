@@ -199,8 +199,13 @@ private extension PrayerTimer.Phase {
 
         let adhan = current.dateInterval.start
         let nextAdhan = next.dateInterval.start
-        // The reminder is the next prayer's, whichever prayer a case counts to
-        let warningSeconds = Double(preAdhanMinutes[next.type] * 60)
+        // A warning is as long as the reminder of the prayer counted to: the next prayer's before its adhan, which a
+        // count-up carries too, and Dhuhr's before the khutba
+        func reminderSeconds(of prayerTime: PrayerTime) -> Double {
+            Double(preAdhanMinutes[prayerTime.type] * 60)
+        }
+
+        let warningSeconds = reminderSeconds(of: next)
         let currentIqama = iqamaTimes.timerIqama(for: current, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
         let iqama = currentIqama.flatMap { adhan.isIqamaTimer(at: date, iqamaTime: $0) ? $0 : nil }
         // A prayer with an iqama never counts up, even once its iqama has passed
@@ -245,7 +250,7 @@ private extension PrayerTimer.Phase {
 
             // Down to the khutba, over the morning's sunrise or Dhuhr's adhan to the khutba
             let untilKhutba = DateInterval(start: adhan, end: khutba)
-            return Self(prayerTime: ordinary.prayerTime, kind: .iqama, target: khutba, span: untilKhutba, warningSeconds: warningSeconds)
+            return Self(prayerTime: ordinary.prayerTime, kind: .iqama, target: khutba, span: untilKhutba, warningSeconds: reminderSeconds(of: dhuhr))
         }
 
         // 2. After Isha with Sunrise after Isha on: down to Fajr's iqama where one is set, whether or not the iqama

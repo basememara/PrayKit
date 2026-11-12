@@ -701,7 +701,8 @@ extension PrayerTimerTests {
         isIqamaTimerEnabled: Bool = true,
         stopwatchMinutes: Int = 20,
         sunriseAfterIsha: Bool = false,
-        isJumuahEnabled: Bool = true
+        isJumuahEnabled: Bool = true,
+        preAdhanMinutes: PreAdhanMinutes = PreAdhanMinutes(rawValue: ["fajr": 20, "sunrise": 20, "dhuhr": 20, "asr": 20, "maghrib": 20, "isha": 25])
     ) throws -> PrayerTimer {
         let prayerDay = PrayerDay.mock(
             at: date,
@@ -725,16 +726,7 @@ extension PrayerTimerTests {
                 iqamaTimes: iqamaTimes,
                 isIqamaTimerEnabled: isIqamaTimerEnabled,
                 stopwatchMinutes: stopwatchMinutes,
-                preAdhanMinutes: PreAdhanMinutes(
-                    rawValue: [
-                        Prayer.fajr.rawValue: 20,
-                        Prayer.sunrise.rawValue: 20,
-                        Prayer.dhuhr.rawValue: 20,
-                        Prayer.asr.rawValue: 20,
-                        Prayer.maghrib.rawValue: 20,
-                        Prayer.isha.rawValue: 25
-                    ]
-                ),
+                preAdhanMinutes: preAdhanMinutes,
                 sunriseAfterIsha: sunriseAfterIsha,
                 timeZone: timeZone
             ))

@@ -30,7 +30,7 @@ struct HolidayTests {
 
     @Test
     func withoutAnOffsetTheHolidayFallsOnItsUmmAlQuraDay() throws {
-        let date = try #require(eid.date(inYear: 1448, offset: 0))
+        let date = try #require(eid.date(inYear: 1448, offset: 0, timeZone: calendar.timeZone))
         let hijri = Date.islamicCalendar.dateComponents([.year, .month, .day], from: date)
 
         #expect(hijri.year == 1448)
@@ -42,16 +42,27 @@ struct HolidayTests {
     @Test
     func anOffsetMovesTheHolidayToTheDayThatShowsIt() throws {
         let calendar = Date.islamicCalendar
-        let unshifted = try #require(eid.date(inYear: 1448, offset: 0))
+        let unshifted = try #require(eid.date(inYear: 1448, offset: 0, timeZone: calendar.timeZone))
 
         for offset in [-2, -1, 1, 2] {
-            let date = try #require(eid.date(inYear: 1448, offset: offset))
+            let date = try #require(eid.date(inYear: 1448, offset: offset, timeZone: calendar.timeZone))
             let shown = date.hijri(components: [.year, .month, .day], offSet: offset)
 
             #expect(calendar.dateComponents([.day], from: unshifted, to: date).day == -offset)
             #expect(shown.month == 10)
             #expect(shown.day == 1)
         }
+    }
+
+    @Test(arguments: ["Pacific/Honolulu", "Pacific/Kiritimati"])
+    func aHolidayStartsAtMidnightInThePlacesTimeZone(identifier: String) throws {
+        let timeZone = try #require(TimeZone(identifier: identifier))
+        let place = Calendar(identifier: .gregorian, timeZone: timeZone)
+        let next = try #require(holidays.upcoming(after: now, offset: 0, calendar: place).first)
+
+        #expect(next.holiday.id == "isra_miraj")
+        #expect(next.date == place.startOfDay(for: next.date))
+        #expect(next.date.hijri(offSet: 0, timeZone: timeZone).day == 27)
     }
 
     @Test

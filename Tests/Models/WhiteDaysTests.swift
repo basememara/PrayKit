@@ -23,7 +23,17 @@ struct WhiteDaysTests {
     }
 
     private func date(hijriYear year: Int, month: Int, day: Int, offset: Int = 0) throws -> Date {
-        try #require(Date(hijriYear: year, month: month, day: day, offset: offset)).addingTimeInterval(12 * 3600)
+        try #require(Date(hijriYear: year, month: month, day: day, offset: offset, timeZone: timeZone)).addingTimeInterval(12 * 3600)
+    }
+
+    @Test
+    func theyStartAtMidnightInThePlacesTimeZone() throws {
+        let honolulu = try #require(TimeZone(identifier: "Pacific/Honolulu"))
+        let calendar = Calendar(identifier: .gregorian, timeZone: honolulu)
+        let days = try date(hijriYear: 1448, month: 5, day: 4).whiteDays(offset: 0, timeZone: honolulu)
+
+        #expect(days.count == 3)
+        #expect(days.allSatisfy { $0 == calendar.startOfDay(for: $0) })
     }
 
     @Test

@@ -56,10 +56,11 @@ public extension Date {
 }
 
 public extension Date {
-    /// The day a Hijri date falls on as the app shows it: the app shows the Hijri date of the day `offset` days on,
-    /// so each Hijri day comes `offset` days before its Umm al-Qura day.
-    init?(hijriYear year: Int, month: Int, day: Int, offset: Int) {
-        let calendar = Date.islamicCalendar
+    /// The day a Hijri date falls on as the app shows it, at its midnight in `timeZone`: the app shows the Hijri date
+    /// of the day `offset` days on, so each Hijri day comes `offset` days before its Umm al-Qura day.
+    init?(hijriYear year: Int, month: Int, day: Int, offset: Int, timeZone: TimeZone) {
+        var calendar = Date.islamicCalendar
+        calendar.timeZone = timeZone
         guard let date = DateComponents(calendar: calendar, year: year, month: month, day: day).date
             .flatMap({ calendar.date(byAdding: .day, value: -offset, to: $0) }) else { return nil }
         self = date
@@ -76,6 +77,6 @@ public extension Date {
         let next = { (year: Int, month: Int) in month == 12 ? (year + 1, 1) : (year, month + 1) }
         let current = day <= 15 ? (year, month) : next(year, month)
         let (whiteYear, whiteMonth) = current.1 == 12 ? next(current.0, current.1) : current
-        return (13...15).compactMap { Date(hijriYear: whiteYear, month: whiteMonth, day: $0, offset: offset) }
+        return (13...15).compactMap { Date(hijriYear: whiteYear, month: whiteMonth, day: $0, offset: offset, timeZone: timeZone) }
     }
 }

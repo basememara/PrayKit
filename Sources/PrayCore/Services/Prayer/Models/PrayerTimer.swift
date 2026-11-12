@@ -111,14 +111,12 @@ public extension PrayerTimer {
 
     var isJumuah: Bool { phase.prayerTime.isJumuah(using: Calendar(identifier: .gregorian, timeZone: timeZone)) }
 
-    /// Whether the face names the prayer Jumuah: Friday's Dhuhr, except while its stopwatch runs before the khutba.
-    var isNamedJumuah: Bool {
-        if case .countUp(end: _, isBeforeKhutba: true) = phase.kind { false } else { isJumuah }
-    }
+    /// Whether the face names the prayer Jumuah: Friday's Dhuhr.
+    var isNamedJumuah: Bool { isJumuah }
 
     /// When the count-up after the adhan stops, while it runs.
     var stopwatchEnd: Date? {
-        if case let .countUp(end, _) = phase.kind { end } else { nil }
+        if case let .countUp(end) = phase.kind { end } else { nil }
     }
 }
 
@@ -171,8 +169,7 @@ private extension PrayerTimer {
         enum Kind: Equatable, Codable, Sendable {
             case countdown
             case iqama
-            /// Until `end`, and `isBeforeKhutba` from a Friday Dhuhr's adhan while its khutba is still to come.
-            case countUp(end: Date, isBeforeKhutba: Bool)
+            case countUp(end: Date)
         }
     }
 }
@@ -215,8 +212,8 @@ private extension PrayerTimer.Phase {
         // A prayer with an iqama never counts up, even once its iqama has passed
         let countsUp = currentIqama == nil && current.type != .sunrise && adhan.isStopwatchTimer(at: date, minutes: stopwatchMinutes)
 
-        func countUp(from start: Date, isBeforeKhutba: Bool = false) -> Kind {
-            .countUp(end: start + .minutes(stopwatchMinutes), isBeforeKhutba: isBeforeKhutba)
+        func countUp(from start: Date) -> Kind {
+            .countUp(end: start + .minutes(stopwatchMinutes))
         }
 
         // An ordinary moment, over the prayer under way: up from its adhan, down to its iqama, or down to the next adhan.
@@ -235,12 +232,6 @@ private extension PrayerTimer.Phase {
         if let dhuhr = [current, next].first(where: { $0.type == .dhuhr }),
            dhuhr.dateInterval.start.isJumuah(using: calendar),
            let khutba = timerIqama(for: dhuhr) {
-            // Up from Dhuhr's adhan, over the adhan to the khutba
-            if countsUp, current.type == .dhuhr {
-                let untilKhutba = DateInterval(start: adhan, end: khutba)
-                return Self(prayerTime: current, kind: countUp(from: adhan, isBeforeKhutba: true), target: adhan, span: untilKhutba, warningSeconds: warningSeconds)
-            }
-
             // Up from the khutba, over the khutba to the next adhan
             if khutba.isStopwatchTimer(at: date, minutes: stopwatchMinutes) {
                 let afterKhutba = DateInterval(start: khutba, end: nextAdhan)

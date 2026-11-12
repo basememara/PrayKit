@@ -41,9 +41,6 @@ public extension PrayerWindow {
             self.isJumuah = isJumuah
             self.time = time
         }
-
-        /// Whether this prayer has a window, and so an activity, of its own; Fajr doesn't.
-        public var hasWindow: Bool { prayer.hasWindow }
     }
 
     var end: Date { iqama ?? time }

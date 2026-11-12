@@ -1,6 +1,6 @@
 # PrayKit — Agent Guide
 
-Open-source Swift package (github.com/ZamzamInc/PrayKit) powering the closed-source PrayWatch app. Prayer time calculation, Hijri calendar, Qibla, notification scheduling. Default branch: `main`.
+Open-source Swift package (github.com/basememara/PrayKit) powering the closed-source PrayWatch app. Prayer time calculation, Hijri calendar, Qibla, notification scheduling. Default branch: `main`.
 
 ## Layout
 

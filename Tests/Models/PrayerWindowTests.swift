@@ -144,16 +144,12 @@ extension PrayerWindowTests {
     }
 
     @Test
-    func ishaPointsToTomorrowsFajrWhichHasNoWindowOfItsOwn() throws {
+    func ishaPointsToTomorrowsFajr() throws {
         let windows = Settings().prayerWindows(in: [day], from: hour(0), using: calendar)
         let isha = try #require(windows.first { $0.prayer == .isha })
 
         #expect(isha.next.prayer == .fajr)
         #expect(isha.next.time == hour(29))
-        let othersHaveWindows = windows.filter { $0.prayer != .isha }.allSatisfy(\.next.hasWindow)
-
-        #expect(!isha.next.hasWindow)
-        #expect(othersHaveWindows)
     }
 
     @Test

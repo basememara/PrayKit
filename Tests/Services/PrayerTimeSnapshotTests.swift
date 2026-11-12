@@ -305,7 +305,7 @@ extension SnapshotPlace {
 }
 
 extension SnapshotCase {
-    static let all: [SnapshotCase] = places + methods + settings
+    static let all: [SnapshotCase] = places + methods + settings + relativeLimits
 
     static let places: [SnapshotCase] = SnapshotPlace.all.map { place in
         SnapshotCase(id: "\(place.id).place", place: place, note: notes[place.id])
@@ -331,6 +331,26 @@ extension SnapshotCase {
         SnapshotCase(id: "cairo.place.hanafi", place: .cairo, jurisprudence: .hanafi),
         SnapshotCase(id: "tromso.place.nearestday", place: .tromso, polarResolution: .nearestDay)
     ]
+
+    /// A relative Fajr or Isha that can't apply: on the wrong side of sunrise or Maghrib, which saved settings can
+    /// hold, or far enough to put Isha past the next Fajr. London's timetable and a calculated method treat it differently.
+    static let relativeLimits: [SnapshotCase] = [(name: "place", method: Method.place), (name: "moon", method: .set(.moonsightingCommittee))]
+        .flatMap { name, method in
+            [
+                SnapshotCase(
+                    id: "london.\(name).fajr-300-before-sunrise-isha-300-after-maghrib",
+                    place: .london,
+                    method: method,
+                    adjustments: .relative(fajr: -300, isha: 300)
+                ),
+                SnapshotCase(id: "london.\(name).fajr-300-before-sunrise", place: .london, method: method, adjustments: .relative(fajr: -300)),
+                SnapshotCase(id: "london.\(name).fajr-1-after-sunrise", place: .london, method: method, adjustments: .relative(fajr: 1)),
+                SnapshotCase(id: "london.\(name).fajr-300-after-sunrise", place: .london, method: method, adjustments: .relative(fajr: 300)),
+                SnapshotCase(id: "london.\(name).isha-300-after-maghrib", place: .london, method: method, adjustments: .relative(isha: 300)),
+                SnapshotCase(id: "london.\(name).isha-1-before-maghrib", place: .london, method: method, adjustments: .relative(isha: -1)),
+                SnapshotCase(id: "london.\(name).isha-300-before-maghrib", place: .london, method: method, adjustments: .relative(isha: -300))
+            ]
+        }
 }
 
 private extension PrayerAdjustments {

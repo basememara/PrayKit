@@ -132,174 +132,128 @@ private extension Draft {
     mutating func schedule(_ prayerTime: PrayerTime, prefixIdentifier: String) {
         guard counter > 0 else { return }
 
-        let isObligation = prayerTime.type.isObligation
+        let prayer = prayerTime.type
+        let start = prayerTime.dateInterval.start
         let isJumuah = prayerTime.isJumuah(using: calendar)
+        let identifier = "\(prefixIdentifier)-\(prayer)"
+        let sound = settings.notificationSounds[prayer] ?? .off
+
+        let iqamaIdentifier = "\(identifier)-iqama-reminder"
         let iqamaTime = settings.iqamaTimes[prayerTime, using: calendar]
         let iqamaMinutes = isJumuah ? settings.iqamaReminders.jumuahMinutes : settings.iqamaReminders.minutes
         let iqamaSound = settings.iqamaReminders.sound
-        let iqamaReminderDate = iqamaTime.map { $0 - .minutes(iqamaMinutes) }
-        let hasIqamaReminder = iqamaReminderDate.map { iqamaSound != .off && iqamaMinutes > 0 && $0 > now } ?? false
+        let iqamaDate = iqamaTime.flatMap { fireDate(iqamaMinutes, before: $0) }
+        let hasIqamaReminder = iqamaSound != .off && iqamaDate.map { $0 > now } ?? false
 
-        let identifier = "\(prefixIdentifier)-\(prayerTime.type)"
-        let sound = settings.notificationSounds[prayerTime.type] ?? .off
-
-        // Add prayer notifications; the system silently drops calendar triggers already in the past,
-        // so they must not consume the budget, and the Jumuah iqama reminder replaces the dhuhr prayer
-        if sound != .off, counter > 0, prayerTime.dateInterval.start > now, !(isJumuah && hasIqamaReminder) {
-            requests.append(
-                NotificationPlan.Request(
-                    identifier: identifier,
-                    trigger: .date(prayerTime.dateInterval.start),
-                    body: .prayer(prayerTime),
-                    sound: settings.notificationSoundFile(for: prayerTime.type).map(NotificationPlan.Sound.file),
-                    interruptionLevel: .timeSensitive,
-                    category: isObligation ? .main : .reminder,
-                    payload: .prayerTime(prayerTime)
-                )
-            )
-
-            firstScheduled = firstScheduled ?? prayerTime.dateInterval.start
-            lastScheduled = prayerTime.dateInterval.start
-            counter -= 1
-        } else if sound == .off {
-            removals.append(.identifier(identifier))
+        // The Jumuah iqama reminder replaces the dhuhr prayer
+        if let date = slot(for: identifier, at: isJumuah && hasIqamaReminder ? nil : start, isOff: sound == .off) {
+            let file = settings.notificationSoundFile(for: prayer)
+            add(identifier, at: date, .prayer(prayerTime), sound: file, category: prayer.isObligation ? .main : .reminder, for: prayerTime)
+            firstScheduled = firstScheduled ?? date
+            lastScheduled = date
         }
 
-        // Add iqama notification if applicable; it goes before the optional reminders so the Jumuah
-        // replacement for dhuhr cannot lose the last budget slot to a pre-adhan reminder
-        let iqamaIdentifier = "\(identifier)-iqama-reminder"
-
-        if let iqamaReminderDate, hasIqamaReminder, counter > 0 {
-            requests.append(
-                NotificationPlan.Request(
-                    identifier: iqamaIdentifier,
-                    trigger: .date(iqamaReminderDate),
-                    body: .iqama(prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah),
-                    sound: iqamaSound.file.map(NotificationPlan.Sound.file),
-                    interruptionLevel: .timeSensitive,
-                    category: .reminder,
-                    payload: .prayerTime(prayerTime)
-                )
-            )
-
-            counter -= 1
-        } else if iqamaSound == .off {
-            removals.append(.identifier(iqamaIdentifier))
+        // The iqama reminder goes before the optional reminders so the Jumuah replacement for dhuhr
+        // cannot lose the last budget slot to a pre-adhan reminder
+        if let date = slot(for: iqamaIdentifier, at: iqamaDate, isOff: iqamaSound == .off) {
+            add(iqamaIdentifier, at: date, .iqama(prayerTime, minutes: iqamaMinutes, isJumuah: isJumuah), sound: iqamaSound.file, for: prayerTime)
         }
 
         shortcutPrayers.append(prayerTime)
-        scheduleReminders(for: prayerTime, identifier: identifier, isJumuah: isJumuah, iqamaTime: iqamaTime)
-    }
 
-    mutating func scheduleReminders(for prayerTime: PrayerTime, identifier: String, isJumuah: Bool, iqamaTime: Date?) {
         let reminderIdentifier = "\(identifier)-reminder"
-        let reminderSound = settings.reminderSounds[prayerTime.type] ?? .off
-        let reminderMinutes = settings.preAdhanMinutes[prayerTime.type]
-
-        let reminderDate = (isJumuah ? iqamaTime ?? prayerTime.dateInterval.start : prayerTime.dateInterval.start)
-            - .minutes(reminderMinutes)
+        let reminderSound = settings.reminderSounds[prayer] ?? .off
+        let reminderMinutes = settings.preAdhanMinutes[prayer]
+        let reminderDate = fireDate(reminderMinutes, before: isJumuah ? iqamaTime ?? start : start)
 
         // An alarm rings at the reminder's time, so the reminder still shows but stays silent
-        let isSilenced = settings.ringsAlarm(for: prayerTime.type)
+        let isSilenced = settings.ringsAlarm(for: prayer)
 
-        if reminderSound != .off, reminderMinutes > 0, counter > 0, reminderDate > now {
-            requests.append(
-                NotificationPlan.Request(
-                    identifier: reminderIdentifier,
-                    trigger: .date(reminderDate),
-                    body: .reminder(prayerTime, minutes: reminderMinutes),
-                    sound: isSilenced ? nil : reminderSound.file.map(NotificationPlan.Sound.file),
-                    interruptionLevel: .timeSensitive,
-                    category: .reminder,
-                    payload: .prayerTime(prayerTime)
-                )
+        if let date = slot(for: reminderIdentifier, at: reminderDate, isOff: reminderSound == .off) {
+            add(reminderIdentifier, at: date, .reminder(prayerTime, minutes: reminderMinutes), sound: isSilenced ? nil : reminderSound.file, for: prayerTime)
+        }
+
+        if prayer == .fajr {
+            let imsakIdentifier = "\(identifier)-imsak-reminder"
+            let imsakMinutes = settings.preAdhanMinutes.imsak
+
+            if let date = slot(for: imsakIdentifier, at: fireDate(imsakMinutes, before: start), isOff: reminderSound == .off) {
+                add(imsakIdentifier, at: date, .reminder(prayerTime, minutes: imsakMinutes), sound: reminderSound.file, for: prayerTime)
+            }
+        }
+
+        if prayer == .sunrise {
+            let duhaIdentifier = "\(identifier)-duha-reminder"
+            let duhaDate = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
+
+            if let date = slot(for: duhaIdentifier, at: duhaDate, isOff: reminderSound == .off) {
+                add(duhaIdentifier, at: date, .duha(at: date), sound: reminderSound.file, for: prayerTime)
+            }
+        }
+    }
+
+    /// A notification that is on and still to come takes a slot from the budget and gets its date back;
+    /// one that is off is removed, even with no date to fire at.
+    mutating func slot(for identifier: String, at date: Date?, isOff: Bool) -> Date? {
+        // The system silently drops calendar triggers already in the past, so they must not consume the budget
+        guard let date, !isOff, counter > 0, date > now else {
+            if isOff {
+                removals.append(.identifier(identifier))
+            }
+
+            return nil
+        }
+
+        counter -= 1
+        return date
+    }
+
+    mutating func add(
+        _ identifier: String,
+        at date: Date,
+        _ body: NotificationPlan.Body,
+        sound: String?,
+        category: NotificationCategory = .reminder,
+        for prayerTime: PrayerTime
+    ) {
+        requests.append(
+            NotificationPlan.Request(
+                identifier: identifier,
+                trigger: .date(date),
+                body: body,
+                sound: sound.map(NotificationPlan.Sound.file),
+                interruptionLevel: .timeSensitive,
+                category: category,
+                payload: .prayerTime(prayerTime)
             )
+        )
+    }
 
-            counter -= 1
-        } else if reminderSound == .off {
-            removals.append(.identifier(reminderIdentifier))
-        }
-
-        if prayerTime.type == .fajr {
-            let reminderIdentifier = "\(identifier)-imsak-reminder"
-            let reminderMinutes = settings.preAdhanMinutes.imsak
-            let reminderDate = prayerTime.dateInterval.start - .minutes(reminderMinutes)
-
-            if reminderSound != .off, reminderMinutes > 0, counter > 0, reminderDate > now {
-                requests.append(
-                    NotificationPlan.Request(
-                        identifier: reminderIdentifier,
-                        trigger: .date(reminderDate),
-                        body: .reminder(prayerTime, minutes: reminderMinutes),
-                        sound: reminderSound.file.map(NotificationPlan.Sound.file),
-                        interruptionLevel: .timeSensitive,
-                        category: .reminder,
-                        payload: .prayerTime(prayerTime)
-                    )
-                )
-
-                counter -= 1
-            } else if reminderSound == .off {
-                removals.append(.identifier(reminderIdentifier))
-            }
-        }
-
-        if prayerTime.type == .sunrise {
-            let reminderIdentifier = "\(identifier)-duha-reminder"
-            let reminderTime = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
-
-            if let reminderTime, reminderSound != .off, counter > 0, reminderTime > now {
-                requests.append(
-                    NotificationPlan.Request(
-                        identifier: reminderIdentifier,
-                        trigger: .date(reminderTime),
-                        body: .duha(at: reminderTime),
-                        sound: reminderSound.file.map(NotificationPlan.Sound.file),
-                        interruptionLevel: .timeSensitive,
-                        category: .reminder,
-                        payload: .prayerTime(prayerTime)
-                    )
-                )
-
-                counter -= 1
-            } else if reminderSound == .off {
-                removals.append(.identifier(reminderIdentifier))
-            }
-        }
+    func fireDate(_ minutes: Int, before date: Date) -> Date? {
+        minutes > 0 ? date - .minutes(minutes) : nil
     }
 
     mutating func scheduleIqamaUpdate(from origin: Date) {
-        var iqamaUpdateInterval: TimeInterval?
-        switch (settings.iqamaReminders.updateInterval, settings.iqamaTimes.isEmpty) {
-        case (.weekly, false):
-            iqamaUpdateInterval = 7 * 24 * 3600
-        case (.biweekly, false):
-            iqamaUpdateInterval = 14 * 24 * 3600
-        case (.monthly, false):
-            iqamaUpdateInterval = 30 * 24 * 3600
-        case (.bimonthly, false):
-            iqamaUpdateInterval = 60 * 24 * 3600
-        case (_, true), (.off, _):
+        guard !settings.iqamaTimes.isEmpty, let timeInterval = settings.iqamaReminders.updateInterval.timeInterval else {
             removals.append(.identifier(NotificationPlan.iqamaUpdateIdentifier))
+            return
         }
 
-        if let timeInterval = iqamaUpdateInterval {
-            let date = -origin.timeIntervalSince(now) < timeInterval ? origin : now
+        let date = -origin.timeIntervalSince(now) < timeInterval ? origin : now
 
-            requests.append(
-                NotificationPlan.Request(
-                    identifier: NotificationPlan.iqamaUpdateIdentifier,
-                    trigger: .date(date.addingTimeInterval(timeInterval)),
-                    body: .iqamaUpdate,
-                    sound: .default,
-                    interruptionLevel: .passive,
-                    category: .reminder,
-                    payload: .iqamaUpdateOrigin(date)
-                )
+        requests.append(
+            NotificationPlan.Request(
+                identifier: NotificationPlan.iqamaUpdateIdentifier,
+                trigger: .date(date.addingTimeInterval(timeInterval)),
+                body: .iqamaUpdate,
+                sound: .default,
+                interruptionLevel: .passive,
+                category: .reminder,
+                payload: .iqamaUpdateOrigin(date)
             )
+        )
 
-            counter -= 1
-        }
+        counter -= 1
     }
 
     mutating func scheduleCalibrate(with requestHash: PrayerRequestHash) {
@@ -336,6 +290,23 @@ private extension Draft {
         }
     }
     #endif
+}
+
+private extension IqamaReminders.UpdateInterval {
+    var timeInterval: TimeInterval? {
+        switch self {
+        case .weekly:
+            7 * 24 * 3600
+        case .biweekly:
+            14 * 24 * 3600
+        case .monthly:
+            30 * 24 * 3600
+        case .bimonthly:
+            60 * 24 * 3600
+        case .off:
+            nil
+        }
+    }
 }
 
 // MARK: - Rendering

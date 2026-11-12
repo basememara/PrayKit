@@ -17,7 +17,6 @@ struct ConstantsTests {
 
         let constants = Constants(
             isDebug: true,
-            itunesName: "example",
             itunesID: "989923828",
             email: "help@example.com",
             twitter: "example",

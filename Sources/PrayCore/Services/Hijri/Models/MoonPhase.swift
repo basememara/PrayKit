@@ -10,8 +10,10 @@ import Foundation
 
 /// The moon on a day of the Hijri month, which begins with the new crescent.
 public struct MoonPhase: Equatable, Sendable {
+    private static let synodicMonth = 29.53
+
     /// Days since the new moon.
-    public let age: Double
+    private let age: Double
 
     public init(hijriDay: Int) {
         age = Double(hijriDay)
@@ -19,8 +21,6 @@ public struct MoonPhase: Equatable, Sendable {
 }
 
 public extension MoonPhase {
-    static let synodicMonth = 29.53
-
     /// The share of the disc lit, 0 at the new moon and 1 at the full moon.
     var illumination: Double {
         (1 - cos(2 * .pi * age / Self.synodicMonth)) / 2

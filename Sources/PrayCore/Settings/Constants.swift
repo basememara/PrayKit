@@ -11,7 +11,6 @@ import ZamzamCore
 
 public struct Constants: Distribution, Sendable {
     public let isDebug: Bool
-    public let itunesName: String
     public let itunesID: String
     public let email: String
     public let twitter: String
@@ -30,12 +29,10 @@ public struct Constants: Distribution, Sendable {
     public let stripePublishableKey: String
     public let stripeApplePayMerchantId: String
     public let donationApiUrl: URL
-    public let preferredLocalizations: [String]
     public let language: String
 
     public init(
         isDebug: Bool,
-        itunesName: String,
         itunesID: String,
         email: String,
         twitter: String,
@@ -57,7 +54,6 @@ public struct Constants: Distribution, Sendable {
         preferredLocalizations: [String]
     ) {
         self.isDebug = isDebug
-        self.itunesName = itunesName
         self.itunesID = itunesID
         self.email = email
         self.twitter = twitter
@@ -76,7 +72,6 @@ public struct Constants: Distribution, Sendable {
         self.stripePublishableKey = stripePublishableKey
         self.stripeApplePayMerchantId = stripeApplePayMerchantId
         self.donationApiUrl = donationApiUrl
-        self.preferredLocalizations = preferredLocalizations
 
         self.language = (Bundle
             .preferredLocalizations(from: preferredLocalizations)

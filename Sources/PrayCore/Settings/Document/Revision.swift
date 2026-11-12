@@ -32,7 +32,9 @@ public extension Revision {
     var date: Date {
         Date(timeIntervalSince1970: TimeInterval(milliseconds) / 1000)
     }
+}
 
+extension Revision {
     /// The revision for an edit made at `date`, never earlier than one already seen.
     ///
     /// A device whose clock runs behind still orders its edit after every revision it has merged.

@@ -74,7 +74,6 @@ public extension PrayerManager {
 
 public extension PrayerManager {
     enum Expanded: Sendable {
-        case finalHour
         /// Every hour of each prayer, then a step at a time through its last hour.
         case hourly(finalHourStep: TimeInterval)
         case intervals(TimeInterval)
@@ -302,8 +301,6 @@ private extension PrayerManager {
             }
 
         switch expanded {
-        case .finalHour:
-            entries = entries.expandedWithFinalHour(using: context, in: days, calendar: calendar)
         case let .hourly(finalHourStep):
             entries = entries.expandedHourly(using: context, in: days, calendar: calendar, finalHourStep: finalHourStep)
         case let .intervals(progress):
@@ -392,25 +389,6 @@ private extension Array where Element == PrayerTimer {
             } else if let prayerTimer = context.timer(currentPrayer.dateInterval.start, in: days) {
                 result.append(prayerTimer)
             }
-
-            result += context
-                .expandedTimeline(currentPrayer, calendar)
-                .compactMap { context.timer($0, in: days) }
-        }
-        .removeDuplicates()
-        .sorted(by: \.date)
-    }
-}
-
-private extension Array where Element == PrayerTimer {
-    func expandedWithFinalHour(using context: TimerContext, in days: [PrayerDay], calendar: Calendar) -> Self {
-        reduce(into: []) { result, entry in
-            guard let currentPrayer = entry.prayerDay.current(at: entry.date) else { return }
-
-            result += [
-                context.timer(currentPrayer.dateInterval.start, in: days),
-                context.timer(currentPrayer.dateInterval.end - .hours(1), in: days)
-            ].compactMap(\.self)
 
             result += context
                 .expandedTimeline(currentPrayer, calendar)

@@ -78,19 +78,6 @@ public extension Settings {
         manualMethod?.keptTimeZones.insert(CalculationMethod.area(at: place))
     }
 
-    /// Follows the place's recommended method, unless minutes adjusted for the times of `current`, the method in
-    /// use until now, would move another's: then that method stays, counted as picked by hand, so the place asks
-    /// instead.
-    mutating func followPlace(_ place: Place, from current: CalculationMethod) {
-        guard Self.placeMethod(at: place) == current || adjustments.isEmpty else {
-            calculationMethod = current
-            manualMethod = ManualMethod(keptTimeZones: [])
-            return
-        }
-
-        recommendMethod(at: place)
-    }
-
     /// The method the times are calculated with. One that follows the place is the place's own, whatever is stored:
     /// the stored method syncs and may have followed another device elsewhere. One picked by hand is kept, unless it's
     /// a city's timetable away from its time zone, whose times would be read on another clock: then the place's applies.
@@ -130,6 +117,19 @@ public extension Settings {
 }
 
 extension Settings {
+    /// Follows the place's recommended method, unless minutes adjusted for the times of `current`, the method in
+    /// use until now, would move another's: then that method stays, counted as picked by hand, so the place asks
+    /// instead.
+    mutating func followPlace(_ place: Place, from current: CalculationMethod) {
+        guard Self.placeMethod(at: place) == current || adjustments.isEmpty else {
+            calculationMethod = current
+            manualMethod = ManualMethod(keptTimeZones: [])
+            return
+        }
+
+        recommendMethod(at: place)
+    }
+
     static func placeMethod(for timeZone: TimeZone, at coordinates: Coordinates?) -> CalculationMethod {
         .recommended(for: timeZone, at: coordinates) ?? .moonsightingCommittee
     }

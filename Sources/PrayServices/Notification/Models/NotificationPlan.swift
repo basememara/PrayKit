@@ -98,6 +98,7 @@ extension NotificationPlan {
             draft.schedule(prayerTime, prefixIdentifier: prefixIdentifier)
         }
 
+        draft.endRangeWhereTheBudgetStopped()
         draft.scheduleIqamaUpdate(from: iqamaUpdateOrigin ?? now)
         draft.scheduleCalibrate(with: requestHash)
         #if os(iOS)
@@ -125,6 +126,7 @@ private struct Draft {
     var shortcutPrayers = [PrayerTime]()
     var firstScheduled: Date?
     var lastScheduled: Date
+    var lastRequested: Date?
     var counter: Int
 }
 
@@ -216,6 +218,8 @@ private extension Draft {
         category: NotificationCategory = .reminder,
         for prayerTime: PrayerTime
     ) {
+        lastRequested = max(lastRequested ?? date, date)
+
         requests.append(
             NotificationPlan.Request(
                 identifier: identifier,
@@ -231,6 +235,13 @@ private extension Draft {
 
     func fireDate(_ minutes: Int, before date: Date) -> Date? {
         minutes > 0 ? date - .minutes(minutes) : nil
+    }
+
+    /// The last adhan marks where the range ends. With every adhan off and the budget spent, nothing does, so
+    /// the range ends at the last request made, and calibrate and the background refresh come before they run out.
+    mutating func endRangeWhereTheBudgetStopped() {
+        guard firstScheduled == nil, counter <= 0, let lastRequested else { return }
+        lastScheduled = lastRequested
     }
 
     mutating func scheduleIqamaUpdate(from origin: Date) {

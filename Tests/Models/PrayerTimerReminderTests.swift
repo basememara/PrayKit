@@ -8,6 +8,7 @@
 import Foundation
 import PrayCore
 import Testing
+import ZamzamCore
 
 // MARK: - The Reminder of the Prayer Counted To
 
@@ -66,5 +67,57 @@ extension PrayerTimerTests {
         try #require(dhuhr.isJumuah(using: calendar))
         #expect(timeline.contains(friday(hour: 12, minute: 10)))
         #expect(khutbaMoments.map(timeline.contains) == [isIqamaTimerEnabled, isIqamaTimerEnabled])
+    }
+}
+
+// MARK: - The Reminder Moment Before the Khutba
+
+extension PrayerTimerTests {
+    /// Dhuhr's 20 minutes are counted back from the khutba at 13:30 while the timer counts to it, else from the adhan at 12:10.
+    @Test(arguments: [true, false])
+    func fridaysReminderMomentIsCountedBackFromWhatTheTimerCountsTo(isIqamaTimerEnabled: Bool) throws {
+        let timer = try prayerTimer(at: friday(hour: 12, minute: 20))
+        let calendar = Calendar(identifier: .gregorian, timeZone: timer.timeZone)
+        let dhuhr = try #require(timer.prayerDay.times[.dhuhr])
+        var settings = Settings()
+        settings.iqamaTimes.jumuah = .time(hour: 13, minutes: 30)
+        settings.preAdhanMinutes = PreAdhanMinutes(rawValue: ["dhuhr": 20])
+        settings.isIqamaTimerEnabled = isIqamaTimerEnabled
+
+        let timeline = settings.expandedTimeline(for: dhuhr, using: calendar)
+
+        #expect(timeline.contains(friday(hour: 13, minute: 10)) == isIqamaTimerEnabled)
+        #expect(timeline.contains(friday(hour: 11, minute: 50)) == !isIqamaTimerEnabled)
+    }
+
+    @Test(arguments: [20, 45])
+    func onAFridayTheTimerTurnsRedAtTheTimelinesReminderMoment(dhuhrMinutes: Int) async throws {
+        let prayerManager = PrayTestFixture().prayerManager
+        var settings = Settings()
+        settings.iqamaTimes.jumuah = .time(hour: 13, minutes: 30)
+        settings.preAdhanMinutes = PreAdhanMinutes(rawValue: ["dhuhr": dhuhrMinutes])
+        var fridays = [String]()
+
+        for place in DayFixture.all {
+            let calendar = try place.calendar()
+            let days = try await place.days(1, using: prayerManager)
+            let day = try #require(days.first)
+            let dhuhr = try #require(day.times[.dhuhr])
+
+            if dhuhr.isJumuah(using: calendar) {
+                let khutba = try #require(settings.timerIqama(for: dhuhr, using: calendar))
+                let reminder = khutba - .minutes(dhuhrMinutes)
+                let atReminder = try #require(PrayerTimer(at: reminder, using: day, settings: settings, timeZone: calendar.timeZone))
+                let aSecondBefore = try #require(PrayerTimer(at: reminder - 1, using: day, settings: settings, timeZone: calendar.timeZone))
+
+                fridays.append(place.name)
+                #expect(settings.expandedTimeline(for: dhuhr, using: calendar).contains(reminder), "\(place.name)")
+                #expect(atReminder.countdownDate == khutba, "\(place.name)")
+                #expect(atReminder.isDangerZone, "\(place.name)")
+                #expect(!aSecondBefore.isDangerZone, "\(place.name)")
+            }
+        }
+
+        #expect(fridays.count == 3)
     }
 }

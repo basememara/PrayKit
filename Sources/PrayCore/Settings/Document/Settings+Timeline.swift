@@ -16,8 +16,8 @@ public extension Settings {
     }
 
     /// The moments in a prayer's window when its countdown changes: the start, the reminder before it, the
-    /// iqama and the stopwatch after it, and on a Friday whose khutba the iqama timer counts to, the stopwatch the
-    /// khutba starts.
+    /// iqama and the stopwatch after it. On a Friday whose khutba the iqama timer counts to, the reminder is counted
+    /// back from the khutba instead, and the khutba starts a stopwatch.
     func expandedTimeline(for prayerTime: PrayerTime, using calendar: Calendar) -> [Date] {
         let start = prayerTime.dateInterval.start
         let duration = prayerTime.dateInterval.duration
@@ -25,9 +25,18 @@ public extension Settings {
         let iqama = timerIqama(for: prayerTime, using: calendar)
         let khutba = prayerTime.isJumuah(using: calendar) ? iqama : nil
 
+        // The count to the khutba runs from sunrise's adhan, so its warning begins inside it even before Dhuhr's adhan
+        let reminder: Date? = if let khutba {
+            khutba - .minutes(reminderMinutes)
+        } else if duration > Double(reminderMinutes) * 60 {
+            start - .minutes(reminderMinutes)
+        } else {
+            nil
+        }
+
         return [
             start,
-            reminderMinutes > 0 && duration > Double(reminderMinutes) * 60 ? start - .minutes(reminderMinutes) : nil,
+            reminderMinutes > 0 ? reminder : nil,
             iqama,
             stopwatchMinutes > 0 && duration > Double(stopwatchMinutes) * 60 ? start + .minutes(stopwatchMinutes) : nil,
             stopwatchMinutes > 0 ? khutba.map { $0 + .minutes(stopwatchMinutes) } : nil

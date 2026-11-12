@@ -94,7 +94,7 @@ public extension PrayerTimer {
         let preAdhanMinutes = preAdhanMinutes[nextPrayer.type]
         let calendar = Calendar(identifier: .gregorian, timeZone: timeZone)
 
-        let currentIqama = isIqamaTimerEnabled ? iqamaTimes[currentPrayer, using: calendar] : nil
+        let currentIqama = iqamaTimes.timerIqama(for: currentPrayer, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
         let iqamaTime = currentIqama.flatMap { currentPrayer.dateInterval.start.isIqamaTimer(at: date, iqamaTime: $0) ? $0 : nil }
 
         // A prayer with an iqama never counts up, even once its iqama has passed

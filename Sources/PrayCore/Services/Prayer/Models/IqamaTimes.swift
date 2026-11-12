@@ -111,6 +111,12 @@ public extension IqamaTimes {
         return iqamaType?.date(for: prayerTime, using: calendar)
     }
 
+    /// The iqama a timer counts to for a prayer, the khutba for Friday's Dhuhr: `nil` when the iqama timer is off or
+    /// the prayer has none.
+    func timerIqama(for prayerTime: PrayerTime, isTimerEnabled: Bool, using calendar: Calendar) -> Date? {
+        isTimerEnabled ? self[prayerTime, using: calendar] : nil
+    }
+
     /// The soonest iqama still ahead of `date` among the day's prayers, today's and tomorrow's, that `matches` accepts.
     func next(
         in day: PrayerDay,

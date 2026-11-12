@@ -420,7 +420,7 @@ private extension Array where Element == PrayerTimer {
 
             // The last hour before each moment the timer counts to, in steps, for a face that draws the minutes left
             // without a live timer
-            let iqama = context.settings.isIqamaTimerEnabled ? context.settings.iqamaTimes[currentPrayer, using: calendar] : nil
+            let iqama = context.settings.timerIqama(for: currentPrayer, using: calendar)
             let targets = [currentPrayer.dateInterval.end] + [iqama].compactMap(\.self).filter { currentPrayer.dateInterval.contains($0) }
 
             result += targets.flatMap { target in

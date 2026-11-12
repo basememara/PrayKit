@@ -78,7 +78,7 @@ private extension Settings {
             isJumuah: prayerTime.isJumuah(using: calendar),
             start: time - .minutes(leadMinutes),
             time: time,
-            iqama: isIqamaTimerEnabled ? iqamaTimes[prayerTime, using: calendar] : nil,
+            iqama: timerIqama(for: prayerTime, using: calendar),
             next: PrayerWindow.Next(prayer: next.type, isJumuah: next.isJumuah(using: calendar), time: next.dateInterval.start)
         )
     }

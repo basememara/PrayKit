@@ -105,7 +105,7 @@ extension PrayerDay {
     func turnover(iqamaTimes: IqamaTimes, isIqamaTimerEnabled: Bool, stopwatchMinutes: Int, using calendar: Calendar) -> Date? {
         guard let isha = times[.isha] else { return nil }
         // The same window a timer shows: an iqama when one is set, otherwise the count-up
-        let iqama = isIqamaTimerEnabled ? iqamaTimes[isha, using: calendar] : nil
+        let iqama = iqamaTimes.timerIqama(for: isha, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
         let ishaWindowEnd = iqama ?? isha.dateInterval.start + .minutes(max(stopwatchMinutes, 0))
         return min(max(date.tomorrow(using: calendar), ishaWindowEnd), isha.dateInterval.end)
     }

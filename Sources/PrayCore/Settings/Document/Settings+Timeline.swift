@@ -10,6 +10,11 @@ import Foundation
 import ZamzamCore
 
 public extension Settings {
+    /// The iqama a timer counts to for a prayer, which the iqama timer setting turns off; see `IqamaTimes.timerIqama`.
+    func timerIqama(for prayerTime: PrayerTime, using calendar: Calendar) -> Date? {
+        iqamaTimes.timerIqama(for: prayerTime, isTimerEnabled: isIqamaTimerEnabled, using: calendar)
+    }
+
     /// The moments in a prayer's window when its countdown changes: the start, the reminder before it, the
     /// iqama and the stopwatch after it, and on a Friday the khutba and the stopwatch it starts.
     func expandedTimeline(for prayerTime: PrayerTime, using calendar: Calendar) -> [Date] {
@@ -21,7 +26,7 @@ public extension Settings {
         return [
             start,
             reminderMinutes > 0 && duration > Double(reminderMinutes) * 60 ? start - .minutes(reminderMinutes) : nil,
-            isIqamaTimerEnabled ? iqamaTimes[prayerTime, using: calendar] : nil,
+            timerIqama(for: prayerTime, using: calendar),
             stopwatchMinutes > 0 && duration > Double(stopwatchMinutes) * 60 ? start + .minutes(stopwatchMinutes) : nil,
             khutba,
             stopwatchMinutes > 0 ? khutba.map { $0 + .minutes(stopwatchMinutes) } : nil

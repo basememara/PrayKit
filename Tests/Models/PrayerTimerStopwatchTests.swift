@@ -128,3 +128,17 @@ extension PrayerTimerTests {
         assertCalculations(for: prayerTimer, minutes: -5)
     }
 }
+
+// MARK: - Danger Zone
+
+extension PrayerTimerTests {
+    @Test(arguments: [(7, 0), (11, 50), (14, 5), (16, 30), (17, 50)])
+    func theDangerZoneBeginsAtTheRemindersOwnMoment(hour: Int, minute: Int) throws {
+        let atReminder = try prayerTimer(at: today(hour: hour, minute: minute))
+        let aMinuteBefore = try prayerTimer(at: today(hour: hour, minute: minute) - .minutes(1))
+
+        #expect(atReminder.timerType == .countdown)
+        #expect(atReminder.isDangerZone)
+        #expect(!aMinuteBefore.isDangerZone)
+    }
+}

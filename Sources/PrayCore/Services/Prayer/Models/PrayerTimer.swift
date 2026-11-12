@@ -149,9 +149,9 @@ public extension PrayerTimer {
             }
         }
 
-        let progress = currentDateInterval.progress(at: date).value
-        let progressRemaining = 1 - progress
-        let dangerZone = hasPreAdhanZone ? min(1, Double(preAdhanMinutes * 60) / currentDateInterval.duration) : 0 // Pre-adhan zone
+        let progressRemaining = 1 - currentDateInterval.progress(at: date).value
+        let dangerSeconds = hasPreAdhanZone ? Double(preAdhanMinutes * 60) : 0
+        let dangerZone = hasPreAdhanZone ? min(1, dangerSeconds / currentDateInterval.duration) : 0
         let isJumuah = prayerTime.isJumuah(using: calendar)
 
         self.init(
@@ -165,17 +165,13 @@ public extension PrayerTimer {
             timeDuration: currentDateInterval.duration,
             progressRemaining: progressRemaining,
             dangerZone: dangerZone,
-            isDangerZone: timerType != .stopwatch ? progressRemaining <= dangerZone : false,
+            // By the seconds left: the two ratios round apart at the reminder's own moment
+            isDangerZone: timerType != .stopwatch && currentDateInterval.end.timeIntervalSince(date) <= dangerSeconds,
             isJumuah: isJumuah,
             timeZone: timeZone,
             isNamedJumuah: isJumuah && !isDhuhrStopwatchOnFriday,
             stopwatchEnd: timerType == .stopwatch ? countdownDate + .minutes(stopwatchMinutes) : nil,
-            turnover: prayerDay.turnover(
-                iqamaTimes: iqamaTimes,
-                isIqamaTimerEnabled: isIqamaTimerEnabled,
-                stopwatchMinutes: stopwatchMinutes,
-                using: calendar
-            ),
+            turnover: prayerDay.turnover(iqamaTimes: iqamaTimes, isIqamaTimerEnabled: isIqamaTimerEnabled, stopwatchMinutes: stopwatchMinutes, using: calendar),
             isPlaceholder: isPlaceholder
         )
     }

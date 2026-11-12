@@ -211,11 +211,13 @@ extension PrayerMessageTests {
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=reminder&prayer=dinner&starts=1799841600&ends=1799854200",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=reminder&prayer=asr&starts=1799841600&ends=1799854200",
         "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=reminder&prayer=asr&starts=1799854200&ends=1799841600",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=asr&adhan=soon&minutes=30&timing=after",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=isha&adhan=1799868600&minutes=-5&timing=before",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=meet&prayer=isha&adhan=1799868600&minutes=5&timing=whenever",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=timetable&times=fajr:1:2,sunrise:x:3",
-        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&kind=party"
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=meet&prayer=asr&adhan=soon&minutes=30&timing=after",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=meet&prayer=isha&adhan=1799868600&minutes=-5&timing=before",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=meet&prayer=isha&adhan=1799868600&minutes=1441&timing=after",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=meet&prayer=isha&adhan=1799868600&minutes=9223372036854775807&timing=after",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=meet&prayer=isha&adhan=1799868600&minutes=5&timing=whenever",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=timetable&times=fajr:1:2,sunrise:x:3",
+        "https://praywatch.app/m?v=1&tz=Asia/Kuala_Lumpur&hijri=0&kind=party"
     ])
     func aMalformedOrNewerLinkReadsAsNothing(link: String) throws {
         let url = try #require(URL(string: link))

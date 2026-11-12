@@ -229,7 +229,8 @@ private extension PrayerMessage.Content {
         case "meet":
             guard let prayer,
                   let adhan = query["adhan"].flatMap(Date.init(epoch:)),
-                  let minutes = query["minutes"].flatMap(Int.init), minutes >= 0,
+                  // A meeting stays within a day of its adhan; a number past that could overflow the date math
+                  let minutes = query["minutes"].flatMap(Int.init), (0...1_440).contains(minutes),
                   let timing = query["timing"].flatMap(PrayerMessage.Meeting.Timing.init(rawValue:))
             else { return nil }
             self = .meet(PrayerMessage.Meeting(prayer: prayer, adhan: adhan, minutes: minutes, timing: timing, together: query["together"] == "1"))

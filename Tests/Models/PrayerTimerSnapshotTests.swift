@@ -74,9 +74,9 @@ extension PrayerTimerSnapshotTests {
                 let timers = try Self.moments(of: days.own.times, settings: row.settings, using: calendar)
                     .compactMap { Self.timer(at: $0, in: [days.before, days.own], settings: row.settings, using: calendar) }
 
-                readings += timers.map(\.listedTimes.count).reduce(0, +)
+                readings += timers.map(\.listedDay.times.count).reduce(0, +)
                 disagreements += timers.flatMap { timer in
-                    timer.listedTimes.compactMap { prayerTime in
+                    timer.listedDay.times.compactMap { prayerTime in
                         let byPrayerDay = timer.prayerDay.stage(of: prayerTime, at: timer.date)
                         let byListedDay = timer.listedDay.stage(of: prayerTime, at: timer.date)
                         guard byPrayerDay != byListedDay else { return nil }

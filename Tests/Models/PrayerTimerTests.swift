@@ -631,11 +631,7 @@ extension PrayerTimerTests {
 
 extension PrayerTimerTests {
     func assertCalculations(for prayerTimer: PrayerTimer, minutes: Int, lastAdhanTime: Date? = nil) {
-        let componentFormatStyle = Date.ComponentsFormatStyle(style: .condensedAbbreviated, fields: [.minute])
-        let formattedComponent = prayerTimer.timeRange.formatted(componentFormatStyle).components(separatedBy: .decimalDigits.inverted).joined()
-
         #expect(prayerTimer.timeRemaining == Double(minutes) * 60)
-        #expect(formattedComponent == "\(abs(minutes))")
 
         switch prayerTimer.timerType {
         case .stopwatch:

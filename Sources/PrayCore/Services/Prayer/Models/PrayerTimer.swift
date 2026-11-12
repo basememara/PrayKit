@@ -10,7 +10,7 @@ import Foundation.NSCalendar
 import Foundation.NSDateInterval
 import ZamzamCore
 
-public struct PrayerTimer: Equatable, Codable, Sendable {
+public struct PrayerTimer: Equatable, Sendable {
     public let date: Date
     public let prayerDay: PrayerDay
     /// The place's zone, which its times read in, rather than the device's
@@ -98,7 +98,6 @@ public extension PrayerTimer {
 
     /// The adhan, iqama or khutba counted to, or the one counted up from.
     var countdownDate: Date { phase.target }
-    var timeRange: ClosedRange<Date> { min(date, countdownDate)...max(date, countdownDate) }
     var timeRemaining: TimeInterval { countdownDate.timeIntervalSince(date) }
     var timeDuration: TimeInterval { phase.span.duration }
     var progressRemaining: Double { 1 - phase.span.progress(at: date).value }
@@ -128,10 +127,6 @@ public extension PrayerTimer {
         listsTomorrow ? prayerDay.dayAfter(using: Calendar(identifier: .gregorian, timeZone: timeZone)) : prayerDay
     }
 
-    var listedTimes: [PrayerTime] {
-        listedDay.times
-    }
-
     /// The listed day's rows at the timer's moment.
     var listed: [ListedPrayer] {
         listedDay.listed(at: date)
@@ -152,18 +147,16 @@ public extension PrayerTimer {
 
 private extension PrayerTimer {
     /// What a timer counts to or up from at a moment: the one decision its initializer makes.
-    struct Phase: Equatable, Codable, Sendable {
-        /// The prayer counted to, or counted up from.
+    struct Phase: Equatable, Sendable {
         let prayerTime: PrayerTime
         let kind: Kind
-        /// The adhan, iqama or khutba counted to, or the one counted up from.
         let target: Date
         /// The stretch of time the progress runs over.
         let span: DateInterval
         /// The reminder before the span ends; the count to a prayer's own iqama has none.
         let warningSeconds: Double
 
-        enum Kind: Equatable, Codable, Sendable {
+        enum Kind: Equatable, Sendable {
             case countdown
             case iqama
             case countUp(end: Date)

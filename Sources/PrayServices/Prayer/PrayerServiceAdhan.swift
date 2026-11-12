@@ -66,7 +66,6 @@ public extension PrayerServiceAdhan {
 
         let ishaTime: Date = {
             if let adjustments = request.adjustments, adjustments.isha != 0, adjustments.isIshaMaghribRelative {
-                // Like a relative Fajr past sunrise, one outside Maghrib to the next Fajr keeps the method's time
                 return PrayerTime.relativeIsha(
                     minutes: adjustments.isha,
                     maghrib: prayers.maghrib,

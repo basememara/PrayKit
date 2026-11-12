@@ -161,7 +161,7 @@ public extension PrayerManager {
 
 // MARK: - Helpers
 
-extension PrayerManager.Expanded {
+private extension PrayerManager.Expanded {
     /// The moments a prayer under way adds to the timeline: the mode's own, then each change in its countdown.
     func moments(in prayerTime: PrayerTime, settings: Settings, calendar: Calendar) -> [Date] {
         let window = prayerTime.dateInterval

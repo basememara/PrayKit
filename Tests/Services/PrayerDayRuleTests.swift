@@ -577,10 +577,10 @@ extension PrayerDayRuleTests {
             )
         }
 
-        #expect(try timer(at: isha + 60).listedTimes == day.times, "Isha's count-up")
-        #expect(try timer(at: isha + 20 * 60).listedTimes == day.times, "Counting down to tomorrow's Fajr before midnight")
-        #expect(try timer(at: isha + 20 * 60, sunriseAfterIsha: true).listedTimes == day.times, "Counting down to sunrise")
-        #expect(try timer(at: midnight + 60).listedTimes == day.tomorrow)
+        #expect(try timer(at: isha + 60).listedDay.times == day.times, "Isha's count-up")
+        #expect(try timer(at: isha + 20 * 60).listedDay.times == day.times, "Counting down to tomorrow's Fajr before midnight")
+        #expect(try timer(at: isha + 20 * 60, sunriseAfterIsha: true).listedDay.times == day.times, "Counting down to sunrise")
+        #expect(try timer(at: midnight + 60).listedDay.times == day.tomorrow)
         #expect(try timer(at: midnight + 60).listedDay.date == midnight)
     }
 

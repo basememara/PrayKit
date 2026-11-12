@@ -363,13 +363,14 @@ private extension PrayerManager {
 // MARK: - Extensions
 
 private extension Array where Element == PrayerTimer {
-    /// The first `limit` timers, then on to the one at the moment the last of them counts to: a face left on a
-    /// countdown with nothing after it freezes at zero. `nil` while the timers don't reach that far yet.
+    /// The first `limit` timers, then on to the next prayer's countdown from the moment the last of them counts to:
+    /// a face left on a countdown, an iqama or a count-up with nothing after it freezes at its end. `nil` while the
+    /// timers don't reach that far yet.
     func capped(at limit: Int) -> Self? {
         guard limit > 0 else { return [] }
         guard count >= limit else { return nil }
         let target = self[limit - 1].countdownDate
-        guard let end = self[(limit - 1)...].firstIndex(where: { $0.date >= target }) else { return nil }
+        guard let end = self[(limit - 1)...].firstIndex(where: { $0.date >= target && $0.timerType == .countdown }) else { return nil }
         return Array(self[...end])
     }
 }
@@ -439,14 +440,19 @@ private extension Array where Element == PrayerTimer {
                 context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
             }
 
-            // The last hour in steps, for a face that draws the minutes left without a live timer
-            let finalHour = Swift.max(currentPrayer.dateInterval.start, currentPrayer.dateInterval.end - .hours(1))
-            result += stride(
-                from: finalHour.timeIntervalSince1970,
-                to: currentPrayer.dateInterval.end.timeIntervalSince1970,
-                by: finalHourStep
-            ).compactMap { timeInterval in
-                context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
+            // The last hour in steps, for a face that draws the minutes left without a live timer: before the next
+            // prayer, and before an iqama or khutba the timer counts to inside this window
+            let iqama = context.settings.isIqamaTimerEnabled ? context.settings.iqamaTimes[currentPrayer, using: calendar] : nil
+            let targets = [currentPrayer.dateInterval.end] + [iqama].compactMap(\.self).filter { currentPrayer.dateInterval.contains($0) }
+
+            result += targets.flatMap { target in
+                stride(
+                    from: Swift.max(currentPrayer.dateInterval.start, target - .hours(1)).timeIntervalSince1970,
+                    to: target.timeIntervalSince1970,
+                    by: finalHourStep
+                ).compactMap { timeInterval in
+                    context.timer(Date(timeIntervalSince1970: timeInterval), in: days)
+                }
             }
 
             result += context

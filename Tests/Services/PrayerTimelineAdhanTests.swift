@@ -83,7 +83,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 113)
+        #expect(timeline.count == 115)
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:46"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("07:05"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("12:32"))
@@ -179,7 +179,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 112)
+        #expect(timeline.count == 115)
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:21"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("06:58"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("12:19"))
@@ -258,7 +258,7 @@ extension PrayerTimelineAdhanTests {
             dateTimeFormatter.date(from: "\(dateString) \(timeString)")
         }
 
-        #expect(timeline.count == 35)
+        #expect(timeline.count == 36)
         #expect(timeline[dayOf: date, .fajr]?.dateInterval.start == time("05:38"))
         #expect(timeline[dayOf: date, .sunrise]?.dateInterval.start == time("06:59"))
         #expect(timeline[dayOf: date, .dhuhr]?.dateInterval.start == time("13:22"))

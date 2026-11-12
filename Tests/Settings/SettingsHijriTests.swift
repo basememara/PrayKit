@@ -73,6 +73,33 @@ extension SettingsHijriTests {
 
         #expect(turns(maghrib - 1) != turns(maghrib))
     }
+
+    /// The faces that read day first spelled it out as the day and then the month, from two calls. The one function
+    /// they call now writes the same string either side of Maghrib.
+    @Test(arguments: DayFixture.all)
+    func hijriDayAndMonthWritesWhatTheDayFirstFacesSpelledOut(place: DayFixture) async throws {
+        let timeZone = try place.request().timeZone
+        let day = try #require(try await place.days(1, using: fixture.prayerManager).first)
+        let maghrib = try #require(day.times[.maghrib]).dateInterval.start
+
+        let comparisons = [maghrib - 1, maghrib].flatMap { moment in
+            Self.settingsRows.flatMap { settings in
+                ["en_US", "ar_SA"].map(Locale.init(identifier:)).map { locale in
+                    Comparison(
+                        written: settings.hijriDayAndMonth(at: moment, in: day, timeZone: timeZone, locale: locale),
+                        spelledOut: ["d", "MMM"]
+                            .map { settings.hijriString(at: moment, in: day, timeZone: timeZone, template: $0, locale: locale) }
+                            .joined(separator: " "),
+                        label: "\(moment), \(settings.hijriDayOffset) \(settings.autoIncrementHijri) \(locale.identifier)"
+                    )
+                }
+            }
+        }
+
+        let mismatches = comparisons.filter { $0.written != $0.spelledOut }
+        #expect(comparisons.count == 24)
+        #expect(mismatches.isEmpty, "first of \(mismatches.count): \(mismatches.prefix(3))")
+    }
 }
 
 // MARK: - Types

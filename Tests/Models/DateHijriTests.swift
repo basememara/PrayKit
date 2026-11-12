@@ -34,3 +34,54 @@ struct DateHijriTests {
         #expect(afterMaghrib.hijriDayOffset(for: prayerDay, hijriDayOffset: 2, autoIncrementHijri: false, timeZone: timeZone) == 2)
     }
 }
+
+extension DateHijriTests {
+    /// 27 Rajab 1448 reads day first whatever order the locale writes a date in, with the month as it stands alone.
+    @Test(arguments: DayAndMonth.all)
+    func theHijriDayComesBeforeItsMonth(expected: DayAndMonth) {
+        let locale = Locale(identifier: expected.locale)
+
+        #expect(Self.israMiraj.hijriDayAndMonth(timeZone: .gmt, locale: locale) == expected.abbreviated)
+        #expect(Self.israMiraj.hijriDayAndMonth(month: .wide, timeZone: .gmt, locale: locale) == expected.wide)
+    }
+
+    /// Arabic and Turkish write the day first already, so through a Hijri year the day-first form is what their own
+    /// day-and-month template writes.
+    @Test(arguments: ["ar_SA", "ar", "tr_TR"])
+    func aDayFirstLocaleKeepsWhatItsOwnTemplateWrites(locale identifier: String) {
+        let locale = Locale(identifier: identifier)
+        let moved = (0..<355)
+            .map { Self.israMiraj + Double($0) * 86_400 }
+            .flatMap { day in
+                [(HijriMonthWidth.abbreviated, "MMMd"), (.wide, "MMMMd")].compactMap { width, template in
+                    let dayFirst = day.hijriDayAndMonth(month: width, timeZone: .gmt, locale: locale)
+                    let templated = day.hijriString(template: template, timeZone: .gmt, locale: locale)
+                    return dayFirst == templated ? nil : "\(dayFirst) vs \(templated)"
+                }
+            }
+
+        #expect(moved.isEmpty, "first of \(moved.count): \(moved.prefix(3))")
+    }
+}
+
+// MARK: - Types
+
+extension DateHijriTests {
+    struct DayAndMonth: Sendable, CustomTestStringConvertible {
+        let locale: String
+        let abbreviated: String
+        let wide: String
+
+        var testDescription: String { locale }
+
+        static let all = [
+            DayAndMonth(locale: "en_US", abbreviated: "27 Raj.", wide: "27 Rajab"),
+            DayAndMonth(locale: "en_GB", abbreviated: "27 Raj.", wide: "27 Rajab"),
+            DayAndMonth(locale: "ar_SA", abbreviated: "٢٧ رجب", wide: "٢٧ رجب"),
+            DayAndMonth(locale: "tr_TR", abbreviated: "27 Recep", wide: "27 Recep")
+        ]
+    }
+
+    /// 5 January 2027 at noon UTC, 27 Rajab 1448.
+    static let israMiraj = Date(timeIntervalSince1970: 1_799_150_400)
+}

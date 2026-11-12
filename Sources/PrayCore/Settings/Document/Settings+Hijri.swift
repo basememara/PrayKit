@@ -22,14 +22,37 @@ public extension Settings {
     ) -> String {
         moment.hijriString(
             template: template,
-            offset: moment.hijriDayOffset(
-                for: prayerDay,
-                hijriDayOffset: hijriDayOffset,
-                autoIncrementHijri: autoIncrementHijri,
-                timeZone: timeZone
-            ),
+            offset: hijriOffset(at: moment, in: prayerDay, timeZone: timeZone),
             timeZone: timeZone,
             locale: locale
+        )
+    }
+
+    /// Today's Hijri day then its month at `moment`, such as 27 Raj., in every locale, turning at Maghrib as
+    /// `hijriString` does.
+    func hijriDayAndMonth(
+        at moment: Date,
+        in prayerDay: PrayerDay,
+        timeZone: TimeZone,
+        month: HijriMonthWidth = .abbreviated,
+        locale: Locale = .current
+    ) -> String {
+        moment.hijriDayAndMonth(
+            month: month,
+            offset: hijriOffset(at: moment, in: prayerDay, timeZone: timeZone),
+            timeZone: timeZone,
+            locale: locale
+        )
+    }
+}
+
+private extension Settings {
+    func hijriOffset(at moment: Date, in prayerDay: PrayerDay, timeZone: TimeZone) -> Int {
+        moment.hijriDayOffset(
+            for: prayerDay,
+            hijriDayOffset: hijriDayOffset,
+            autoIncrementHijri: autoIncrementHijri,
+            timeZone: timeZone
         )
     }
 }

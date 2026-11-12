@@ -34,6 +34,37 @@ public extension Date {
     }
 }
 
+/// How a Hijri month is written beside its day.
+public enum HijriMonthWidth: Sendable {
+    /// Raj.
+    case abbreviated
+    /// Rajab
+    case wide
+
+    var template: String {
+        switch self {
+        case .abbreviated: "MMM"
+        case .wide: "MMMM"
+        }
+    }
+}
+
+public extension Date {
+    /// The Hijri day then its month, such as 27 Raj., in every locale; a day-and-month template lets the locale put
+    /// the month first. The month is written as it stands alone, which English abbreviates differently inside a
+    /// date (Rajb.).
+    func hijriDayAndMonth(
+        month: HijriMonthWidth = .abbreviated,
+        offset: Int = 0,
+        timeZone: TimeZone,
+        locale: Locale = .current
+    ) -> String {
+        ["d", month.template]
+            .map { hijriString(template: $0, offset: offset, timeZone: timeZone, locale: locale) }
+            .joined(separator: " ")
+    }
+}
+
 public extension Date {
     /// The day a Hijri date falls on as the app shows it, at its midnight in `timeZone`: the app shows the Hijri date
     /// of the day `offset` days on, so each Hijri day comes `offset` days before its Umm al-Qura day.

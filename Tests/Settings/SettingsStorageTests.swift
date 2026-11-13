@@ -39,6 +39,7 @@ extension SettingsStorageTests {
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled
         expected.alarms = Settings().alarms
         expected.isPlacePinned = Settings().isPlacePinned
+        expected.clearsOneNotification = Settings().clearsOneNotification
 
         let state = storage.load()
         #expect(state.document.settings == expected)
@@ -59,6 +60,7 @@ extension SettingsStorageTests {
         #expect(settings.isFullAdhanEnabled)
         #expect(settings.alarms == [.fajr])
         #expect(settings.isPlacePinned)
+        #expect(settings.clearsOneNotification)
     }
 
     @Test
@@ -332,6 +334,7 @@ private extension SettingsStorageTests {
         [
             // One prayer, since a set's encoded order isn't stable
             "alarms": Data(#"["fajr"]"#.utf8),
+            "clearsOneNotification": true,
             "isFullAdhanEnabled": true,
             "isPlacePinned": true,
             "manualMethod": Data(#"{"keptTimeZones":["America\/Winnipeg","Europe\/Istanbul"]}"#.utf8),

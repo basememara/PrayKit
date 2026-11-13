@@ -48,7 +48,8 @@ extension Settings {
         SettingField(.matchesAppIcon, \.matchesAppIcon, .bool, synced: false),
         SettingField(.isFullAdhanEnabled, \.isFullAdhanEnabled, .bool, synced: false),
         SettingField(.alarms, \.alarms, .json, synced: false),
-        SettingField(.isPlacePinned, \.isPlacePinned, .bool, synced: false)
+        SettingField(.isPlacePinned, \.isPlacePinned, .bool, synced: false),
+        SettingField(.clearsOneNotification, \.clearsOneNotification, .bool, synced: false)
     ]
 }
 

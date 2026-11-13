@@ -110,6 +110,9 @@ public struct Settings: Codable, Equatable, Sendable {
     public var matchesAppIcon = false
     public var isFullAdhanEnabled = false
     public var alarms: Set<Prayer> = []
+    /// Whether clearing one prayer notification leaves the others, for someone who keeps them as a checklist; off,
+    /// they all clear together.
+    public var clearsOneNotification = false
 
     public init() {}
 }
@@ -154,6 +157,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case isFullAdhanEnabled
     case alarms
     case isPlacePinned
+    case clearsOneNotification
 }
 
 public extension SettingKey {

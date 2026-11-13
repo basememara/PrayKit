@@ -26,11 +26,11 @@ struct PrayTestFixture {
         prayerManager = PrayerManager(
             service: PrayerServiceAdhan(log: log),
             timetables: [
-                .london: PrayerServiceLondon(
-                    networkManager: NetworkManager(service: OfflineNetwork()),
+                .london: PrayerServiceTimetable.london(
                     apiKey: "",
-                    log: log,
-                    directory: .temporaryDirectory.appending(path: "PrayKitTests-London-\(UUID().uuidString)", directoryHint: .isDirectory)
+                    networkManager: NetworkManager(service: OfflineNetwork()),
+                    directory: .temporaryDirectory.appending(path: "PrayKitTests-Timetables-\(UUID().uuidString)", directoryHint: .isDirectory),
+                    log: log
                 )
             ],
             log: log
@@ -38,7 +38,7 @@ struct PrayTestFixture {
     }
 }
 
-/// No suite reaches the real London API: a year it would fetch fails as it does offline.
+/// No suite reaches a real timetable API: a table it would fetch fails as it does offline.
 struct OfflineNetwork: NetworkService {
     func send(_ request: URLRequest) async throws -> NetworkResponse {
         throw URLError(.notConnectedToInternet)

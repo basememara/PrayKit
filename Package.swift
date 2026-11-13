@@ -63,7 +63,7 @@ let package = Package(
                 "PrayCore",
                 .product(name: "Adhan", package: "adhan-swift")
             ],
-            resources: [.process("Resources")],
+            resources: [.copy("Resources/PrayerTimetables")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(

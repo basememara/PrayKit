@@ -38,7 +38,12 @@ let log = LogManager(services: [LogServiceConsole(minLevel: .verbose, subsystem:
 let prayerManager = PrayerManager(
     service: PrayerServiceAdhan(log: log),
     timetables: [
-        .london: PrayerServiceLondon(networkManager: NetworkManager(service: NetworkServiceFoundation()), apiKey: "{{key}}", log: log)
+        .london: PrayerServiceTimetable.london(
+            apiKey: "{{key}}",
+            networkManager: NetworkManager(service: NetworkServiceFoundation()),
+            directory: {{a folder in your App Group}},
+            log: log
+        )
     ],
     log: log
 )

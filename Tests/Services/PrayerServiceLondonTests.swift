@@ -13,8 +13,6 @@ import ZamzamCore
 
 /// The timetable is bundled a year at a time. A year past the bundle, and Dec 31 of the last bundled year (which needs the
 /// next year's first Fajr), come from the API, which answers a year it hasn't published yet with a timetable of no days.
-///
-/// The parsed timetables are cached for the whole process, so each test reads years no other test loads.
 struct PrayerServiceLondonTests {
     private let log = LogManager(services: [LogServiceConsole(minLevel: .none, subsystem: "PrayKitTests")])
 }
@@ -58,6 +56,7 @@ extension PrayerServiceLondonTests {
 
         // When
         await api.publish(lastYear + 1)
+        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: lastYear + 1)) // as if hours had passed
         let times = try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
 
         // Then
@@ -84,6 +83,7 @@ extension PrayerServiceLondonTests {
         }
 
         await api.publish(year)
+        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: year)) // as if hours had passed
         let times = try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
 
         // Then
@@ -92,12 +92,67 @@ extension PrayerServiceLondonTests {
         #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: year)) != nil, "The fetched year is saved")
     }
 
+    /// A year the API hasn't published yet waits a few hours before it's asked for again, so every widget reload and
+    /// scheduling run in December doesn't ask.
+    @Test
+    func anUnpublishedYearWaitsBeforeItIsAskedForAgain() async throws {
+        // Given
+        let year = try #require(PrayerServiceLondon.lastYear) + 5
+        let place = london(year)
+        let api = TimetableAPI()
+        let defaults = UserDefaults.makeTest()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
+        let newYearsDay = try place.date(year, 1, 1, 12)
+
+        // When
+        for _ in 1...3 {
+            _ = try? await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(await api.requestedURLs.count == 1)
+
+        // When
+        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: year)) // as if hours had passed
+        _ = try? await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+
+        // Then
+        #expect(await api.requestedURLs.count == 2)
+    }
+
+    /// A range fans out a day at a time, so the days of a year the app doesn't have share one request for it.
+    @Test
+    func daysOfAYearBeingFetchedWaitForTheSameRequest() async throws {
+        // Given
+        let year = try #require(PrayerServiceLondon.lastYear) + 4
+        let place = london(year)
+        let api = HeldAPI()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: .makeTest())
+        let days = try (1...8).map { try place.date(year, 1, $0, 12) }
+        let calendar = try place.calendar()
+        let request = try place.request()
+
+        // When
+        await withTaskGroup(of: Void.self) { group in
+            days.forEach { day in
+                group.addTask { _ = try? await service.calculate(for: day, using: calendar, with: request) }
+            }
+
+            await api.waitForARequest()
+            try? await Task.sleep(for: .milliseconds(200))
+            await api.answer()
+        }
+
+        // Then
+        #expect(await api.requestCount == 1)
+    }
+
     @Test
     func aYearThatCantBeFetchedHasNoTimes() async throws {
         // Given
         let year = try #require(PrayerServiceLondon.lastYear) + 3
         let place = london(year)
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: OfflineAPI()), apiKey: "", log: log, defaults: .makeTest())
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: OfflineNetwork()), apiKey: "", log: log, defaults: .makeTest())
 
         // When
         let error = await #expect(throws: PrayError.self) {
@@ -167,9 +222,33 @@ private actor TimetableAPI: NetworkService {
     }
 }
 
-/// A device with no connection.
-private struct OfflineAPI: NetworkService {
+/// An API that holds every request until it's told to answer, with a year it hasn't published.
+private actor HeldAPI: NetworkService {
+    private(set) var requestCount = 0
+    private var held = [CheckedContinuation<Void, Never>]()
+    private var arrivals = [CheckedContinuation<Void, Never>]()
+    private var isAnswering = false
+
     func send(_ request: URLRequest) async throws -> NetworkResponse {
-        throw URLError(.notConnectedToInternet)
+        requestCount += 1
+        arrivals.forEach { $0.resume() }
+        arrivals = []
+
+        if !isAnswering {
+            await withCheckedContinuation { held.append($0) }
+        }
+
+        return NetworkResponse(data: Data(TimetableAPI.unpublished.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
+    }
+
+    func waitForARequest() async {
+        guard requestCount == 0 else { return }
+        await withCheckedContinuation { arrivals.append($0) }
+    }
+
+    func answer() {
+        isAnswering = true
+        held.forEach { $0.resume() }
+        held = []
     }
 }

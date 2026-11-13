@@ -37,7 +37,7 @@ struct PrayTestFixture {
 }
 
 /// No suite reaches the real London API: a year it would fetch fails as it does offline.
-private struct OfflineNetwork: NetworkService {
+struct OfflineNetwork: NetworkService {
     func send(_ request: URLRequest) async throws -> NetworkResponse {
         throw URLError(.notConnectedToInternet)
     }

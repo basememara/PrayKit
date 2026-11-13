@@ -16,12 +16,21 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let defaults: UserDefaults
     private let apiKey: String
     private let log: LogManager
+    private let cache = LondonPrayerTimetableCache()
 
     private static let filePrefix = "london-"
+
+    /// How long a year the API hasn't published waits before it's asked for again, by every process sharing the suite.
+    private static let unpublishedRetryInterval: TimeInterval = 6 * 3600
 
     /// Where a year fetched from the API is kept, apart from the settings that share the suite.
     static func cacheKey(forYear year: Int) -> String {
         "londonTimetable-\(year)"
+    }
+
+    /// When the API last answered that a year had no days yet.
+    static func askedKey(forYear year: Int) -> String {
+        "londonTimetableAsked-\(year)"
     }
 
     /// The last year the bundled timetables cover, from the newest `london-<year>.json`.
@@ -166,32 +175,42 @@ public extension PrayerServiceLondon {
 
 // MARK: - Helpers
 
-/// Process-wide in-memory cache of the parsed timetable, keyed by year.
-///
-/// `PrayerManager.fetch(between:)` fans out through a task group, so concurrent
-/// fetches share this and it has to be isolated.
+/// The parsed timetables by year. `PrayerManager.fetch(between:)` fans out through a task group, so the days of a year
+/// share its one load; a load that fails or finds no days isn't kept, so the year is loaded again next time.
 private actor LondonPrayerTimetableCache {
-    static let shared = LondonPrayerTimetableCache()
+    typealias Timetable = [String: PrayerServiceLondon.LondonPrayerTimes]
 
-    private var storage = [String: [String: PrayerServiceLondon.LondonPrayerTimes]]()
+    private var loads = [Int: Task<Timetable, Error>]()
 
-    func value(for key: String) -> [String: PrayerServiceLondon.LondonPrayerTimes]? { storage[key] }
+    func timetable(for year: Int, load: @escaping @Sendable () async throws -> Timetable) async throws -> Timetable {
+        if let task = loads[year] {
+            return try await task.value
+        }
 
-    func set(_ value: [String: PrayerServiceLondon.LondonPrayerTimes], for key: String) {
-        storage[key] = value
+        let task = Task(operation: load)
+        loads[year] = task
+
+        do {
+            let timetable = try await task.value
+            if timetable.isEmpty {
+                loads[year] = nil
+            }
+
+            return timetable
+        } catch {
+            loads[year] = nil
+            throw error
+        }
     }
 }
 
 private extension PrayerServiceLondon {
     func fetch(for year: Int) async throws -> [String: LondonPrayerTimes] {
+        try await cache.timetable(for: year) { try await load(year) }
+    }
+
+    func load(_ year: Int) async throws -> [String: LondonPrayerTimes] {
         let key = String(year)
-
-        // Retrieve from memory if available
-        if let cache = await LondonPrayerTimetableCache.shared.value(for: key) {
-            return cache
-        }
-
-        // Construct data
         let data: Data
 
         // The bundle comes first, so a copy saved from the network never hides a year the app ships
@@ -204,6 +223,10 @@ private extension PrayerServiceLondon {
             // Retrieve from user defaults
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
             data = value
+        } else if let asked = defaults.object(forKey: Self.askedKey(forYear: year)) as? Date,
+                  Date.now.timeIntervalSince(asked) < Self.unpublishedRetryInterval {
+            log.debug("Unified London Prayer Timetable for '\(key)' had no days when last asked, so it isn't asked again yet")
+            return [:]
         } else {
             // Retrieve remotely from endpoint
             log.warning("Fetching Unified London Prayer Timetable for '\(key)' from network...")
@@ -227,11 +250,12 @@ private extension PrayerServiceLondon {
         }
 
         // Parse and save to cache
-        return try await save(data: data, for: year)
+        return try save(data: data, for: year)
     }
 
-    func save(data: Data, for year: Int) async throws -> [String: PrayerServiceLondon.LondonPrayerTimes] {
+    func save(data: Data, for year: Int) throws -> [String: PrayerServiceLondon.LondonPrayerTimes] {
         let key = String(year)
+        let cacheKey = Self.cacheKey(forYear: year)
         let decoded: PrayerServiceLondon.ServerResponse
 
         do {
@@ -241,18 +265,18 @@ private extension PrayerServiceLondon {
             throw error
         }
 
-        // The API answers a year it hasn't published with no days, so it's asked again next time
+        // The API answers a year it hasn't published with no days, so it's asked again once the wait has passed
         guard !decoded.times.isEmpty else {
             log.warning("Unified London Prayer Timetable for '\(key)' has no days yet, so it isn't kept")
-            defaults.removeObject(forKey: Self.cacheKey(forYear: year))
+            defaults.removeObject(forKey: cacheKey)
+            defaults.set(Date.now, forKey: Self.askedKey(forYear: year))
             return [:]
         }
 
-        await LondonPrayerTimetableCache.shared.set(decoded.times, for: key) // Store in-memory
-
         // Persist in user preferences
-        if defaults.object(forKey: Self.cacheKey(forYear: year)) == nil {
-            defaults.set(data, forKey: Self.cacheKey(forYear: year))
+        defaults.removeObject(forKey: Self.askedKey(forYear: year))
+        if defaults.object(forKey: cacheKey) == nil {
+            defaults.set(data, forKey: cacheKey)
             defaults.removeObject(forKey: Self.cacheKey(forYear: year - 2))
         }
 

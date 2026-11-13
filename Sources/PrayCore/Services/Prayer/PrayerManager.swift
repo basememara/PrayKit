@@ -284,8 +284,7 @@ private extension PrayerManager {
         let prayerService = timetables[request.method] ?? service
         let times = try await prayerService.calculate(for: date, using: calendar, with: request)
 
-        // A timetable answers a day past its end with no times (London's, past its last bundled year). The day after
-        // may still be empty, so the last day of a timetable keeps its own times.
+        // A service with no times for a day ends a range there, as one that throws does
         guard !times.isEmpty else {
             log.warning("No prayer times for \(date.formatted(.iso8601))")
             throw PrayError.invalidTimes

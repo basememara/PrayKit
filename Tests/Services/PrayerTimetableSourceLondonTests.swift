@@ -9,24 +9,31 @@ import Foundation
 @testable import PrayServices
 import Testing
 
-/// London's own part of its timetable: how a response from londonprayertimes.com reads.
+/// London's own part of its timetable: how a table is asked for and how a response from londonprayertimes.com reads.
 struct PrayerTimetableSourceLondonTests {
-    private let source = PrayerTimetableSourceLondon(apiKey: "")
+    private let source = PrayerTimetableSourceLondon(apiKey: "abc-123_XYZ")
 }
 
 extension PrayerTimetableSourceLondonTests {
     @Test
+    func aTableIsAskedForWithTheKeyAndTheYear() {
+        // When
+        let request = source.urlRequest(for: PrayerTimetable(start: TimetableDate(year: 2019, month: 1, day: 1), zone: nil))
+
+        // Then
+        #expect(request.url?.absoluteString == "https://www.londonprayertimes.com/api/times/?key=abc-123_XYZ&year=2019&24hours=true&format=json")
+    }
+
+    @Test
     func everyBundledYearReadsInFull() throws {
         // Given
-        let london = try #require(PrayerTimetableStore.bundledDirectory).appending(path: "london")
-        let files = try FileManager.default.contentsOfDirectory(at: london, includingPropertiesForKeys: nil)
+        let years = try bundledLondonYears()
         let calendar = Calendar(identifier: .gregorian)
 
         // Then
-        #expect(files.count >= 5)
+        #expect(years.count >= 5)
 
-        try files.forEach { file in
-            let year = try #require(Int(file.deletingPathExtension().lastPathComponent))
+        try years.forEach { year, file in
             let newYear = try #require(calendar.date(from: DateComponents(year: year)))
             let daysInYear = try #require(calendar.range(of: .day, in: .year, for: newYear)).count
 
@@ -42,7 +49,7 @@ extension PrayerTimetableSourceLondonTests {
     @Test
     func theSecondAsrIsTheHanafiOne() throws {
         // When
-        let days = try source.days(from: Data(Self.response(asr2: "14:17").utf8))
+        let days = try source.days(from: Data(LondonJSON.response([LondonJSON.day("2031-01-01")]).utf8))
 
         // Then
         let day = try #require(days[TimetableDate(year: 2031, month: 1, day: 1)])
@@ -54,7 +61,8 @@ extension PrayerTimetableSourceLondonTests {
     @Test
     func aDayWithATimeThatCantBeReadIsLeftOut() throws {
         // When
-        let days = try source.days(from: Data(Self.response(fajr: "6.26").utf8))
+        let response = LondonJSON.response([LondonJSON.day("2031-01-01", fajr: "6.26"), LondonJSON.day("2031-01-02")])
+        let days = try source.days(from: Data(response.utf8))
 
         // Then
         #expect(days.keys.map(\.day) == [2])
@@ -62,24 +70,39 @@ extension PrayerTimetableSourceLondonTests {
 
     @Test
     func aYearNotYetPublishedHasNoDays() throws {
-        #expect(try source.days(from: Data(#"{"city":"london","times":{}}"#.utf8)).isEmpty)
+        #expect(try source.days(from: Data(LondonJSON.unpublished.utf8)).isEmpty)
     }
 }
 
-// MARK: - Helpers
+// MARK: - London fixtures
 
-private extension PrayerTimetableSourceLondonTests {
-    /// Two days as the API writes them, the first with the given Fajr and second Asr.
-    static func response(fajr: String = "06:26", asr2: String = "14:17") -> String {
+/// The years of London's timetable the package ships, each with its file.
+func bundledLondonYears() throws -> [Int: URL] {
+    let folder = try #require(PrayerTimetableStore.bundledDirectory).appending(path: "london")
+
+    return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+        .reduce(into: [:]) { years, file in
+            guard let year = Int(file.deletingPathExtension().lastPathComponent) else { return }
+            years[year] = file
+        }
+}
+
+/// Responses as the London Prayer Times API writes them.
+enum LondonJSON {
+    /// How the API answers a year it hasn't published.
+    static let unpublished = #"{"city":"london","times":{}}"#
+
+    static func response(_ days: [String]) -> String {
+        #"{"city":"london","times":{\#(days.joined(separator: ","))}}"#
+    }
+
+    /// One day, `yyyy-MM-dd`, with the same times every day but Fajr.
+    static func day(_ date: String, fajr: String = "06:26") -> String {
         #"""
-        {"city":"london","times":{"2031-01-01":{"date":"2031-01-01",
+        "\#(date)":{"date":"\#(date)",
         "fajr":"\#(fajr)","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:09","dhuhr_jamat":"12:45",
-        "asr":"13:46","asr_2":"\#(asr2)","asr_jamat":"14:45","magrib":"16:05","magrib_jamat":"16:12",
-        "isha":"17:42","isha_jamat":"19:30"},
-        "2031-01-02":{"date":"2031-01-02",
-        "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:10","dhuhr_jamat":"12:45",
-        "asr":"13:47","asr_2":"14:18","asr_jamat":"14:45","magrib":"16:06","magrib_jamat":"16:13",
-        "isha":"17:43","isha_jamat":"19:30"}}}
+        "asr":"13:46","asr_2":"14:17","asr_jamat":"14:45","magrib":"16:05","magrib_jamat":"16:12",
+        "isha":"17:42","isha_jamat":"19:30"}
         """#
     }
 }

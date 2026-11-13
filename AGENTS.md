@@ -46,7 +46,7 @@ PrayerTimetables/
 ```
 
 - A file holds the API's response as it came, so the bundled copy, the saved copy and a script's download read the same way. The bundle comes first, so a saved copy never hides a table the package ships.
-- Saving a table removes the one two periods before it. The wait and that count are constants in the store; they become per source when one needs different values.
+- Saving a table removes the saved tables older than the period before today's, never one ahead of today, so a calendar looking ahead keeps what the widgets read. The wait and that count are constants in the store; they become per source when one needs different values.
 - **Keys:** this package never holds one. A source that needs a key takes it in its initializer and puts it on its request, the app supplies it, and the store never logs a request, a URL or an error that prints one (`PrayerServiceTimetableTests` holds that).
 - A source that isn't one request per table (a login first, a rolling window) conforms to `PrayerService` itself, reuses `PrayerTime.day` and `checkOrder`, and is registered in `timetables` the same way.
 
@@ -54,7 +54,7 @@ Adding a source:
 
 1. `PrayerTimetableSource<Name>.swift` beside London's: `id`, `period`, the request, and `days(from:)` over private `Decodable` types. A day that can't be read is left out, which leaves the table short of whole, so it is asked for again every six hours until the day reads; a table not yet published reads as no days.
 2. A factory on `PrayerServiceTimetable`, and its line in the app's `timetables` dictionary.
-3. The method: a `CalculationMethod` case if it's new, its zones in `mapped`, and its `reach` when the timetable holds only near a city (`CalculationMethod+Recommended.swift`).
+3. The method: a `CalculationMethod` case if it's new, its zones in `mapped`, and its `reach` when the timetable holds only near a city (`CalculationMethod+Recommended.swift`). A new case also needs its branch in `CalculationParameters`' switch, as `.london` has; the calculator never reads it.
 4. Tests: the source's own, as `PrayerTimetableSourceLondonTests` (a bundled table reads in full, its format's edges), and a `PrayerTimes` snapshot case for a place on it.
 5. Optional: bundled tables in `Resources/PrayerTimetables/<id>/`, for installs that are offline when a period turns over.
 

@@ -29,11 +29,11 @@ extension PrayerServiceTimetableTests {
         // Given
         let year = try lastBundledYear() - 1
         let place = london(year)
-        try save(LondonAPI.unpublished, at: "london/\(year).json")
+        try save(LondonJSON.unpublished, at: "london/\(year).json")
         let service = londonService(LondonAPI())
 
         // When
-        let times = try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        let times = try await times(service, place)
 
         // Then
         #expect(times.contains { $0.type == .fajr })
@@ -46,18 +46,18 @@ extension PrayerServiceTimetableTests {
         let lastYear = try lastBundledYear()
         let place = london(lastYear)
         let api = LondonAPI()
-        try save(LondonAPI.unpublished, at: "london/\(lastYear + 1).json")
+        try save(LondonJSON.unpublished, at: "london/\(lastYear + 1).json")
         let service = londonService(api)
         let yearsEnd = try place.date(lastYear, 12, 31)
 
         // When
         await #expect(throws: PrayError.self) {
-            try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
+            try await times(service, place, on: yearsEnd)
         }
 
         await api.publish(lastYear + 1)
         clock.advance(by: 7 * 3600)
-        let times = try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
+        let times = try await times(service, place, on: yearsEnd)
 
         // Then
         let isha = try #require(times.first { $0.type == .isha })
@@ -79,12 +79,12 @@ extension PrayerServiceTimetableTests {
 
         // When
         await #expect(throws: PrayError.self) {
-            try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+            try await times(service, place, on: newYearsDay)
         }
 
         await api.publish(year)
         clock.advance(by: 7 * 3600)
-        let times = try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+        let times = try await times(service, place, on: newYearsDay)
 
         // Then
         let fajr = try #require(times.first { $0.type == .fajr })
@@ -105,7 +105,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         for _ in 1...3 {
-            _ = try? await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+            _ = try? await times(service, place, on: newYearsDay)
         }
 
         // Then
@@ -113,7 +113,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         clock.advance(by: 7 * 3600)
-        _ = try? await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+        _ = try? await times(service, place, on: newYearsDay)
 
         // Then
         #expect(await api.requestedURLs.count == 2)
@@ -155,7 +155,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         let error = await #expect(throws: PrayError.self) {
-            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+            try await times(service, place)
         }
 
         // Then
@@ -176,7 +176,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         let error = await #expect(throws: PrayError.self) {
-            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+            try await times(service, place)
         }
 
         // Then
@@ -201,10 +201,10 @@ extension PrayerServiceTimetableTests {
         let march = try place.date(year, 3, 1)
 
         // When
-        let januaryTimes = try await service.calculate(for: try place.date(year, 1, 15), using: try place.calendar(), with: try place.request())
+        let januaryTimes = try await times(service, place, on: place.date(year, 1, 15))
 
         await #expect(throws: PrayError.self) {
-            try await service.calculate(for: march, using: try place.calendar(), with: try place.request())
+            try await times(service, place, on: march)
         }
 
         // Then
@@ -216,7 +216,7 @@ extension PrayerServiceTimetableTests {
         // When
         await api.publish(year)
         clock.advance(by: 7 * 3600)
-        let marchTimes = try await service.calculate(for: march, using: try place.calendar(), with: try place.request())
+        let marchTimes = try await times(service, place, on: march)
 
         // Then
         #expect(marchTimes.contains { $0.type == .fajr })
@@ -233,12 +233,12 @@ extension PrayerServiceTimetableTests {
         await api.publish(year, months: 1...1)
         let service = londonService(api)
         let january = try place.date(year, 1, 15)
-        _ = try await service.calculate(for: january, using: try place.calendar(), with: try place.request())
+        _ = try await times(service, place, on: january)
 
         // When
         await api.goOffline()
         clock.advance(by: 7 * 3600)
-        let times = try await service.calculate(for: january, using: try place.calendar(), with: try place.request())
+        let times = try await times(service, place, on: january)
 
         // Then
         #expect(times.contains { $0.type == .fajr })
@@ -255,26 +255,10 @@ extension PrayerServiceTimetableTests {
         let service = londonService(api)
 
         // When
-        _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        _ = try? await times(service, place)
 
         // Then
         #expect(await api.requests.map(\.timeoutInterval) == [15])
-    }
-
-    @Test
-    func aYearThatIsNotBundledIsAskedForWithTheKeyAndTheYear() async throws {
-        // Given
-        let place = london(2019)
-        let api = LondonAPI()
-        let service = londonService(api, apiKey: "abc-123_XYZ")
-
-        // When
-        await #expect(throws: PrayError.self) {
-            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
-        }
-
-        // Then
-        #expect(await api.requestedURLs == ["https://www.londonprayertimes.com/api/times/?key=abc-123_XYZ&year=2019&24hours=true&format=json"])
     }
 }
 
@@ -292,7 +276,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         for _ in 1...3 {
-            _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+            _ = try? await times(service, place)
         }
 
         // Then
@@ -300,7 +284,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         clock.advance(by: 7 * 3600)
-        _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        _ = try? await times(service, place)
 
         // Then
         #expect(await api.requestCount == 2)
@@ -316,7 +300,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         for _ in 1...2 {
-            _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+            _ = try? await times(service, place)
         }
 
         // Then
@@ -343,7 +327,7 @@ extension PrayerServiceTimetableTests {
 
         // When
         await #expect(throws: PrayError.self) {
-            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+            try await times(service, place)
         }
 
         // Then
@@ -367,8 +351,8 @@ extension PrayerServiceTimetableTests {
         let service = service(LineSource(id: "monthly", period: .month, hasZones: true), api)
 
         // When
-        let eastTimes = try await service.calculate(for: try east.firstNoon(), using: try east.calendar(), with: try east.request())
-        let westTimes = try await service.calculate(for: try west.firstNoon(), using: try west.calendar(), with: try west.request())
+        let eastTimes = try await times(service, east)
+        let westTimes = try await times(service, west)
 
         // Then
         let eastFajr = try #require(eastTimes.first { $0.type == .fajr })
@@ -400,8 +384,8 @@ extension PrayerServiceTimetableTests {
         )
 
         // When
-        let standard = try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
-        let hanafi = try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: request)
+        let standard = try await times(service, place)
+        let hanafi = try await times(service, place, request: request)
 
         // Then
         let standardAsr = try #require(standard.first { $0.type == .asr })
@@ -417,7 +401,7 @@ extension PrayerServiceTimetableTests {
         let service = service(LineSource(id: "weekly", period: .week), LineAPI())
 
         // When
-        let times = try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        let times = try await times(service, place)
 
         // Then
         let isha = try #require(times.first { $0.type == .isha })
@@ -425,19 +409,38 @@ extension PrayerServiceTimetableTests {
         #expect(try savedFiles() == ["weekly/2031-03-03.json", "weekly/2031-03-10.json"])
     }
 
+    /// Today's table and the one before it are kept, so a widget never fetches one again.
     @Test
-    func savingATableRemovesTheOneTwoPeriodsBack() async throws {
+    func savingATableRemovesTheOnesBeforeLastPeriod() async throws {
         // Given
         let place = DayFixture("Three Wednesdays", 51.5074, -0.1278, "Europe/London", .custom, 2031, 3, 5)
         let service = service(LineSource(id: "weekly", period: .week), LineAPI())
+        clock.set(try place.date(2031, 3, 19))
 
         // When
         for day in [5, 12, 19] {
-            _ = try await service.calculate(for: try place.date(2031, 3, day), using: try place.calendar(), with: try place.request())
+            _ = try await times(service, place, on: place.date(2031, 3, day))
         }
 
         // Then
         #expect(try savedFiles() == ["weekly/2031-03-10.json", "weekly/2031-03-17.json"])
+    }
+
+    /// A calendar looking ahead saves tables past today, which never remove the ones today is read from.
+    @Test
+    func lookingAheadKeepsTheTablesInUse() async throws {
+        // Given
+        let place = DayFixture("Three Wednesdays", 51.5074, -0.1278, "Europe/London", .custom, 2031, 3, 5)
+        let service = service(LineSource(id: "weekly", period: .week), LineAPI())
+        clock.set(try place.date(2031, 3, 5))
+
+        // When
+        for day in [5, 12, 19] {
+            _ = try await times(service, place, on: place.date(2031, 3, day))
+        }
+
+        // Then
+        #expect(try savedFiles() == ["weekly/2031-03-03.json", "weekly/2031-03-10.json", "weekly/2031-03-17.json"])
     }
 }
 
@@ -448,8 +451,8 @@ private extension PrayerServiceTimetableTests {
         DayFixture("London timetable", 51.5074, -0.1278, "Europe/London", .london, year, 6, 1)
     }
 
-    func londonService(_ api: some NetworkService, apiKey: String = "") -> PrayerServiceTimetable {
-        service(PrayerTimetableSourceLondon(apiKey: apiKey), api)
+    func londonService(_ api: some NetworkService) -> PrayerServiceTimetable {
+        service(PrayerTimetableSourceLondon(apiKey: ""), api)
     }
 
     func service(_ source: some PrayerTimetableSource, _ api: some NetworkService) -> PrayerServiceTimetable {
@@ -462,13 +465,14 @@ private extension PrayerServiceTimetableTests {
         )
     }
 
+    /// A day's times at a place, its first noon unless a date is given.
+    func times(_ service: PrayerServiceTimetable, _ place: DayFixture, on date: Date? = nil, request: PrayerAPI.Request? = nil) async throws -> [PrayerTime] {
+        try await service.calculate(for: date ?? place.firstNoon(), using: place.calendar(), with: request ?? place.request())
+    }
+
     /// The last year of London's timetable the package ships.
     func lastBundledYear() throws -> Int {
-        let london = try #require(PrayerTimetableStore.bundledDirectory).appending(path: "london")
-        let years = try FileManager.default.contentsOfDirectory(at: london, includingPropertiesForKeys: nil)
-            .compactMap { Int($0.deletingPathExtension().lastPathComponent) }
-
-        return try #require(years.max())
+        try #require(try bundledLondonYears().keys.max())
     }
 
     func save(_ text: String, at path: String) throws {
@@ -544,12 +548,14 @@ private final class TestClock: Sendable {
     func advance(by interval: TimeInterval) {
         date.withLock { $0 += interval }
     }
+
+    func set(_ now: Date) {
+        date.withLock { $0 = now }
+    }
 }
 
 /// The London Prayer Times API: a year is empty until it is published, in whole or only its first months.
 private actor LondonAPI: NetworkService {
-    static let unpublished = #"{"city":"london","times":{}}"#
-
     private var published: (year: Int, months: ClosedRange<Int>)?
     private var isOffline = false
     private(set) var requests = [URLRequest]()
@@ -568,30 +574,21 @@ private actor LondonAPI: NetworkService {
         requests.append(request)
         guard !isOffline else { throw URLError(.notConnectedToInternet) }
 
-        let body = published.map { Self.response(year: $0.year, months: $0.months) } ?? Self.unpublished
+        let body = published.map { Self.response(year: $0.year, months: $0.months) } ?? LondonJSON.unpublished
         return NetworkResponse(data: Data(body.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
     }
 
-    /// Every day of the months as the API writes them, each with the same times.
+    /// Every day of the months, each with the same times.
     private static func response(year: Int, months: ClosedRange<Int>) -> String {
         let calendar = Calendar(identifier: .gregorian, timeZone: .gmt)
 
         let days = months.flatMap { month in
             calendar.date(from: DateComponents(year: year, month: month, day: 1))
                 .flatMap { calendar.range(of: .day, in: .month, for: $0) }
-                .map { $0.map { String(format: "%04d-%02d-%02d", year, month, $0) } } ?? []
+                .map { $0.map { LondonJSON.day(String(format: "%04d-%02d-%02d", year, month, $0)) } } ?? []
         }
 
-        let entries = days.map { day in
-            #"""
-            "\#(day)":{"date":"\#(day)",
-            "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:09","dhuhr_jamat":"12:45",
-            "asr":"13:46","asr_2":"14:17","asr_jamat":"14:45","magrib":"16:05","magrib_jamat":"16:12",
-            "isha":"17:42","isha_jamat":"19:30"}
-            """#
-        }
-
-        return #"{"city":"london","times":{\#(entries.joined(separator: ","))}}"#
+        return LondonJSON.response(days)
     }
 }
 
@@ -611,7 +608,7 @@ private actor HeldAPI: NetworkService {
             await withCheckedContinuation { held.append($0) }
         }
 
-        return NetworkResponse(data: Data(LondonAPI.unpublished.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
+        return NetworkResponse(data: Data(LondonJSON.unpublished.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
     }
 
     func waitForARequest() async {

@@ -51,26 +51,29 @@ public extension PrayerServiceTimetable {
     ) async throws -> [PrayerTime] {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         let today = TimetableDate(date, using: calendar)
+        let todaysTable = await store.days(holding: date, using: calendar, for: request)
+        let onToday = { (clock: TimetableClock) in clock.date(on: today, using: calendar) }
 
-        guard let prayerTimes = await store.days(holding: date, using: calendar, for: request)[today] else { throw PrayError.invalidTimes }
+        guard let prayerTimes = todaysTable[today] else { throw PrayError.invalidTimes }
         let asr = request.jurisprudence == .hanafi ? prayerTimes.asrHanafi ?? prayerTimes.asr : prayerTimes.asr
 
-        guard var fajrTime = prayerTimes.fajr.date(on: today, using: calendar),
-              var sunriseTime = prayerTimes.sunrise.date(on: today, using: calendar),
-              var dhuhrTime = prayerTimes.dhuhr.date(on: today, using: calendar),
-              var asrTime = asr.date(on: today, using: calendar),
-              var magribTime = prayerTimes.maghrib.date(on: today, using: calendar),
-              var ishaTime = prayerTimes.isha.date(on: today, using: calendar)
+        guard var fajrTime = onToday(prayerTimes.fajr),
+              var sunriseTime = onToday(prayerTimes.sunrise),
+              var dhuhrTime = onToday(prayerTimes.dhuhr),
+              var asrTime = onToday(asr),
+              var magribTime = onToday(prayerTimes.maghrib),
+              var ishaTime = onToday(prayerTimes.isha)
         else {
             log.error("Could not initialize prayer times from the timetable.")
             throw PrayError.invalidTimes
         }
 
-        // Tomorrow's Fajr comes from the table holding tomorrow, which is the next one on a table's last day
+        // Tomorrow's Fajr comes from today's table, or from the next one on a table's last day
         let tomorrowDate = date.tomorrow(using: calendar)
         let tomorrow = TimetableDate(tomorrowDate, using: calendar)
+        let tomorrowsTable = todaysTable[tomorrow] != nil ? todaysTable : await store.days(holding: tomorrowDate, using: calendar, for: request)
 
-        guard let tomorrowPrayers = await store.days(holding: tomorrowDate, using: calendar, for: request)[tomorrow],
+        guard let tomorrowPrayers = tomorrowsTable[tomorrow],
               var tomorrowFajrTime = tomorrowPrayers.fajr.date(on: tomorrow, using: calendar),
               var tomorrowSunriseTime = tomorrowPrayers.sunrise.date(on: tomorrow, using: calendar)
         else {

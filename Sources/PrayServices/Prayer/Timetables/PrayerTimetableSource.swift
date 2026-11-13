@@ -79,6 +79,13 @@ struct TimetableDay: Sendable {
 // MARK: - Helpers
 
 extension TimetablePeriod {
+    /// The period holding a date, a week running from Monday.
+    func interval(holding date: Date, using calendar: Calendar) -> DateInterval? {
+        var calendar = calendar
+        calendar.firstWeekday = 2
+        return calendar.dateInterval(of: component, for: date)
+    }
+
     var component: Calendar.Component {
         switch self {
         case .year: .year

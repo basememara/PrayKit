@@ -27,6 +27,10 @@ struct PrayerTimetableStore: Sendable {
     /// How long a table the API hasn't published waits before it's asked for again, by every process sharing the folder.
     private static let unpublishedRetryInterval: TimeInterval = 6 * 3600
 
+    /// How long a request waits on a silent connection, in place of Foundation's minute: a day at the end of a table
+    /// needs the next one's first Fajr, so a request that hangs holds back that day's own times.
+    private static let requestTimeout: TimeInterval = 15
+
     /// A saved table is removed when the one this many periods after it is saved.
     private static let periodsKept = 2
 
@@ -125,9 +129,12 @@ private extension PrayerTimetableStore {
 
         log.warning("Fetching the timetable '\(path)' from the network...")
 
+        var request = source.urlRequest(for: table)
+        request.timeoutInterval = Self.requestTimeout
+
         let data: Data
         do {
-            data = try await networkManager.send(source.urlRequest(for: table)).data
+            data = try await networkManager.send(request).data
         } catch {
             // A table that can't be fetched has no times, like a day its timetable doesn't reach
             log.error("Could not fetch the timetable '\(path)': \(Self.reason(for: error))")

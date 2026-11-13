@@ -192,6 +192,22 @@ extension PrayerServiceTimetableTests {
         #expect(((try? savedFiles()) ?? []).isEmpty)
     }
 
+    /// Dec 31 needs the next year's first Fajr, so a request that hangs holds back that day's own times; Foundation
+    /// would wait a minute.
+    @Test
+    func aRequestThatHangsIsGivenUpOnAfterFifteenSeconds() async throws {
+        // Given
+        let place = london(2019)
+        let api = TimeoutProbe()
+        let service = londonService(api)
+
+        // When
+        _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+
+        // Then
+        #expect(await api.timeouts == [15])
+    }
+
     @Test
     func aYearThatIsNotBundledIsAskedForWithTheKeyAndTheYear() async throws {
         // Given
@@ -404,6 +420,16 @@ private struct FailingNetwork: NetworkService {
     func send(_ request: URLRequest) async throws -> NetworkResponse {
         let offline = URLError(.notConnectedToInternet, userInfo: [NSURLErrorFailingURLStringErrorKey: request.url?.absoluteString ?? ""])
         throw NetworkError(request: request, statusCode: statusCode, internalError: statusCode == nil ? offline : nil)
+    }
+}
+
+/// Notes how long each request is willing to wait, and answers with a year not yet published.
+private actor TimeoutProbe: NetworkService {
+    private(set) var timeouts = [TimeInterval]()
+
+    func send(_ request: URLRequest) async throws -> NetworkResponse {
+        timeouts.append(request.timeoutInterval)
+        return NetworkResponse(data: Data(LondonAPI.unpublished.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
     }
 }
 

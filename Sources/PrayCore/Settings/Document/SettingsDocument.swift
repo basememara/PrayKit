@@ -106,15 +106,28 @@ public struct Place: Codable, Equatable, Sendable {
 /// Everything one device knows about the user's settings and location.
 public struct DeviceState: Equatable, Sendable {
     public var document: SettingsDocument
-    public var place: Place?
 
-    public init(document: SettingsDocument = SettingsDocument(), place: Place? = nil) {
+    /// This device's own place: its last GPS fix, or the city it was given during first-run setup. It never syncs.
+    public var ownPlace: Place?
+
+    public init(document: SettingsDocument = SettingsDocument(), ownPlace: Place? = nil) {
         self.document = document
-        self.place = place
+        self.ownPlace = ownPlace
     }
 }
 
 public extension DeviceState {
+    /// Where this device calculates for: its own place while location is on, and the city picked for the account while
+    /// it's off. A version before 28.1 turned location off without picking one, which leaves the device where it was.
+    var place: Place? {
+        document.settings.isGPSEnabled ? ownPlace : document.settings.pickedPlace ?? ownPlace
+    }
+
+    /// This device with other settings, its own place kept.
+    func replacing(document: SettingsDocument) -> DeviceState {
+        DeviceState(document: document, ownPlace: ownPlace)
+    }
+
     /// The place's time zone, or this device's while there is no place.
     var timeZone: TimeZone { place?.timeZone ?? .current }
 

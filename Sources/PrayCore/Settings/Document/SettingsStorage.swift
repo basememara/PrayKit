@@ -47,7 +47,7 @@ public extension SettingsStorage {
     @discardableResult
     func edit(at date: Date = .now, _ edit: (inout Settings) -> Void) -> DeviceState {
         update { state in
-            DeviceState(document: state.document.editing(at: date, edit), place: state.place)
+            state.replacing(document: state.document.editing(at: date, edit))
         }
     }
 }
@@ -69,7 +69,7 @@ private extension SettingsStorage {
 
         return DeviceState(
             document: SettingsDocument(settings: settings, revisions: revisions),
-            place: readPlace()
+            ownPlace: readPlace()
         )
     }
 
@@ -103,8 +103,8 @@ private extension SettingsStorage {
             }
         }
 
-        guard state.place != current.place else { return }
-        writePlace(state.place)
+        guard state.ownPlace != current.ownPlace else { return }
+        writePlace(state.ownPlace)
     }
 
     func writePlace(_ place: Place?) {

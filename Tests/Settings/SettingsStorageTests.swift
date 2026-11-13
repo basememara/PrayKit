@@ -23,7 +23,7 @@ extension SettingsStorageTests {
         let state = storage.load()
 
         #expect(state.document.settings == Settings())
-        #expect(state.place == nil)
+        #expect(state.ownPlace == nil)
     }
 
     @Test
@@ -45,7 +45,7 @@ extension SettingsStorageTests {
         let state = storage.load()
         #expect(state.document.settings == expected)
         #expect(state.document.revisions.isEmpty)
-        #expect(state.place == expectedPlace)
+        #expect(state.ownPlace == expectedPlace)
     }
 
     /// The settings 28.1.0 added, which the first fixture predates.
@@ -68,7 +68,7 @@ extension SettingsStorageTests {
     func writesWhat28_1Reads() throws {
         var settings = Settings.everyFieldChanged
         settings.alarms = [.fajr]
-        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = settings }, place: $0.place) }
+        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = settings }, ownPlace: $0.ownPlace) }
 
         for (key, expected) in Self.golden28_1 {
             try expectStored(key, equals: expected)
@@ -90,7 +90,7 @@ extension SettingsStorageTests {
     @Test
     func writesWhatEarlierVersionsRead() throws {
         let place = try Self.goldenPlace()
-        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = .everyFieldChanged }, place: place) }
+        storage.update { DeviceState(document: $0.document.editing(at: .now) { $0 = .everyFieldChanged }, ownPlace: place) }
 
         for (key, expected) in Self.golden {
             try expectStored(key, equals: expected)
@@ -173,7 +173,7 @@ extension SettingsStorageTests {
     func mergingARemoteCopyWritesItsValuesAndRevisions() {
         let remote = SettingsDocument().editing(at: Date(timeIntervalSince1970: 5_000)) { $0.calculationMethod = .karachi }
 
-        storage.update { DeviceState(document: $0.document.merging(remote), place: $0.place) }
+        storage.update { DeviceState(document: $0.document.merging(remote), ownPlace: $0.ownPlace) }
 
         #expect(storage.load().document.settings.calculationMethod == .karachi)
         #expect(defaults.string(forKey: "calculationMethod") == CalculationMethod.karachi.rawValue)
@@ -193,7 +193,7 @@ extension SettingsStorageTests {
         defaults.set("Somewhere", forKey: "lastRegionName")
         defaults.set(fixedAt, forKey: "lastCacheDate")
 
-        let place = try #require(storage.load().place)
+        let place = try #require(storage.load().ownPlace)
         #expect(place.coordinates == Coordinates(latitude: 2.9, longitude: 101.6))
         #expect(place.timeZone == timeZone)
         #expect(place.regionName == "Somewhere")
@@ -210,7 +210,7 @@ extension SettingsStorageTests {
             fixedAt: Date(timeIntervalSince1970: 1_700_000_000)
         )
 
-        storage.update { DeviceState(document: $0.document, place: place) }
+        storage.update { DeviceState(document: $0.document, ownPlace: place) }
 
         #expect(defaults.array(forKey: "prayersCoordinates") as? [Double] == [51.5, -0.1])
         #expect(defaults.string(forKey: "lastTimeZoneIdentifier") == "Europe/London")
@@ -220,7 +220,7 @@ extension SettingsStorageTests {
 
     @Test
     func noCoordinatesMeansNoPlace() {
-        #expect(storage.load().place == nil)
+        #expect(storage.load().ownPlace == nil)
     }
 }
 

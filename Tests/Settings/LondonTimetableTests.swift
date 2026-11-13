@@ -57,7 +57,7 @@ extension LondonTimetableTests {
         settings.recommendMethod(at: .zone(timeZone, at: london))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
+            ownPlace: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
         )
 
         let away = try #require(LocationRule.apply(manchester, timeZone: timeZone, at: date + 60, to: state))
@@ -75,7 +75,7 @@ extension LondonTimetableTests {
         settings.recommendMethod(at: .zone(timeZone, at: london))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
+            ownPlace: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
         )
 
         let moved = try #require(LocationRule.apply(thirtyKilometresNorth, timeZone: timeZone, at: date + 60, to: state))
@@ -90,7 +90,7 @@ extension LondonTimetableTests {
         settings.pickMethod(.london, at: .zone(timeZone, at: london))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
+            ownPlace: Place(coordinates: london, timeZone: timeZone, regionName: "London", fixedAt: date)
         )
 
         let away = try #require(LocationRule.apply(edinburgh, timeZone: timeZone, at: date + 60, to: state))
@@ -174,7 +174,7 @@ extension LondonTimetableTests {
         var settings = Settings()
         settings.recommendMethod(at: .zone(timeZone, at: london))
         settings.adjustmentMinutes = AdjustmentMinutes(rawValue: ["asr": 5])
-        let state = DeviceState(document: SettingsDocument(settings: settings), place: .zone(timeZone, at: london))
+        let state = DeviceState(document: SettingsDocument(settings: settings), ownPlace: .zone(timeZone, at: london))
 
         let updated = try #require(LocationRule.apply(edinburgh, timeZone: timeZone, at: date, to: state))
 

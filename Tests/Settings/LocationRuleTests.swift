@@ -90,7 +90,7 @@ struct LocationRuleTests {
     @Test
     func jitterUnderAKilometreIsIgnored() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
-        let state = DeviceState(place: Place(coordinates: toronto, timeZone: timeZone, regionName: "Toronto", fixedAt: date))
+        let state = DeviceState(ownPlace: Place(coordinates: toronto, timeZone: timeZone, regionName: "Toronto", fixedAt: date))
 
         // About 220 m north
         let nearby = Coordinates(latitude: 43.6530, longitude: -79.3470)
@@ -111,7 +111,7 @@ struct LocationRuleTests {
         settings.calculationMethod = .northAmerica
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
+            ownPlace: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
         )
 
         let nearby = Coordinates(latitude: 43.6530, longitude: -79.3470)
@@ -130,7 +130,7 @@ struct LocationRuleTests {
         settings.calculationMethod = method
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
+            ownPlace: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
         )
 
         let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date, to: state))
@@ -146,7 +146,7 @@ struct LocationRuleTests {
         settings.pickMethod(method, at: .zone(saved))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
+            ownPlace: Place(coordinates: toronto, timeZone: saved, regionName: "Toronto", fixedAt: date)
         )
 
         let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date, to: state))
@@ -162,7 +162,7 @@ struct LocationRuleTests {
         settings.pickMethod(.northAmerica, at: .zone(saved))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: toronto, timeZone: saved, regionName: "Fort Frances", fixedAt: date)
+            ownPlace: Place(coordinates: toronto, timeZone: saved, regionName: "Fort Frances", fixedAt: date)
         )
 
         let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date + 60, to: state))
@@ -182,7 +182,7 @@ struct LocationRuleTests {
         settings.pickMethod(.london, at: .zone(london))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
+            ownPlace: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
         )
 
         let updated = try #require(LocationRule.apply(makkah, timeZone: riyadh, at: date + 60, to: state))
@@ -218,7 +218,7 @@ struct LocationRuleTests {
         settings.pickMethod(.london, at: .zone(london))
         let state = DeviceState(
             document: SettingsDocument(settings: settings),
-            place: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
+            ownPlace: Place(coordinates: Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, regionName: "London", fixedAt: date)
         )
 
         let updated = try #require(LocationRule.apply(manchester, timeZone: london, at: date + 60, to: state))
@@ -253,8 +253,8 @@ struct LocationRuleTests {
     @Test
     func aPlaceWithoutANameOrFixTimeIsRefreshed() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
-        let unnamed = DeviceState(place: Place(coordinates: toronto, timeZone: timeZone, regionName: nil, fixedAt: date))
-        let unfixed = DeviceState(place: Place(coordinates: toronto, timeZone: timeZone, regionName: "Toronto", fixedAt: nil))
+        let unnamed = DeviceState(ownPlace: Place(coordinates: toronto, timeZone: timeZone, regionName: nil, fixedAt: date))
+        let unfixed = DeviceState(ownPlace: Place(coordinates: toronto, timeZone: timeZone, regionName: "Toronto", fixedAt: nil))
 
         #expect(LocationRule.apply(toronto, timeZone: timeZone, at: date, to: unnamed) != nil)
         #expect(LocationRule.apply(toronto, timeZone: timeZone, at: date, to: unfixed) != nil)
@@ -340,7 +340,7 @@ extension LocationRuleTests {
         let manual = storage.setManualPlace(Coordinates(latitude: 48.857, longitude: 2.352), timeZone: paris, regionName: "Paris", at: date + 60)
         #expect(manual.document.settings.calculationMethod == .muslimWorldLeague)
 
-        storage.edit { $0.followLocation() }
+        storage.followLocation(at: date + 90)
         let back = storage.saveLocation(kualaLumpurCoordinates, timeZone: kualaLumpur, at: date + 120)
 
         #expect(back.document.settings.calculationMethod == .jakim)

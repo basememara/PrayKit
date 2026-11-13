@@ -9,8 +9,8 @@ import Foundation
 @testable import PrayCore
 import Testing
 
-/// A city picked by hand is the account's: every device takes it, and Automatic on puts every device back on its own
-/// location. A place picked during first-run setup stays on the device that picked it.
+/// Where each device calculates for: its own place while location is on, and the city picked for the account while it's
+/// off. A place picked during first-run setup is the device's own, so it stays on the device that picked it.
 struct PickedPlaceTests {
     private let date = Date(timeIntervalSince1970: 1_800_000_000)
     private let cyberjaya = Coordinates(latitude: 2.9213, longitude: 101.6559)
@@ -71,16 +71,36 @@ extension PickedPlaceTests {
         deliver(from: phone, to: mac, at: date + 60)
 
         // When
-        phone.edit(at: date + 120) { $0.followLocation() }
+        phone.followLocation(at: date + 120)
         let received = deliver(from: phone, to: mac, at: date + 180)
 
         // Then
         #expect(received.document.settings.followsLocation)
         #expect(received.document.settings.pickedPlace == nil)
-        #expect(received.place?.fixedAt == nil, "The old pick is replaced by the next fix, however near")
+        #expect(received.place?.coordinates == cyberjaya, "Back on its own place until its next fix")
 
         let fixed = try #require(LocationRule.apply(kualaLumpur, timeZone: timeZone, at: date + 240, to: received))
-        #expect(fixed.place?.fixedAt == date + 240)
+        #expect(fixed.place?.coordinates == kualaLumpur)
+    }
+
+    /// The device that turns location on stays where it is until its fix, rather than going back to an old one of its own.
+    @Test
+    func turningAutomaticOnHereKeepsThisDeviceWhereItIsUntilItsFix() throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let phone = SettingsStorage(defaults: .makeTest())
+        phone.saveLocation(cyberjaya, timeZone: timeZone, at: date)
+        phone.setManualPlace(kualaLumpur, timeZone: timeZone, regionName: "Kuala Lumpur", at: date + 60)
+
+        // When
+        let following = phone.followLocation(at: date + 120)
+
+        // Then
+        #expect(following.place?.coordinates == kualaLumpur)
+        #expect(following.place?.fixedAt == nil)
+
+        let fixed = try #require(LocationRule.apply(kualaLumpur, timeZone: timeZone, at: date + 180, to: following), "However near")
+        #expect(fixed.place?.fixedAt == date + 180)
     }
 
     /// A new device's first-run pick is kept on it, so setting up a Mac never takes the iPhone off its location.
@@ -150,7 +170,26 @@ extension PickedPlaceTests {
 
         // Then
         #expect(received.place?.coordinates == kualaLumpur)
-        #expect(!received.document.settings.isPlacePinned)
+    }
+
+    /// A device pinned at setup keeps its city whenever the account is on location, until location changes on it.
+    @Test
+    func aDevicePinnedAtSetupGoesBackToItsCityWhenLocationIsTurnedOn() throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let phone = SettingsStorage(defaults: .makeTest())
+        let mac = SettingsStorage(defaults: .makeTest())
+        mac.setUpPlace(cyberjaya, timeZone: timeZone, regionName: "Cyberjaya", at: date)
+        phone.setManualPlace(kualaLumpur, timeZone: timeZone, regionName: "Kuala Lumpur", at: date + 60)
+        deliver(from: phone, to: mac, at: date + 120)
+
+        // When
+        phone.followLocation(at: date + 180)
+        let received = deliver(from: phone, to: mac, at: date + 240)
+
+        // Then
+        #expect(received.place?.coordinates == cyberjaya)
+        #expect(!received.document.settings.followsLocation)
     }
 
     @Test
@@ -171,6 +210,26 @@ extension PickedPlaceTests {
         #expect(phoneAfter.place?.coordinates == toronto)
         #expect(macAfter.place?.coordinates == toronto)
         #expect(phoneAfter.place?.timeZone == torontoZone)
+    }
+
+    /// A device that holds the account's pick without ever having moved to it, as one that fetched the pick before
+    /// upgrading, is on it all the same: the place is read from the settings, not copied on arrival.
+    @Test
+    func aPickHeldButNeverAppliedIsWhereTheDeviceIs() throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let mac = SettingsStorage(defaults: .makeTest())
+        mac.saveLocation(cyberjaya, timeZone: timeZone, at: date)
+        let picked = Place(coordinates: kualaLumpur, timeZone: timeZone, regionName: "Kuala Lumpur", fixedAt: date)
+
+        // When
+        mac.edit(at: date + 60) {
+            $0.isGPSEnabled = false
+            $0.pickedPlace = picked
+        }
+
+        // Then
+        #expect(mac.load().place == picked)
     }
 
     /// The same copy arriving twice changes nothing the second time.
@@ -200,7 +259,8 @@ private extension PickedPlaceTests {
         let fields = sender.load().document.wireFields
 
         return receiver.update { state in
-            state.receiving(SettingsDocument(wireFields: fields, base: state.document.settings, modifiedAt: date, previous: nil))
+            let remote = SettingsDocument(wireFields: fields, base: state.document.settings, modifiedAt: date, previous: nil)
+            return state.replacing(document: state.document.merging(remote))
         }
     }
 }

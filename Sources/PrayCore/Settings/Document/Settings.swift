@@ -28,7 +28,7 @@ public struct Settings: Codable, Equatable, Sendable {
 
     // Location
     public var isGPSEnabled = true
-    /// The place picked by hand for the account, which every device takes; `nil` while devices follow their location.
+    /// The city picked by hand for the account, where every device calculates while location is off (`DeviceState.place`).
     public var pickedPlace: Place?
     public var geofenceRadius: Double = 75_000
 

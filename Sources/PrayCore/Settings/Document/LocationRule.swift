@@ -20,7 +20,7 @@ public enum LocationRule {
     public static func apply(_ coordinates: Coordinates, timeZone: TimeZone, at date: Date, to state: DeviceState) -> DeviceState? {
         guard state.document.settings.followsLocation else { return nil }
 
-        let place = state.place
+        let place = state.ownPlace
         let hasMoved = place.map { CLLocation(coordinates).distance(from: CLLocation($0.coordinates)) >= significantDistance } ?? true
         let hasChangedTimeZone = place.map { $0.timeZone.identifier != timeZone.identifier } ?? false
 
@@ -41,31 +41,7 @@ public enum LocationRule {
             state.document
         }
 
-        return DeviceState(document: document, place: newPlace)
-    }
-}
-
-public extension DeviceState {
-    /// This device after a copy of the account's settings arrives: the newer revision of every setting, and, when the
-    /// place picked for the account changed, that place in place of this device's own. A pick cleared with location on
-    /// lets this device follow its location again, its old place replaced by the next fix however near.
-    func receiving(_ remote: SettingsDocument) -> DeviceState {
-        var document = document.merging(remote)
-        let picked = document.settings.pickedPlace
-
-        guard picked != self.document.settings.pickedPlace else { return DeviceState(document: document, place: place) }
-
-        if let picked {
-            document.settings.isPlacePinned = false
-            return DeviceState(document: document, place: picked)
-        }
-
-        guard document.settings.isGPSEnabled else { return DeviceState(document: document, place: place) }
-
-        document.settings.isPlacePinned = false
-        var stale = place
-        stale?.fixedAt = nil
-        return DeviceState(document: document, place: stale)
+        return DeviceState(document: document, ownPlace: newPlace)
     }
 }
 
@@ -182,14 +158,13 @@ public extension SettingsStorage {
         let place = Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
 
         return update { state in
-            DeviceState(
+            state.replacing(
                 document: state.document.editing(at: date) {
                     $0.pickPlace(place)
 
                     guard $0.manualMethod == nil else { return }
                     $0.followPlace(place, from: $0.method(at: state.place))
-                },
-                place: place
+                }
             )
         }
     }
@@ -206,7 +181,7 @@ public extension SettingsStorage {
                 document: state.document
                     .editing(at: date) { $0.isPlacePinned = true }
                     .proposing { $0.recommendMethod(at: place) },
-                place: place
+                ownPlace: place
             )
         }
     }
@@ -216,12 +191,22 @@ public extension SettingsStorage {
     @discardableResult
     func setUpLocation(at date: Date = .now) -> DeviceState {
         update { state in
-            DeviceState(
+            state.replacing(
                 document: state.document
                     .editing(at: date) { $0.isPlacePinned = false }
-                    .proposing { $0.followLocation() },
-                place: state.place
+                    .proposing { $0.followLocation() }
             )
+        }
+    }
+
+    /// Turns location on for the account, so every device follows its own. This device starts from the place it's on,
+    /// marked for a fresh fix, rather than going back to an old fix of its own until the next one.
+    @discardableResult
+    func followLocation(at date: Date = .now) -> DeviceState {
+        update { state in
+            var current = state.place
+            current?.fixedAt = nil
+            return DeviceState(document: state.document.editing(at: date) { $0.followLocation() }, ownPlace: current)
         }
     }
 
@@ -230,17 +215,14 @@ public extension SettingsStorage {
     @discardableResult
     func stopFollowingLocation(at date: Date = .now) -> DeviceState {
         update { state in
-            DeviceState(
-                document: state.document.editing(at: date) { $0.pickPlace(state.place) },
-                place: state.place
-            )
+            state.replacing(document: state.document.editing(at: date) { $0.pickPlace(state.place) })
         }
     }
 
     /// Proposes defaults; see `SettingsDocument.proposing(_:)`.
     @discardableResult
     func propose(_ edit: (inout Settings) -> Void) -> DeviceState {
-        update { DeviceState(document: $0.document.proposing(edit), place: $0.place) }
+        update { $0.replacing(document: $0.document.proposing(edit)) }
     }
 
     /// Saves a GPS fix through the location rule, returning the state as stored.
@@ -276,9 +258,9 @@ public extension SettingsStorage {
     @discardableResult
     func saveRegionName(_ regionName: String, for coordinates: Coordinates) -> DeviceState {
         update { state in
-            guard var place = state.place, place.coordinates == coordinates else { return state }
+            guard var place = state.ownPlace, place.coordinates == coordinates else { return state }
             place.regionName = regionName
-            return DeviceState(document: state.document, place: place)
+            return DeviceState(document: state.document, ownPlace: place)
         }
     }
 }

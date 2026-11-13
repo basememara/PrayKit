@@ -4,7 +4,7 @@ Open-source Swift package (github.com/basememara/PrayKit) powering the closed-so
 
 ## Layout
 
-Pure SPM, `swift-tools-version: 6.0`, platforms macOS 14 / iOS 17 / watchOS 10 (matching ZamzamKit 7 and the app). Every library target builds in the **Swift 6 language mode** under strict concurrency; Models and service protocols are `Sendable`; the service structs that hold `UserDefaults`, `NetworkManager` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
+Pure SPM, `swift-tools-version: 6.0`, platforms macOS 14 / iOS 17 / watchOS 10 (matching ZamzamKit 7 and the app). Every library target builds in the **Swift 6 language mode** under strict concurrency; Models and service protocols are `Sendable`; the service structs that hold `UserDefaults` or `UNUserNotificationCenter` are `@unchecked Sendable` with a comment naming the invariant. Four library products:
 
 - `PrayCore` — enums, errors, extensions, service protocols, settings
 - `PrayServices` — service implementations (Hijri, Notification, Prayer, Qibla, Resources)
@@ -22,6 +22,41 @@ A prayer day runs from its Fajr to the next Fajr: its essential prayers (Fajr, s
 - The calculators must keep the days tiling: Maghrib ends at the Isha actually used, tomorrow's Fajr takes the same adjustments as the next day's own, and an Isha that would reach the next Fajr throws. The night (its middle and last third) runs from Maghrib to the Fajr actually used (`PrayerTime.night`), so the last third ends with Isha; a short night can put its middle before Isha, so a day's times are kept in time order, and a night too short to order the two leaves them out rather than failing the day.
 - What a screen lists is a separate rule: a day's times until its turnover, then the next day's (`PrayerDay.turnover`, `listedDay`, `PrayerManager.fetch(listedAt:)`). The turnover is 12 AM in the place's zone, or later when tonight's Isha hasn't begun or its iqama or count-up hasn't ended by then (Paris on France 18), and the next Fajr at the latest. Change the cut-over there and every face follows; the timeline holds an entry at it. A list's rows come from that day's `listed(at:)`, or `PrayerTimer.listed`: its times in time order, each with its stage (`ListedPrayerTests`). A stage read from the day a timer counts in, past that day's span, calls the prayer under way passed.
 - `PrayerDayRuleTests` holds the rule: sweeps over 17 real fixtures (three with Isha or Maghrib after midnight, one with Fajr before it) for days, timelines, notifications and the Hijri date. A change to day logic lands with a case there.
+
+## Timetables
+
+Some methods read an authority's published timetable instead of calculating; London's Unified Prayer Timetable is the first. `PrayerManager` takes them as `timetables`, a method to the service that reads it, and every other method goes to the calculating service.
+
+| Piece | What it knows |
+|---|---|
+| `PrayerTimetableSource` (`Sources/PrayServices/Prayer/Timetables/`) | One authority: its folder name (`id`), what one table covers (`period`: a year, a month or a week), the zone a place reads (`zone(for:)`, none by default), the request for a table and how its response reads. `PrayerTimetableSourceLondon` is the model. |
+| `PrayerTimetableStore` (same folder) | Where a table is and when the API is asked: the bundled copy first, then the saved file, then the network. A table the API hasn't published is asked for again only after six hours, a wait every process sharing the folder keeps, and concurrent days share one request. |
+| `PrayerServiceTimetable` (`Sources/PrayServices/Prayer/`) | A printed day into prayer times, the same for every source: clocks read in the request's time zone, the user's adjustments, the order check, and tomorrow's Fajr from the table holding tomorrow. It is the one public type, with a factory per source (`.london(apiKey:networkManager:directory:log:)`). |
+
+The bundled tables (`Sources/PrayServices/Resources/PrayerTimetables/`, copied into the bundle with its folders) and the saved ones (the folder the app passes in, in its App Group) share one layout:
+
+```
+PrayerTimetables/
+├── london/                  a folder per source
+│   ├── 2026.json            a file per table, named for the period it covers
+│   └── 2028.unpublished     saved only: when the API last said the table had no days
+└── <source>/<zone>/         a folder per zone, where the source has them
+    ├── 2027-03.json         a month
+    └── 2027-03-08.json      a week, named by its Monday
+```
+
+- A file holds the API's response as it came, so the bundled copy, the saved copy and a script's download read the same way. The bundle comes first, so a saved copy never hides a table the package ships.
+- Saving a table removes the one two periods before it. The wait and that count are constants in the store; they become per source when one needs different values.
+- **Keys:** this package never holds one. A source that needs a key takes it in its initializer and puts it on its request, the app supplies it, and the store never logs a request, a URL or an error that prints one (`PrayerServiceTimetableTests` holds that).
+- A source that isn't one request per table (a login first, a rolling window) conforms to `PrayerService` itself, reuses `PrayerTime.day` and `checkOrder`, and is registered in `timetables` the same way.
+
+Adding a source:
+
+1. `PrayerTimetableSource<Name>.swift` beside London's: `id`, `period`, the request, and `days(from:)` over private `Decodable` types. A day that can't be read is left out; a table not yet published reads as no days.
+2. A factory on `PrayerServiceTimetable`, and its line in the app's `timetables` dictionary.
+3. The method: a `CalculationMethod` case if it's new, its zones in `mapped`, and its `reach` when the timetable holds only near a city (`CalculationMethod+Recommended.swift`).
+4. Tests: the source's own, as `PrayerTimetableSourceLondonTests` (a bundled table reads in full, its format's edges), and a `PrayerTimes` snapshot case for a place on it.
+5. Optional: bundled tables in `Resources/PrayerTimetables/<id>/`, for installs that are offline when a period turns over.
 
 ## Build & test
 

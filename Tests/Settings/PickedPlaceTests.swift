@@ -102,6 +102,40 @@ extension PickedPlaceTests {
         #expect(mac.load().document.settings.pickedPlace == nil)
     }
 
+    /// A new device set up on its own location never clears a city the account picked, so the others stay on it.
+    @Test
+    func settingUpOnLocationNeverClearsTheAccountsPick() throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let phone = SettingsStorage(defaults: .makeTest())
+        let mac = SettingsStorage(defaults: .makeTest())
+        phone.setManualPlace(kualaLumpur, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
+        deliver(from: phone, to: mac, at: date + 60)
+
+        // When
+        let setUp = mac.setUpLocation(at: date + 120)
+        let received = deliver(from: mac, to: phone, at: date + 180)
+
+        // Then
+        #expect(setUp.place?.coordinates == kualaLumpur)
+        #expect(received.place?.coordinates == kualaLumpur)
+        #expect(!received.document.settings.followsLocation)
+    }
+
+    @Test
+    func settingUpOnLocationFollowsItWhenNothingIsPicked() throws {
+        // Given
+        let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
+        let mac = SettingsStorage(defaults: .makeTest())
+        mac.setUpPlace(cyberjaya, timeZone: timeZone, regionName: "Cyberjaya", at: date)
+
+        // When
+        let setUp = mac.setUpLocation(at: date + 60)
+
+        // Then
+        #expect(setUp.document.settings.followsLocation)
+    }
+
     @Test
     func aDevicePinnedAtSetupStillTakesALaterPick() throws {
         // Given

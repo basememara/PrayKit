@@ -82,6 +82,13 @@ public extension Settings {
         isPlacePinned = false
         pickedPlace = nil
     }
+
+    /// Picks a place for the account, which turns location off and moves every device there.
+    mutating func pickPlace(_ place: Place?) {
+        isGPSEnabled = false
+        isPlacePinned = false
+        pickedPlace = place
+    }
 }
 
 /// A `nil` place is one not yet known, where the device's time zone decides.
@@ -177,9 +184,7 @@ public extension SettingsStorage {
         return update { state in
             DeviceState(
                 document: state.document.editing(at: date) {
-                    $0.isGPSEnabled = false
-                    $0.isPlacePinned = false
-                    $0.pickedPlace = place
+                    $0.pickPlace(place)
 
                     guard $0.manualMethod == nil else { return }
                     $0.followPlace(place, from: $0.method(at: state.place))
@@ -206,17 +211,27 @@ public extension SettingsStorage {
         }
     }
 
+    /// Has a first-run screen follow this device's location: lets go of a place pinned here, and only proposes location
+    /// on for the account, so a city picked on another device still wins, whether iCloud brought it already or later.
+    @discardableResult
+    func setUpLocation(at date: Date = .now) -> DeviceState {
+        update { state in
+            DeviceState(
+                document: state.document
+                    .editing(at: date) { $0.isPlacePinned = false }
+                    .proposing { $0.followLocation() },
+                place: state.place
+            )
+        }
+    }
+
     /// Turns location off for the account and shares the place this device is on, so every device stays on one place
     /// rather than wherever each last was.
     @discardableResult
     func stopFollowingLocation(at date: Date = .now) -> DeviceState {
         update { state in
             DeviceState(
-                document: state.document.editing(at: date) {
-                    $0.isGPSEnabled = false
-                    $0.isPlacePinned = false
-                    $0.pickedPlace = state.place
-                },
+                document: state.document.editing(at: date) { $0.pickPlace(state.place) },
                 place: state.place
             )
         }

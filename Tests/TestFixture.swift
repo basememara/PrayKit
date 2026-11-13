@@ -6,6 +6,7 @@
 //  Copyright © 2021 Zamzam Inc. All rights reserved.
 //
 
+import Foundation
 import PrayCore
 import PrayServices
 import ZamzamCore
@@ -25,12 +26,19 @@ struct PrayTestFixture {
         prayerManager = PrayerManager(
             service: PrayerServiceAdhan(log: log),
             londonService: PrayerServiceLondon(
-                networkManager: NetworkManager(service: NetworkServiceFoundation()),
-                apiKey: "{{your api key}}",
+                networkManager: NetworkManager(service: OfflineNetwork()),
+                apiKey: "",
                 log: log,
                 defaults: .makeTest()
             ),
             log: log
         )
+    }
+}
+
+/// No suite reaches the real London API: a year it would fetch fails as it does offline.
+private struct OfflineNetwork: NetworkService {
+    func send(_ request: URLRequest) async throws -> NetworkResponse {
+        throw URLError(.notConnectedToInternet)
     }
 }

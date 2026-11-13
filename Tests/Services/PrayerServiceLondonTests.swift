@@ -11,8 +11,8 @@ import PrayCore
 import Testing
 import ZamzamCore
 
-/// The timetable is bundled a year at a time. Dec 31 of the last bundled year needs the next year's first Fajr, so it asks
-/// the API, which answers a year it hasn't published yet with a timetable of no days.
+/// The timetable is bundled a year at a time. A year past the bundle, and Dec 31 of the last bundled year (which needs the
+/// next year's first Fajr), come from the API, which answers a year it hasn't published yet with a timetable of no days.
 ///
 /// The parsed timetables are cached for the whole process, so each test reads years no other test loads.
 struct PrayerServiceLondonTests {
@@ -26,7 +26,7 @@ extension PrayerServiceLondonTests {
         let year = try #require(PrayerServiceLondon.lastYear) - 1
         let place = london(year)
         let defaults = UserDefaults.makeTest()
-        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: String(year))
+        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: PrayerServiceLondon.cacheKey(forYear: year))
         let service = PrayerServiceLondon(networkManager: NetworkManager(service: TimetableAPI()), apiKey: "", log: log, defaults: defaults)
 
         // When
@@ -44,7 +44,7 @@ extension PrayerServiceLondonTests {
         let place = london(lastYear)
         let api = TimetableAPI()
         let defaults = UserDefaults.makeTest()
-        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: String(lastYear + 1)) // as an older version saved it
+        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1))
         let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
         let yearsEnd = try place.date(lastYear, 12, 31)
 
@@ -54,7 +54,7 @@ extension PrayerServiceLondonTests {
         }
 
         // Then
-        #expect(defaults.object(forKey: String(lastYear + 1)) == nil, "A year with no days must not stay saved")
+        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1)) == nil, "A year with no days must not stay saved")
 
         // When
         await api.publish(lastYear + 1)
@@ -64,7 +64,51 @@ extension PrayerServiceLondonTests {
         let isha = try #require(times.first { $0.type == .isha })
         let nextFajr = try place.date(lastYear + 1, 1, 1, 6, 26)
         #expect(isha.dateInterval.end == nextFajr)
-        #expect(defaults.object(forKey: String(lastYear + 1)) != nil, "A published year is saved")
+        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1)) != nil, "A published year is saved")
+    }
+
+    /// A year the app doesn't bundle yet comes from the API once it's published, so January never goes blank.
+    @Test
+    func aYearPastTheBundleIsFetchedOnceItIsOut() async throws {
+        // Given
+        let year = try #require(PrayerServiceLondon.lastYear) + 2
+        let place = london(year)
+        let api = TimetableAPI()
+        let defaults = UserDefaults.makeTest()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
+        let newYearsDay = try place.date(year, 1, 1, 12)
+
+        // When
+        await #expect(throws: PrayError.self) {
+            try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+        }
+
+        await api.publish(year)
+        let times = try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
+
+        // Then
+        let fajr = try #require(times.first { $0.type == .fajr })
+        #expect(fajr.dateInterval.start == (try place.date(year, 1, 1, 6, 26)))
+        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: year)) != nil, "The fetched year is saved")
+    }
+
+    @Test
+    func aYearThatCantBeFetchedHasNoTimes() async throws {
+        // Given
+        let year = try #require(PrayerServiceLondon.lastYear) + 3
+        let place = london(year)
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: OfflineAPI()), apiKey: "", log: log, defaults: .makeTest())
+
+        // When
+        let error = await #expect(throws: PrayError.self) {
+            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        guard case .invalidTimes = error else {
+            Issue.record("Expected invalid times, got \(String(describing: error))")
+            return
+        }
     }
 
     @Test
@@ -111,10 +155,21 @@ private actor TimetableAPI: NetworkService {
             {"city":"london","times":{"\#(year)-01-01":{"date":"\#(year)-01-01",
             "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:09","dhuhr_jamat":"12:45",
             "asr":"13:46","asr_2":"14:17","asr_jamat":"14:45","magrib":"16:05","magrib_jamat":"16:12",
-            "isha":"17:42","isha_jamat":"19:30"}}}
+            "isha":"17:42","isha_jamat":"19:30"},
+            "\#(year)-01-02":{"date":"\#(year)-01-02",
+            "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:10","dhuhr_jamat":"12:45",
+            "asr":"13:47","asr_2":"14:18","asr_jamat":"14:45","magrib":"16:06","magrib_jamat":"16:13",
+            "isha":"17:43","isha_jamat":"19:30"}}}
             """#
         } ?? Self.unpublished
 
         return NetworkResponse(data: Data(body.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
+    }
+}
+
+/// A device with no connection.
+private struct OfflineAPI: NetworkService {
+    func send(_ request: URLRequest) async throws -> NetworkResponse {
+        throw URLError(.notConnectedToInternet)
     }
 }

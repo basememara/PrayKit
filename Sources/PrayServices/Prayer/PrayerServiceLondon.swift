@@ -19,6 +19,11 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
 
     private static let filePrefix = "london-"
 
+    /// Where a year fetched from the API is kept, apart from the settings that share the suite.
+    static func cacheKey(forYear year: Int) -> String {
+        "londonTimetable-\(year)"
+    }
+
     /// The last year the bundled timetables cover, from the newest `london-<year>.json`.
     static let lastYear = Bundle.module.urls(forResourcesWithExtension: "json", subdirectory: nil)?
         .compactMap { url in
@@ -52,12 +57,6 @@ public extension PrayerServiceLondon {
         let timeFormatter = DateFormatter(dateFormat: "yyyy-MM-dd HH:mm", calendar: calendar)
 
         let year = calendar.component(.year, from: date)
-
-        guard let lastYear = Self.lastYear, year <= lastYear else {
-            log.warning("London prayers not available for '\(date.formatted())'")
-            return []
-        }
-
         let prayerDays = try await fetch(for: year)
 
         let dateKey = dateFormatter.string(from: date)
@@ -201,7 +200,7 @@ private extension PrayerServiceLondon {
             // Retrieve from embedded file
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from bundle")
             data = contents
-        } else if let value = defaults.data(forKey: key) {
+        } else if let value = defaults.data(forKey: Self.cacheKey(forYear: year)) {
             // Retrieve from user defaults
             log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
             data = value
@@ -217,10 +216,14 @@ private extension PrayerServiceLondon {
                 ]
             )
 
-            let urlRequest = URLRequest(url: url)
-            let urlResponse = try await networkManager.send(urlRequest)
-            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from network successfully")
-            data = urlResponse.data
+            do {
+                data = try await networkManager.send(URLRequest(url: url)).data
+                log.debug("Fetched Unified London Prayer Timetable for '\(key)' from network successfully")
+            } catch {
+                // A year that can't be fetched has no times, like a day its timetable doesn't reach
+                log.error("Could not fetch the Unified London Prayer Timetable for '\(key)'", error: error)
+                throw PrayError.invalidTimes
+            }
         }
 
         // Parse and save to cache
@@ -241,16 +244,16 @@ private extension PrayerServiceLondon {
         // The API answers a year it hasn't published with no days, so it's asked again next time
         guard !decoded.times.isEmpty else {
             log.warning("Unified London Prayer Timetable for '\(key)' has no days yet, so it isn't kept")
-            defaults.removeObject(forKey: key)
+            defaults.removeObject(forKey: Self.cacheKey(forYear: year))
             return [:]
         }
 
         await LondonPrayerTimetableCache.shared.set(decoded.times, for: key) // Store in-memory
 
         // Persist in user preferences
-        if defaults.object(forKey: key) == nil {
-            defaults.set(data, forKey: key)
-            defaults.removeObject(forKey: String(year - 2))
+        if defaults.object(forKey: Self.cacheKey(forYear: year)) == nil {
+            defaults.set(data, forKey: Self.cacheKey(forYear: year))
+            defaults.removeObject(forKey: Self.cacheKey(forYear: year - 2))
         }
 
         log.debug("Stored Unified London Prayer Timetable for '\(key)' into cache successfully")

@@ -25,12 +25,14 @@ struct PrayTestFixture {
 
         prayerManager = PrayerManager(
             service: PrayerServiceAdhan(log: log),
-            londonService: PrayerServiceLondon(
-                networkManager: NetworkManager(service: OfflineNetwork()),
-                apiKey: "",
-                log: log,
-                directory: .temporaryDirectory.appending(path: "PrayKitTests-London-\(UUID().uuidString)", directoryHint: .isDirectory)
-            ),
+            timetables: [
+                .london: PrayerServiceLondon(
+                    networkManager: NetworkManager(service: OfflineNetwork()),
+                    apiKey: "",
+                    log: log,
+                    directory: .temporaryDirectory.appending(path: "PrayKitTests-London-\(UUID().uuidString)", directoryHint: .isDirectory)
+                )
+            ],
             log: log
         )
     }

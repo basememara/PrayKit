@@ -11,12 +11,15 @@ import ZamzamCore
 
 public struct PrayerManager: Sendable {
     private let service: PrayerService
-    private let londonService: PrayerService
+    private let timetables: [CalculationMethod: any PrayerService]
     private let log: LogManager
 
-    public init(service: PrayerService, londonService: PrayerService, log: LogManager) {
+    /// - Parameters:
+    ///   - service: Calculates the times of every method that has no timetable.
+    ///   - timetables: The methods read from a published timetable instead, each with the service that reads it.
+    public init(service: PrayerService, timetables: [CalculationMethod: any PrayerService] = [:], log: LogManager) {
         self.service = service
-        self.londonService = londonService
+        self.timetables = timetables
         self.log = log
     }
 }
@@ -278,7 +281,7 @@ private extension PrayerManager {
 
 private extension PrayerManager {
     func fetch(for date: Date, using calendar: Calendar, with request: PrayerAPI.Request) async throws -> PrayerDay {
-        let prayerService = request.method == .london ? londonService : service
+        let prayerService = timetables[request.method] ?? service
         let times = try await prayerService.calculate(for: date, using: calendar, with: request)
 
         // A timetable answers a day past its end with no times (London's, past its last bundled year). The day after

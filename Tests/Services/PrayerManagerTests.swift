@@ -175,7 +175,7 @@ private extension PrayerManagerTests {
     func timetablePrayerManager(endingAfter lastDay: Date) -> PrayerManager {
         let fixture = PrayTestFixture()
         let service = TimetableService(lastDay: lastDay, service: PrayerServiceAdhan(log: fixture.log))
-        return PrayerManager(service: service, londonService: service, log: fixture.log)
+        return PrayerManager(service: service, log: fixture.log)
     }
 
     func edinburghFajrPastSunriseByMay26() -> DayFixture {

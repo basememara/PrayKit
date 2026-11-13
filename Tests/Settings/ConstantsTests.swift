@@ -23,6 +23,7 @@ struct ConstantsTests {
             instagram: "example",
             websiteURL: address,
             partnerUrl: address,
+            helpURL: address,
             privacyURL: address,
             disclaimerURL: address,
             subscribeURL: address,

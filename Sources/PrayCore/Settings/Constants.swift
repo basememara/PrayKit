@@ -17,6 +17,7 @@ public struct Constants: Distribution, Sendable {
     public let instagram: String
     public let websiteURL: URL
     public let partnerUrl: URL
+    public let helpURL: URL
     public let privacyURL: URL
     public let disclaimerURL: URL
     public let subscribeURL: URL
@@ -39,6 +40,7 @@ public struct Constants: Distribution, Sendable {
         instagram: String,
         websiteURL: URL,
         partnerUrl: URL,
+        helpURL: URL,
         privacyURL: URL,
         disclaimerURL: URL,
         subscribeURL: URL,
@@ -60,6 +62,7 @@ public struct Constants: Distribution, Sendable {
         self.instagram = instagram
         self.websiteURL = websiteURL
         self.partnerUrl = partnerUrl
+        self.helpURL = helpURL
         self.privacyURL = privacyURL
         self.disclaimerURL = disclaimerURL
         self.subscribeURL = subscribeURL

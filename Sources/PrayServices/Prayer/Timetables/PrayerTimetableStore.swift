@@ -58,156 +58,142 @@ struct PrayerTimetableStore: Sendable {
 }
 
 extension PrayerTimetableStore {
-    /// The days of the table holding a date for the request's place, none while that table isn't published.
-    func days(holding date: Date, for request: PrayerAPI.Request) async throws -> Days {
-        var calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
+    /// The days of the table holding a date for the request's place, as far as they can be had: none while the table
+    /// isn't published or can't be reached.
+    ///
+    /// - Parameter calendar: A Gregorian calendar in the place's time zone.
+    func days(holding date: Date, using calendar: Calendar, for request: PrayerAPI.Request) async -> Days {
+        var calendar = calendar
         calendar.firstWeekday = 2
 
-        guard let period = calendar.dateInterval(of: source.period.component, for: date),
-              let dayCount = calendar.dateComponents([.day], from: period.start, to: period.end).day
-        else {
-            throw PrayError.invalidTimes
-        }
+        guard let period = calendar.dateInterval(of: source.period.component, for: date) else { return [:] }
 
-        let zone = source.zone(for: request)
-        let table = PrayerTimetable(start: TimetableDate(period.start, using: calendar), zone: zone)
-        let expired = calendar.date(byAdding: source.period.component, value: -Self.periodsKept, to: period.start)
-            .map { PrayerTimetable(start: TimetableDate($0, using: calendar), zone: zone) }
+        let table = PrayerTimetable(start: TimetableDate(period.start, using: calendar), zone: source.zone(for: request))
+        let now = now()
 
-        return try await loads.days(of: table, at: now()) {
-            try await load(table, dayCount: dayCount, replacing: expired)
+        return await loads.days(of: table, at: now) { [calendar] in
+            await load(table, covering: period, using: calendar, at: now)
         }
     }
 }
 
 // MARK: - Helpers
 
-/// A table as it was read, and when to ask for it again if it wasn't whole.
+/// A table as it was read, and when to read it again: never for a whole table.
 private struct Loaded: Sendable {
     let days: PrayerTimetableStore.Days
     let retryAfter: Date?
 }
 
+/// What the API said when asked for a table.
+private enum Answer {
+    /// Its response and the days in it, none for a table not yet published.
+    case table(Data, PrayerTimetableStore.Days)
+    case refused
+    /// No answer, or one that couldn't be read.
+    case unanswered
+}
+
 /// The tables read so far. `PrayerManager.fetch(between:)` fans out through a task group, so the days of a table share
-/// its one load. A whole table is kept for good, one that isn't until its wait has passed, and a load that fails
-/// isn't kept at all.
+/// its one load, which is kept until it is due again.
 private actor Loads {
-    private var loads = [PrayerTimetable: Task<Loaded, Error>]()
+    private var loads = [PrayerTimetable: Task<Loaded, Never>]()
 
     func days(
         of table: PrayerTimetable,
         at now: Date,
-        load: @escaping @Sendable () async throws -> Loaded
-    ) async throws -> PrayerTimetableStore.Days {
+        load: @escaping @Sendable () async -> Loaded
+    ) async -> PrayerTimetableStore.Days {
         if let task = loads[table] {
-            let loaded = try await task.value
+            let loaded = await task.value
             guard let retryAfter = loaded.retryAfter, now >= retryAfter else { return loaded.days }
 
             // Another caller may have started the next load while this one waited on the last
-            guard loads[table] == task else { return try await days(of: table, at: now, load: load) }
+            guard loads[table] == task else { return await days(of: table, at: now, load: load) }
         }
 
         let task = Task(operation: load)
         loads[table] = task
-
-        do {
-            return try await task.value.days
-        } catch {
-            if loads[table] == task {
-                loads[table] = nil
-            }
-
-            throw error
-        }
+        return await task.value.days
     }
 }
 
 private extension PrayerTimetableStore {
     /// A table is whole once it has a day for every day of its period. Until then what it has is saved and read, and
     /// the API is asked again once the wait has passed, so a table published in part never sticks.
-    func load(_ table: PrayerTimetable, dayCount: Int, replacing expired: PrayerTimetable?) async throws -> Loaded {
+    func load(_ table: PrayerTimetable, covering period: DateInterval, using calendar: Calendar, at now: Date) async -> Loaded {
         let path = path(of: table)
 
         // The bundle comes first, so a copy saved from the network never hides a table the package ships
         if let file = Self.bundledDirectory?.appending(path: "\(path).json"), let data = try? Data(contentsOf: file) {
             log.debug("Read the timetable '\(path)' from the bundle")
-            return Loaded(days: try decode(data, at: path), retryAfter: nil)
+            return Loaded(days: decode(data, at: path) ?? [:], retryAfter: nil)
         }
 
-        let saved = (try? Data(contentsOf: savedFile(at: path))).flatMap { try? decode($0, at: path) } ?? [:]
+        let dayCount = calendar.dateComponents([.day], from: period.start, to: period.end).day ?? 0
+        let saved = (try? Data(contentsOf: savedFile(at: path))).flatMap { decode($0, at: path) } ?? [:]
 
-        guard saved.count < dayCount else {
+        if !saved.isEmpty, saved.count >= dayCount {
             log.debug("Read the timetable '\(path)' from its saved file")
             return Loaded(days: saved, retryAfter: nil)
         }
 
         // A clock set back since the last ask reads as a wait that has passed
-        if let asked = lastAsked(at: path), (0..<Self.retryInterval).contains(now().timeIntervalSince(asked)) {
+        if let asked = lastAsked(at: path), (0..<Self.retryInterval).contains(now.timeIntervalSince(asked)) {
             log.debug("The timetable '\(path)' wasn't whole when last asked, so it isn't asked again yet")
             return Loaded(days: saved, retryAfter: asked + Self.retryInterval)
         }
 
+        switch await ask(for: table, at: path) {
+        case let .table(data, days) where !days.isEmpty:
+            let isWhole = days.count >= dayCount
+            let expired = calendar.date(byAdding: source.period.component, value: -Self.periodsKept, to: period.start)
+                .map { self.path(of: PrayerTimetable(start: TimetableDate($0, using: calendar), zone: table.zone)) }
+
+            save(data, isWhole: isWhole, at: path, replacing: expired, now: now)
+            return Loaded(days: days, retryAfter: isWhole ? nil : now + Self.retryInterval)
+        case .table, .refused:
+            // No days yet, or a refusal, is the API's answer, so it waits
+            markAsked(at: path, now: now)
+            return Loaded(days: saved, retryAfter: now + Self.retryInterval)
+        case .unanswered:
+            // A server that couldn't answer, or no connection, says nothing about the table: the days already saved
+            // wait before the next ask, and with none saved the next lookup asks again
+            guard !saved.isEmpty else { return Loaded(days: saved, retryAfter: now) }
+            markAsked(at: path, now: now)
+            return Loaded(days: saved, retryAfter: now + Self.retryInterval)
+        }
+    }
+
+    func ask(for table: PrayerTimetable, at path: String) async -> Answer {
         log.warning("Fetching the timetable '\(path)' from the network...")
 
         var request = source.urlRequest(for: table)
         request.timeoutInterval = Self.requestTimeout
 
-        let data: Data
         do {
-            data = try await networkManager.send(request).data
+            let data = try await networkManager.send(request).data
+            return decode(data, at: path).map { .table(data, $0) } ?? .unanswered
         } catch {
             log.error("Could not fetch the timetable '\(path)': \(Self.reason(for: error))")
-
-            // A refusal is the API's answer, so it waits like a table not yet published; a server that couldn't
-            // answer, or no connection, says nothing about the table
             let isRefused = (error as? NetworkError)?.statusCode.map((400..<500).contains) ?? false
-            return try unanswered(keeping: saved, at: path, waits: isRefused)
+            return isRefused ? .refused : .unanswered
         }
-
-        guard let days = try? decode(data, at: path) else {
-            return try unanswered(keeping: saved, at: path, waits: false)
-        }
-
-        guard !days.isEmpty else {
-            log.warning("The timetable '\(path)' has no days yet")
-
-            if saved.isEmpty {
-                try? FileManager.default.removeItem(at: savedFile(at: path))
-            }
-
-            markAsked(at: path)
-            return Loaded(days: saved, retryAfter: now() + Self.retryInterval)
-        }
-
-        let isWhole = days.count >= dayCount
-        save(data, isWhole: isWhole, at: path, replacing: expired.map(self.path))
-        return Loaded(days: days, retryAfter: isWhole ? nil : now() + Self.retryInterval)
     }
 
-    /// What an ask that got no table leaves: the days already saved, which then wait before the next ask, or no times,
-    /// like a day its timetable doesn't reach.
-    func unanswered(keeping saved: Days, at path: String, waits: Bool) throws -> Loaded {
-        if waits || !saved.isEmpty {
-            markAsked(at: path)
-        }
-
-        guard !saved.isEmpty else { throw PrayError.invalidTimes }
-        return Loaded(days: saved, retryAfter: now() + Self.retryInterval)
-    }
-
-    /// A table that can't be read has no times, whatever the source's own error.
-    func decode(_ data: Data, at path: String) throws -> Days {
+    /// The days in a table's file or response, or `nil` when it can't be read.
+    func decode(_ data: Data, at path: String) -> Days? {
         do {
             return try source.days(from: data)
         } catch {
             log.error("Could not read the timetable '\(path)'", error: error)
-            throw PrayError.invalidTimes
+            return nil
         }
     }
 
     /// Saves a table's days as a file. One that isn't whole yet is marked as asked, so the rest is asked for only once
     /// the wait has passed.
-    func save(_ data: Data, isWhole: Bool, at path: String, replacing expiredPath: String?) {
+    func save(_ data: Data, isWhole: Bool, at path: String, replacing expiredPath: String?, now: Date) {
         let fileManager = FileManager.default
         let savedFile = savedFile(at: path)
 
@@ -222,7 +208,7 @@ private extension PrayerTimetableStore {
 
         guard isWhole else {
             log.warning("The timetable '\(path)' isn't whole yet")
-            markAsked(at: path)
+            markAsked(at: path, now: now)
             return
         }
 
@@ -243,12 +229,12 @@ private extension PrayerTimetableStore {
     }
 
     /// Notes that the API was asked just now and didn't have the whole table to give.
-    func markAsked(at path: String) {
+    func markAsked(at path: String, now: Date) {
         let file = askedFile(at: path)
 
         do {
             try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try Data(String(now().timeIntervalSince1970).utf8).write(to: file, options: .atomic)
+            try Data(String(now.timeIntervalSince1970).utf8).write(to: file, options: .atomic)
         } catch {
             log.error("Could not note when the timetable '\(path)' was asked for", error: error)
         }

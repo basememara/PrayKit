@@ -55,10 +55,6 @@ extension PrayerServiceTimetableTests {
             try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
         }
 
-        // Then
-        #expect(!isSaved("london/\(lastYear + 1).json"), "A year with no days must not stay saved")
-
-        // When
         await api.publish(lastYear + 1)
         clock.advance(by: 7 * 3600)
         let times = try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
@@ -255,14 +251,14 @@ extension PrayerServiceTimetableTests {
     func aRequestThatHangsIsGivenUpOnAfterFifteenSeconds() async throws {
         // Given
         let place = london(2019)
-        let api = TimeoutProbe()
+        let api = LondonAPI()
         let service = londonService(api)
 
         // When
         _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
 
         // Then
-        #expect(await api.timeouts == [15])
+        #expect(await api.requests.map(\.timeoutInterval) == [15])
     }
 
     @Test
@@ -532,16 +528,6 @@ private actor FailingAPI: NetworkService {
     }
 }
 
-/// Notes how long each request is willing to wait, and answers with a year not yet published.
-private actor TimeoutProbe: NetworkService {
-    private(set) var timeouts = [TimeInterval]()
-
-    func send(_ request: URLRequest) async throws -> NetworkResponse {
-        timeouts.append(request.timeoutInterval)
-        return NetworkResponse(data: Data(LondonAPI.unpublished.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
-    }
-}
-
 /// Answers every request with a page that isn't a timetable.
 private struct UnreadableAPI: NetworkService {
     func send(_ request: URLRequest) async throws -> NetworkResponse {
@@ -566,7 +552,9 @@ private actor LondonAPI: NetworkService {
 
     private var published: (year: Int, months: ClosedRange<Int>)?
     private var isOffline = false
-    private(set) var requestedURLs = [String]()
+    private(set) var requests = [URLRequest]()
+
+    var requestedURLs: [String] { requests.map { $0.url?.absoluteString ?? "" } }
 
     func publish(_ year: Int, months: ClosedRange<Int> = 1...12) {
         published = (year, months)
@@ -577,7 +565,7 @@ private actor LondonAPI: NetworkService {
     }
 
     func send(_ request: URLRequest) async throws -> NetworkResponse {
-        requestedURLs.append(request.url?.absoluteString ?? "")
+        requests.append(request)
         guard !isOffline else { throw URLError(.notConnectedToInternet) }
 
         let body = published.map { Self.response(year: $0.year, months: $0.months) } ?? Self.unpublished

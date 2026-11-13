@@ -52,7 +52,7 @@ public extension PrayerServiceTimetable {
         let calendar = Calendar(identifier: .gregorian, timeZone: request.timeZone, locale: .posix)
         let today = TimetableDate(date, using: calendar)
 
-        guard let prayerTimes = try await store.days(holding: date, for: request)[today] else { throw PrayError.invalidTimes }
+        guard let prayerTimes = await store.days(holding: date, using: calendar, for: request)[today] else { throw PrayError.invalidTimes }
         let asr = request.jurisprudence == .hanafi ? prayerTimes.asrHanafi ?? prayerTimes.asr : prayerTimes.asr
 
         guard var fajrTime = prayerTimes.fajr.date(on: today, using: calendar),
@@ -70,7 +70,7 @@ public extension PrayerServiceTimetable {
         let tomorrowDate = date.tomorrow(using: calendar)
         let tomorrow = TimetableDate(tomorrowDate, using: calendar)
 
-        guard let tomorrowPrayers = try await store.days(holding: tomorrowDate, for: request)[tomorrow],
+        guard let tomorrowPrayers = await store.days(holding: tomorrowDate, using: calendar, for: request)[tomorrow],
               var tomorrowFajrTime = tomorrowPrayers.fajr.date(on: tomorrow, using: calendar),
               var tomorrowSunriseTime = tomorrowPrayers.sunrise.date(on: tomorrow, using: calendar)
         else {

@@ -186,6 +186,35 @@ extension PrayerServiceTimetableTests {
     }
 }
 
+// MARK: - The key
+
+extension PrayerServiceTimetableTests {
+    /// A failed request's error prints its URL, and London's carries the key, so the log names the table and the
+    /// failure only: support requests attach the log.
+    @Test(arguments: [FailingNetwork(statusCode: 403), FailingNetwork(statusCode: nil)])
+    fileprivate func aFailedRequestNeverLogsTheKey(network: FailingNetwork) async throws {
+        // Given
+        let place = london(2019)
+        let recorder = RecordingLog()
+        let service = PrayerServiceTimetable(
+            source: PrayerTimetableSourceLondon(apiKey: "abc-123_XYZ"),
+            networkManager: NetworkManager(service: network),
+            directory: folder,
+            log: LogManager(services: [recorder])
+        )
+
+        // When
+        await #expect(throws: PrayError.self) {
+            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(!recorder.text.contains("abc-123_XYZ"))
+        #expect(!recorder.text.contains("londonprayertimes.com"))
+        #expect(recorder.text.contains("Could not fetch the timetable 'london/2019': \(network.statusCode.map { "status \($0)" } ?? "URL error -1009")"))
+    }
+}
+
 // MARK: - Any source
 
 /// A source brings only its period, its zones, its request and its format; the files, the waits and the day's times are
@@ -319,6 +348,39 @@ private extension PrayerServiceTimetableTests {
         try FileManager.default.subpathsOfDirectory(atPath: folder.path)
             .filter { !$0.hasPrefix(".") && $0.contains(".") }
             .sorted()
+    }
+}
+
+/// Keeps every log entry as the file log would write it.
+private final class RecordingLog: LogService {
+    let minLevel = LogAPI.Level.verbose
+    private let entries = OSAllocatedUnfairLock(initialState: [String]())
+
+    var text: String { entries.withLock { $0.joined(separator: "\n") } }
+
+    func write(
+        _ level: LogAPI.Level,
+        with message: String,
+        file: String,
+        function: String,
+        line: Int,
+        error: Error?,
+        context: [String: any CustomStringConvertible & Sendable],
+        sessionContext: [String: any CustomStringConvertible & Sendable]
+    ) {
+        let entry = format(message, file, function, line, error, context)
+        entries.withLock { $0.append(entry) }
+    }
+}
+
+/// Fails as `NetworkServiceFoundation` does: with the status the server answered, or the transport's error when it
+/// didn't, which names the URL that failed.
+private struct FailingNetwork: NetworkService {
+    let statusCode: Int?
+
+    func send(_ request: URLRequest) async throws -> NetworkResponse {
+        let offline = URLError(.notConnectedToInternet, userInfo: [NSURLErrorFailingURLStringErrorKey: request.url?.absoluteString ?? ""])
+        throw NetworkError(request: request, statusCode: statusCode, internalError: statusCode == nil ? offline : nil)
     }
 }
 

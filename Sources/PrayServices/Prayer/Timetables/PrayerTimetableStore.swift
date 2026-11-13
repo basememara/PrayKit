@@ -130,7 +130,7 @@ private extension PrayerTimetableStore {
             data = try await networkManager.send(source.urlRequest(for: table)).data
         } catch {
             // A table that can't be fetched has no times, like a day its timetable doesn't reach
-            log.error("Could not fetch the timetable '\(path)'", error: error)
+            log.error("Could not fetch the timetable '\(path)': \(Self.reason(for: error))")
             throw PrayError.invalidTimes
         }
 
@@ -172,6 +172,19 @@ private extension PrayerTimetableStore {
         } catch {
             log.error("Could not save the timetable '\(path)'", error: error)
         }
+    }
+
+    /// Why a request failed, without the error itself: both a network error and the transport's own print the
+    /// request's URL, which can carry the source's key, and the log is what support requests attach.
+    static func reason(for error: Error) -> String {
+        let networkError = error as? NetworkError
+
+        if let statusCode = networkError?.statusCode {
+            return "status \(statusCode)"
+        }
+
+        guard let urlError = (networkError?.internalError ?? error) as? URLError else { return "no response" }
+        return "URL error \(urlError.code.rawValue)"
     }
 
     /// When the API last answered that the table had no days yet.

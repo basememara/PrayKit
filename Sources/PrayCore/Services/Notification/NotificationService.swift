@@ -16,6 +16,10 @@ public protocol NotificationService: Sendable {
 
     var hasSnooze: Bool { get async }
     func removeSnooze() async
+
+    /// Clears the delivered notifications the settings say go when the one with `identifier` is opened, swiped away
+    /// or snoozed (`Settings.deliveredToClear`).
+    func clearDelivered(touching identifier: String) async
 }
 
 public extension NotificationService {

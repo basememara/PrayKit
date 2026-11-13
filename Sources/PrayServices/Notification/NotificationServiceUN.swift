@@ -290,6 +290,13 @@ public extension NotificationServiceUN {
     func removeSnooze() async {
         await userNotification.remove(withCategory: NotificationCategory.snooze.rawValue)
     }
+
+    func clearDelivered(touching identifier: String) async {
+        let delivered = await userNotification.deliveredNotifications().map(DeliveredNotification.init)
+        let identifiers = storage.load().document.settings.deliveredToClear(touching: identifier, among: delivered, at: .now)
+        userNotification.removeDeliveredNotifications(withIdentifiers: identifiers)
+        log.info("Cleared delivered notifications", context: ["cleared": "\(identifiers.count)"])
+    }
 }
 
 // MARK: - Helpers
@@ -373,7 +380,7 @@ public extension PrayerTime {
     }
 }
 
-public extension DeliveredNotification {
+extension DeliveredNotification {
     init(_ notification: UNNotification) {
         self.init(
             identifier: notification.request.identifier,

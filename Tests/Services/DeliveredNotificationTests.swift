@@ -22,7 +22,7 @@ struct DeliveredNotificationTests {
     init() throws {
         let calendar = Calendar(identifier: .gregorian, timeZone: try #require(TimeZone(identifier: "Asia/Kuala_Lumpur")))
         let day = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 13)))
-        let at = { (hour: Int, minute: Int) in day.addingTimeInterval(TimeInterval(hour * 3600 + minute * 60)) }
+        let at = { (hour: Int, minute: Int) in Self.time(hour, minute, on: day) }
         self.day = day
 
         fajr = DeliveredNotification(identifier: "fajr", category: .main, date: at(5, 38), prayerStart: at(5, 38))
@@ -37,6 +37,10 @@ struct DeliveredNotificationTests {
     private var delivered: [DeliveredNotification] { [fajr, dhuhr, asrReminder, dhuhrIqamaReminder, methodSuggestion] }
 
     private func time(_ hour: Int, _ minute: Int) -> Date {
+        Self.time(hour, minute, on: day)
+    }
+
+    private static func time(_ hour: Int, _ minute: Int, on day: Date) -> Date {
         day.addingTimeInterval(TimeInterval(hour * 3600 + minute * 60))
     }
 }

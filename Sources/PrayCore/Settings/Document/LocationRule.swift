@@ -204,10 +204,14 @@ public extension SettingsStorage {
     @discardableResult
     func followLocation(at date: Date = .now) -> DeviceState {
         update { state in
-            var current = state.place
-            current?.fixedAt = nil
-            return DeviceState(document: state.document.editing(at: date) { $0.followLocation() }, ownPlace: current)
+            DeviceState(document: state.document.editing(at: date) { $0.followLocation() }, ownPlace: state.place?.awaitingFix)
         }
+    }
+
+    /// Marks this device's own place for a fresh fix, which replaces it even within a kilometre.
+    @discardableResult
+    func requestLocationFix() -> DeviceState {
+        update { DeviceState(document: $0.document, ownPlace: $0.ownPlace?.awaitingFix) }
     }
 
     /// Turns location off for the account and shares the place this device is on, so every device stays on one place
@@ -262,6 +266,13 @@ public extension SettingsStorage {
             place.regionName = regionName
             return DeviceState(document: state.document, ownPlace: place)
         }
+    }
+}
+
+private extension Place {
+    /// This place with no fix time, which `LocationRule` reads as asking for a fresh fix.
+    var awaitingFix: Place {
+        Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: nil)
     }
 }
 

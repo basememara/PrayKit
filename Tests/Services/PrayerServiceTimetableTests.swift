@@ -189,7 +189,7 @@ extension PrayerServiceTimetableTests {
             return
         }
 
-        #expect((try? savedFiles()) ?? [] == [])
+        #expect(((try? savedFiles()) ?? []).isEmpty)
     }
 
     @Test

@@ -68,7 +68,7 @@ extension PrayerServiceTimetableTests {
         let nextFajr = try place.date(lastYear + 1, 1, 1, 6, 26)
         #expect(isha.dateInterval.end == nextFajr)
         #expect(isSaved("london/\(lastYear + 1).json"), "A published year is saved")
-        #expect(!isSaved("london/\(lastYear + 1).unpublished"), "A published year is no longer waited on")
+        #expect(!isSaved("london/\(lastYear + 1).asked"), "A published year is no longer waited on")
     }
 
     /// A year the app doesn't bundle yet comes from the API once it's published, so January never goes blank.
@@ -225,19 +225,65 @@ extension PrayerServiceTimetableTests {
     }
 }
 
+// MARK: - Failures
+
+extension PrayerServiceTimetableTests {
+    /// A refusal is the API's answer, so it waits like a year not yet published; otherwise a key that stopped working
+    /// would be tried on every widget reload.
+    @Test(arguments: [403, 404])
+    func aRefusedRequestWaitsBeforeItIsAskedAgain(statusCode: Int) async throws {
+        // Given
+        let place = london(2019)
+        let api = FailingAPI(statusCode: statusCode)
+        let service = londonService(api)
+
+        // When
+        for _ in 1...3 {
+            _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(await api.requestCount == 1)
+
+        // When
+        clock.advance(by: 7 * 3600)
+        _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+
+        // Then
+        #expect(await api.requestCount == 2)
+    }
+
+    /// A server that couldn't answer, or no connection, says nothing about the table, so the next ask goes out.
+    @Test(arguments: [503, nil])
+    func aRequestThatGotNoAnswerIsAskedAgainNextTime(statusCode: Int?) async throws {
+        // Given
+        let place = london(2019)
+        let api = FailingAPI(statusCode: statusCode)
+        let service = londonService(api)
+
+        // When
+        for _ in 1...2 {
+            _ = try? await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(await api.requestCount == 2)
+    }
+}
+
 // MARK: - The key
 
 extension PrayerServiceTimetableTests {
     /// A failed request's error prints its URL, and London's carries the key, so the log names the table and the
     /// failure only: support requests attach the log.
-    @Test(arguments: [FailingNetwork(statusCode: 403), FailingNetwork(statusCode: nil)])
-    fileprivate func aFailedRequestNeverLogsTheKey(network: FailingNetwork) async throws {
+    @Test(arguments: [403, nil])
+    func aFailedRequestNeverLogsTheKey(statusCode: Int?) async throws {
         // Given
         let place = london(2019)
         let recorder = RecordingLog()
         let service = PrayerServiceTimetable(
             source: PrayerTimetableSourceLondon(apiKey: "abc-123_XYZ"),
-            networkManager: NetworkManager(service: network),
+            networkManager: NetworkManager(service: FailingAPI(statusCode: statusCode)),
             directory: folder,
             log: LogManager(services: [recorder])
         )
@@ -250,7 +296,7 @@ extension PrayerServiceTimetableTests {
         // Then
         #expect(!recorder.text.contains("abc-123_XYZ"))
         #expect(!recorder.text.contains("londonprayertimes.com"))
-        #expect(recorder.text.contains("Could not fetch the timetable 'london/2019': \(network.statusCode.map { "status \($0)" } ?? "URL error -1009")"))
+        #expect(recorder.text.contains("Could not fetch the timetable 'london/2019': \(statusCode.map { "status \($0)" } ?? "URL error -1009")"))
     }
 }
 
@@ -414,10 +460,16 @@ private final class RecordingLog: LogService {
 
 /// Fails as `NetworkServiceFoundation` does: with the status the server answered, or the transport's error when it
 /// didn't, which names the URL that failed.
-private struct FailingNetwork: NetworkService {
-    let statusCode: Int?
+private actor FailingAPI: NetworkService {
+    private let statusCode: Int?
+    private(set) var requestCount = 0
+
+    init(statusCode: Int?) {
+        self.statusCode = statusCode
+    }
 
     func send(_ request: URLRequest) async throws -> NetworkResponse {
+        requestCount += 1
         let offline = URLError(.notConnectedToInternet, userInfo: [NSURLErrorFailingURLStringErrorKey: request.url?.absoluteString ?? ""])
         throw NetworkError(request: request, statusCode: statusCode, internalError: statusCode == nil ? offline : nil)
     }

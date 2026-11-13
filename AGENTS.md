@@ -30,7 +30,7 @@ Some methods read an authority's published timetable instead of calculating; Lon
 | Piece | What it knows |
 |---|---|
 | `PrayerTimetableSource` (`Sources/PrayServices/Prayer/Timetables/`) | One authority: its folder name (`id`), what one table covers (`period`: a year, a month or a week), the zone a place reads (`zone(for:)`, none by default), the request for a table and how its response reads. `PrayerTimetableSourceLondon` is the model. |
-| `PrayerTimetableStore` (same folder) | Where a table is and when the API is asked: the bundled copy first, then the saved file, then the network. A table the API hasn't published is asked for again only after six hours, a wait every process sharing the folder keeps, and concurrent days share one request. |
+| `PrayerTimetableStore` (same folder) | Where a table is and when the API is asked: the bundled copy first, then the saved file, then the network. A table the API hasn't published, or refused (a 4xx), is asked for again only after six hours, a wait every process sharing the folder keeps; a server error or no connection is asked again next time. A request gives up after fifteen seconds, and concurrent days share one. |
 | `PrayerServiceTimetable` (`Sources/PrayServices/Prayer/`) | A printed day into prayer times, the same for every source: clocks read in the request's time zone, the user's adjustments, the order check, and tomorrow's Fajr from the table holding tomorrow. It is the one public type, with a factory per source (`.london(apiKey:networkManager:directory:log:)`). |
 
 The bundled tables (`Sources/PrayServices/Resources/PrayerTimetables/`, copied into the bundle with its folders) and the saved ones (the folder the app passes in, in its App Group) share one layout:
@@ -39,7 +39,7 @@ The bundled tables (`Sources/PrayServices/Resources/PrayerTimetables/`, copied i
 PrayerTimetables/
 ├── london/                  a folder per source
 │   ├── 2026.json            a file per table, named for the period it covers
-│   └── 2028.unpublished     saved only: when the API last said the table had no days
+│   └── 2028.asked           saved only: when the API was last asked and had no table to give
 └── <source>/<zone>/         a folder per zone, where the source has them
     ├── 2027-03.json         a month
     └── 2027-03-08.json      a week, named by its Monday

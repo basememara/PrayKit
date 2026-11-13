@@ -24,8 +24,9 @@ struct PrayerTimetableStore: Sendable {
 
     static let bundledDirectory = Bundle.module.resourceURL?.appending(path: "PrayerTimetables", directoryHint: .isDirectory)
 
-    /// How long a table the API hasn't published waits before it's asked for again, by every process sharing the folder.
-    private static let unpublishedRetryInterval: TimeInterval = 6 * 3600
+    /// How long a table the API hasn't published, or refused, waits before it's asked for again, by every process
+    /// sharing the folder.
+    private static let retryInterval: TimeInterval = 6 * 3600
 
     /// How long a request waits on a silent connection, in place of Foundation's minute: a day at the end of a table
     /// needs the next one's first Fajr, so a request that hangs holds back that day's own times.
@@ -122,8 +123,8 @@ private extension PrayerTimetableStore {
         }
 
         // A clock set back since the last ask reads as a wait that has passed
-        if let asked = lastAsked(at: path), (0..<Self.unpublishedRetryInterval).contains(now().timeIntervalSince(asked)) {
-            log.debug("The timetable '\(path)' had no days when last asked, so it isn't asked again yet")
+        if let asked = lastAsked(at: path), (0..<Self.retryInterval).contains(now().timeIntervalSince(asked)) {
+            log.debug("The timetable '\(path)' wasn't to be had when last asked, so it isn't asked again yet")
             return [:]
         }
 
@@ -138,6 +139,13 @@ private extension PrayerTimetableStore {
         } catch {
             // A table that can't be fetched has no times, like a day its timetable doesn't reach
             log.error("Could not fetch the timetable '\(path)': \(Self.reason(for: error))")
+
+            // A refusal is the API's answer, so it waits like a table not yet published; a server that couldn't
+            // answer, or no connection, says nothing about the table
+            if let statusCode = (error as? NetworkError)?.statusCode, (400..<500).contains(statusCode) {
+                markAsked(at: path)
+            }
+
             throw PrayError.invalidTimes
         }
 
@@ -161,20 +169,18 @@ private extension PrayerTimetableStore {
     func save(_ data: Data, hasDays: Bool, at path: String, replacing expiredPath: String?) {
         let fileManager = FileManager.default
         let savedFile = savedFile(at: path)
-        let unpublishedFile = unpublishedFile(at: path)
+
+        guard hasDays else {
+            log.warning("The timetable '\(path)' has no days yet, so it isn't saved")
+            try? fileManager.removeItem(at: savedFile)
+            markAsked(at: path)
+            return
+        }
 
         do {
             try fileManager.createDirectory(at: savedFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-
-            guard hasDays else {
-                log.warning("The timetable '\(path)' has no days yet, so it isn't saved")
-                try? fileManager.removeItem(at: savedFile)
-                try Data(String(now().timeIntervalSince1970).utf8).write(to: unpublishedFile, options: .atomic)
-                return
-            }
-
             try data.write(to: savedFile, options: .atomic)
-            try? fileManager.removeItem(at: unpublishedFile)
+            try? fileManager.removeItem(at: askedFile(at: path))
             try? expiredPath.map { try fileManager.removeItem(at: self.savedFile(at: $0)) }
             log.debug("Saved the timetable '\(path)'")
         } catch {
@@ -195,9 +201,21 @@ private extension PrayerTimetableStore {
         return "URL error \(urlError.code.rawValue)"
     }
 
-    /// When the API last answered that the table had no days yet.
+    /// Notes that the API was asked just now and had no table to give.
+    func markAsked(at path: String) {
+        let file = askedFile(at: path)
+
+        do {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data(String(now().timeIntervalSince1970).utf8).write(to: file, options: .atomic)
+        } catch {
+            log.error("Could not note when the timetable '\(path)' was asked for", error: error)
+        }
+    }
+
+    /// When the API was last asked and had no table to give.
     func lastAsked(at path: String) -> Date? {
-        (try? String(contentsOf: unpublishedFile(at: path), encoding: .utf8))
+        (try? String(contentsOf: askedFile(at: path), encoding: .utf8))
             .flatMap(TimeInterval.init)
             .map(Date.init(timeIntervalSince1970:))
     }
@@ -213,7 +231,7 @@ private extension PrayerTimetableStore {
         directory.appending(path: "\(path).json")
     }
 
-    func unpublishedFile(at path: String) -> URL {
-        directory.appending(path: "\(path).unpublished")
+    func askedFile(at path: String) -> URL {
+        directory.appending(path: "\(path).asked")
     }
 }

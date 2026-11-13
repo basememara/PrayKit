@@ -169,6 +169,29 @@ extension PrayerServiceTimetableTests {
         }
     }
 
+    /// An answer that isn't the timetable (a captive portal's page, say) is no times, and nothing is kept of it, so the
+    /// year is asked for again.
+    @Test
+    func anAnswerThatCantBeReadHasNoTimes() async throws {
+        // Given
+        let year = try lastBundledYear() + 6
+        let place = london(year)
+        let service = londonService(UnreadableAPI())
+
+        // When
+        let error = await #expect(throws: PrayError.self) {
+            try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        guard case .invalidTimes = error else {
+            Issue.record("Expected invalid times, got \(String(describing: error))")
+            return
+        }
+
+        #expect((try? savedFiles()) ?? [] == [])
+    }
+
     @Test
     func aYearThatIsNotBundledIsAskedForWithTheKeyAndTheYear() async throws {
         // Given
@@ -381,6 +404,13 @@ private struct FailingNetwork: NetworkService {
     func send(_ request: URLRequest) async throws -> NetworkResponse {
         let offline = URLError(.notConnectedToInternet, userInfo: [NSURLErrorFailingURLStringErrorKey: request.url?.absoluteString ?? ""])
         throw NetworkError(request: request, statusCode: statusCode, internalError: statusCode == nil ? offline : nil)
+    }
+}
+
+/// Answers every request with a page that isn't a timetable.
+private struct UnreadableAPI: NetworkService {
+    func send(_ request: URLRequest) async throws -> NetworkResponse {
+        NetworkResponse(data: Data("<html>Sign in to continue</html>".utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
     }
 }
 

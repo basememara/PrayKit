@@ -139,12 +139,13 @@ private extension PrayerTimetableStore {
         return days
     }
 
+    /// A table that can't be read has no times, whatever the source's own error.
     func decode(_ data: Data, at path: String) throws -> Days {
         do {
             return try source.days(from: data)
         } catch {
             log.error("Could not read the timetable '\(path)'", error: error)
-            throw error
+            throw PrayError.invalidTimes
         }
     }
 

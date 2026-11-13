@@ -373,6 +373,17 @@ public extension PrayerTime {
     }
 }
 
+public extension DeliveredNotification {
+    init(_ notification: UNNotification) {
+        self.init(
+            identifier: notification.request.identifier,
+            category: NotificationCategory(rawValue: notification.request.content.categoryIdentifier),
+            date: notification.date,
+            prayerStart: PrayerTime(from: notification.request.content)?.dateInterval.start
+        )
+    }
+}
+
 #if !os(macOS)
 private extension INRelevantShortcut {
     convenience init(

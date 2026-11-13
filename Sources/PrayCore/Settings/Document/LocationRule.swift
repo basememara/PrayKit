@@ -102,13 +102,14 @@ public extension Settings {
     }
 
     /// Upgrades settings saved before picks were recorded, when the time zone alone set the method: one that differs
-    /// from the zone's was picked by hand and is kept where the user is, and any other follows the place from now on.
+    /// from the zone's is kept as picked by hand, but not yet kept where the user is, so the place asks about its own
+    /// once (old defaults and fallbacks left many there without choosing it). Any other follows the place from now on.
     /// A method already the place's own follows too: another of the account's devices may have upgraded and synced first.
     mutating func upgradeMethod(at place: Place) {
         guard manualMethod == nil else { return }
 
         guard [Self.placeMethod(for: place.timeZone, at: nil), Self.placeMethod(at: place)].contains(calculationMethod) else {
-            manualMethod = ManualMethod(keptTimeZones: [CalculationMethod.area(at: place)])
+            manualMethod = ManualMethod(keptTimeZones: [])
             return
         }
 

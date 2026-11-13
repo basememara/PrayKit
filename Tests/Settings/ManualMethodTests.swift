@@ -123,26 +123,40 @@ extension ManualMethodTests {
 // MARK: - Upgrading
 
 extension ManualMethodTests {
+    // Old defaults and the old fallback left many on a method the place doesn't use, so the place asks once, and a
+    // method kept there is never asked about again
     @Test
-    func aMethodOtherThanThePlacesWasPickedByHand() throws {
+    func aMethodOtherThanThePlacesIsKeptAndAskedAboutOnce() throws {
         let winnipeg = try #require(winnipeg)
         var settings = Settings()
         settings.calculationMethod = .northAmerica
 
         settings.upgradeMethod(at: .zone(winnipeg))
 
-        #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["America/Winnipeg"]))
+        #expect(settings.calculationMethod == .northAmerica)
+        #expect(settings.manualMethod == ManualMethod(keptTimeZones: []))
+        #expect(settings.methodSuggestion(at: .zone(winnipeg)) == .moonsightingCommittee)
+
+        settings.keepMethod(at: .zone(winnipeg))
+
+        #expect(settings.methodSuggestion(at: .zone(winnipeg)) == nil)
     }
 
     @Test(arguments: [CalculationMethod.moonsightingCommittee, .muslimWorldLeague])
-    func aUniversalMethodOtherThanThePlacesWasPickedByHand(method: CalculationMethod) throws {
+    func aUniversalMethodOtherThanThePlacesIsKeptAndAskedAboutOnce(method: CalculationMethod) throws {
         let riyadh = try #require(riyadh)
         var settings = Settings()
         settings.calculationMethod = method
 
         settings.upgradeMethod(at: .zone(riyadh))
 
-        #expect(settings.manualMethod == ManualMethod(keptTimeZones: ["Asia/Riyadh"]))
+        #expect(settings.calculationMethod == method)
+        #expect(settings.manualMethod == ManualMethod(keptTimeZones: []))
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) != nil)
+
+        settings.keepMethod(at: .zone(riyadh))
+
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) == nil)
     }
 
     @Test

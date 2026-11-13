@@ -215,7 +215,7 @@ extension LondonTimetableTests {
     }
 
     @Test
-    func anUpgradeKeepsAMethodPickedOutsideLondonWithoutAskingThere() throws {
+    func anUpgradeKeepsAMethodPickedOutsideLondonAndAsksOnce() throws {
         let timeZone = try #require(TimeZone(identifier: "Europe/London"))
         var settings = Settings()
         settings.calculationMethod = .muslimWorldLeague
@@ -223,7 +223,7 @@ extension LondonTimetableTests {
         settings.upgradeMethod(at: .zone(timeZone, at: edinburgh))
 
         #expect(settings.calculationMethod == .muslimWorldLeague)
-        #expect(settings.methodSuggestion(at: .zone(timeZone, at: edinburgh)) == nil)
+        #expect(settings.methodSuggestion(at: .zone(timeZone, at: edinburgh)) == .moonsightingCommittee)
         #expect(settings.methodSuggestion(at: .zone(timeZone, at: london)) == .london)
     }
 }

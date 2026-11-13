@@ -192,6 +192,63 @@ extension PrayerServiceTimetableTests {
         #expect(((try? savedFiles()) ?? []).isEmpty)
     }
 
+    /// A year the API has published only in part answers for the days it has, and is asked for again once the wait has
+    /// passed, so the rest arrives instead of the part sticking for good.
+    @Test
+    func aPartlyPublishedYearIsAskedForAgainUntilItIsWhole() async throws {
+        // Given
+        let year = try lastBundledYear() + 7
+        let place = london(year)
+        let api = LondonAPI()
+        await api.publish(year, months: 1...1)
+        let service = londonService(api)
+        let march = try place.date(year, 3, 1)
+
+        // When
+        let januaryTimes = try await service.calculate(for: try place.date(year, 1, 15), using: try place.calendar(), with: try place.request())
+
+        await #expect(throws: PrayError.self) {
+            try await service.calculate(for: march, using: try place.calendar(), with: try place.request())
+        }
+
+        // Then
+        #expect(januaryTimes.contains { $0.type == .fajr })
+        #expect(await api.requestedURLs.count == 1, "The days it lacks wait before the year is asked for again")
+        #expect(isSaved("london/\(year).json"))
+        #expect(isSaved("london/\(year).asked"))
+
+        // When
+        await api.publish(year)
+        clock.advance(by: 7 * 3600)
+        let marchTimes = try await service.calculate(for: march, using: try place.calendar(), with: try place.request())
+
+        // Then
+        #expect(marchTimes.contains { $0.type == .fajr })
+        #expect(await api.requestedURLs.count == 2)
+        #expect(!isSaved("london/\(year).asked"), "A whole year is never asked for again")
+    }
+
+    @Test
+    func aPartlyPublishedYearKeepsItsDaysWhenItCantBeAskedAgain() async throws {
+        // Given
+        let year = try lastBundledYear() + 8
+        let place = london(year)
+        let api = LondonAPI()
+        await api.publish(year, months: 1...1)
+        let service = londonService(api)
+        let january = try place.date(year, 1, 15)
+        _ = try await service.calculate(for: january, using: try place.calendar(), with: try place.request())
+
+        // When
+        await api.goOffline()
+        clock.advance(by: 7 * 3600)
+        let times = try await service.calculate(for: january, using: try place.calendar(), with: try place.request())
+
+        // Then
+        #expect(times.contains { $0.type == .fajr })
+        #expect(await api.requestedURLs.count == 2)
+    }
+
     /// Dec 31 needs the next year's first Fajr, so a request that hangs holds back that day's own times; Foundation
     /// would wait a minute.
     @Test
@@ -503,34 +560,50 @@ private final class TestClock: Sendable {
     }
 }
 
-/// The London Prayer Times API: a year is empty until it is published, then holds its first two days.
+/// The London Prayer Times API: a year is empty until it is published, in whole or only its first months.
 private actor LondonAPI: NetworkService {
     static let unpublished = #"{"city":"london","times":{}}"#
 
-    private var published: Int?
+    private var published: (year: Int, months: ClosedRange<Int>)?
+    private var isOffline = false
     private(set) var requestedURLs = [String]()
 
-    func publish(_ year: Int) {
-        published = year
+    func publish(_ year: Int, months: ClosedRange<Int> = 1...12) {
+        published = (year, months)
+    }
+
+    func goOffline() {
+        isOffline = true
     }
 
     func send(_ request: URLRequest) async throws -> NetworkResponse {
         requestedURLs.append(request.url?.absoluteString ?? "")
+        guard !isOffline else { throw URLError(.notConnectedToInternet) }
 
-        let body = published.map { year in
+        let body = published.map { Self.response(year: $0.year, months: $0.months) } ?? Self.unpublished
+        return NetworkResponse(data: Data(body.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
+    }
+
+    /// Every day of the months as the API writes them, each with the same times.
+    private static func response(year: Int, months: ClosedRange<Int>) -> String {
+        let calendar = Calendar(identifier: .gregorian, timeZone: .gmt)
+
+        let days = months.flatMap { month in
+            calendar.date(from: DateComponents(year: year, month: month, day: 1))
+                .flatMap { calendar.range(of: .day, in: .month, for: $0) }
+                .map { $0.map { String(format: "%04d-%02d-%02d", year, month, $0) } } ?? []
+        }
+
+        let entries = days.map { day in
             #"""
-            {"city":"london","times":{"\#(year)-01-01":{"date":"\#(year)-01-01",
+            "\#(day)":{"date":"\#(day)",
             "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:09","dhuhr_jamat":"12:45",
             "asr":"13:46","asr_2":"14:17","asr_jamat":"14:45","magrib":"16:05","magrib_jamat":"16:12",
-            "isha":"17:42","isha_jamat":"19:30"},
-            "\#(year)-01-02":{"date":"\#(year)-01-02",
-            "fajr":"06:26","fajr_jamat":"06:46","sunrise":"08:03","dhuhr":"12:10","dhuhr_jamat":"12:45",
-            "asr":"13:47","asr_2":"14:18","asr_jamat":"14:45","magrib":"16:06","magrib_jamat":"16:13",
-            "isha":"17:43","isha_jamat":"19:30"}}}
+            "isha":"17:42","isha_jamat":"19:30"}
             """#
-        } ?? Self.unpublished
+        }
 
-        return NetworkResponse(data: Data(body.utf8), headers: [:], statusCode: 200, request: request, response: URLResponse())
+        return #"{"city":"london","times":{\#(entries.joined(separator: ","))}}"#
     }
 }
 

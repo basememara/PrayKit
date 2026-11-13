@@ -30,7 +30,7 @@ Some methods read an authority's published timetable instead of calculating; Lon
 | Piece | What it knows |
 |---|---|
 | `PrayerTimetableSource` (`Sources/PrayServices/Prayer/Timetables/`) | One authority: its folder name (`id`), what one table covers (`period`: a year, a month or a week), the zone a place reads (`zone(for:)`, none by default), the request for a table and how its response reads. `PrayerTimetableSourceLondon` is the model. |
-| `PrayerTimetableStore` (same folder) | Where a table is and when the API is asked: the bundled copy first, then the saved file, then the network. A table the API hasn't published, or refused (a 4xx), is asked for again only after six hours, a wait every process sharing the folder keeps; a server error or no connection is asked again next time. A request gives up after fifteen seconds, and concurrent days share one. |
+| `PrayerTimetableStore` (same folder) | Where a table is and when the API is asked: the bundled copy first, then the saved file, then the network. A table is whole once it has a day for every day of its period, and a whole table is never asked for again. One the API hasn't published, published in part or refused (a 4xx) is asked for again only after six hours, a wait every process sharing the folder keeps; the days a part table has are saved and read meanwhile, and stay when a later ask fails. A server error or no connection with nothing saved is asked again next time. A request gives up after fifteen seconds, and concurrent days share one. |
 | `PrayerServiceTimetable` (`Sources/PrayServices/Prayer/`) | A printed day into prayer times, the same for every source: clocks read in the request's time zone, the user's adjustments, the order check, and tomorrow's Fajr from the table holding tomorrow. It is the one public type, with a factory per source (`.london(apiKey:networkManager:directory:log:)`). |
 
 The bundled tables (`Sources/PrayServices/Resources/PrayerTimetables/`, copied into the bundle with its folders) and the saved ones (the folder the app passes in, in its App Group) share one layout:
@@ -39,7 +39,7 @@ The bundled tables (`Sources/PrayServices/Resources/PrayerTimetables/`, copied i
 PrayerTimetables/
 ├── london/                  a folder per source
 │   ├── 2026.json            a file per table, named for the period it covers
-│   └── 2028.asked           saved only: when the API was last asked and had no table to give
+│   └── 2028.asked           saved only: when the API was last asked and didn't have the whole table
 └── <source>/<zone>/         a folder per zone, where the source has them
     ├── 2027-03.json         a month
     └── 2027-03-08.json      a week, named by its Monday
@@ -52,7 +52,7 @@ PrayerTimetables/
 
 Adding a source:
 
-1. `PrayerTimetableSource<Name>.swift` beside London's: `id`, `period`, the request, and `days(from:)` over private `Decodable` types. A day that can't be read is left out; a table not yet published reads as no days.
+1. `PrayerTimetableSource<Name>.swift` beside London's: `id`, `period`, the request, and `days(from:)` over private `Decodable` types. A day that can't be read is left out, which leaves the table short of whole, so it is asked for again every six hours until the day reads; a table not yet published reads as no days.
 2. A factory on `PrayerServiceTimetable`, and its line in the app's `timetables` dictionary.
 3. The method: a `CalculationMethod` case if it's new, its zones in `mapped`, and its `reach` when the timetable holds only near a city (`CalculationMethod+Recommended.swift`).
 4. Tests: the source's own, as `PrayerTimetableSourceLondonTests` (a bundled table reads in full, its format's edges), and a `PrayerTimes` snapshot case for a place on it.

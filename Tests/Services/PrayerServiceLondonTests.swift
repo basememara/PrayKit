@@ -23,9 +23,9 @@ extension PrayerServiceLondonTests {
         // Given
         let year = try #require(PrayerServiceLondon.lastYear) - 1
         let place = london(year)
-        let defaults = UserDefaults.makeTest()
-        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: PrayerServiceLondon.cacheKey(forYear: year))
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: TimetableAPI()), apiKey: "", log: log, defaults: defaults)
+        let folder = try makeFolder()
+        try save(TimetableAPI.unpublished, asYear: year, in: folder)
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: TimetableAPI()), apiKey: "", log: log, directory: folder)
 
         // When
         let times = try await service.calculate(for: try place.firstNoon(), using: try place.calendar(), with: try place.request())
@@ -41,9 +41,9 @@ extension PrayerServiceLondonTests {
         let lastYear = try #require(PrayerServiceLondon.lastYear)
         let place = london(lastYear)
         let api = TimetableAPI()
-        let defaults = UserDefaults.makeTest()
-        defaults.set(Data(TimetableAPI.unpublished.utf8), forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1))
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
+        let folder = try makeFolder()
+        try save(TimetableAPI.unpublished, asYear: lastYear + 1, in: folder)
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, directory: folder)
         let yearsEnd = try place.date(lastYear, 12, 31)
 
         // When
@@ -52,18 +52,18 @@ extension PrayerServiceLondonTests {
         }
 
         // Then
-        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1)) == nil, "A year with no days must not stay saved")
+        #expect(!isSaved(lastYear + 1, in: folder), "A year with no days must not stay saved")
 
         // When
         await api.publish(lastYear + 1)
-        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: lastYear + 1)) // as if hours had passed
+        try markAskedLongAgo(lastYear + 1, in: folder) // as if hours had passed
         let times = try await service.calculate(for: yearsEnd, using: try place.calendar(), with: try place.request())
 
         // Then
         let isha = try #require(times.first { $0.type == .isha })
         let nextFajr = try place.date(lastYear + 1, 1, 1, 6, 26)
         #expect(isha.dateInterval.end == nextFajr)
-        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: lastYear + 1)) != nil, "A published year is saved")
+        #expect(isSaved(lastYear + 1, in: folder), "A published year is saved")
     }
 
     /// A year the app doesn't bundle yet comes from the API once it's published, so January never goes blank.
@@ -73,8 +73,8 @@ extension PrayerServiceLondonTests {
         let year = try #require(PrayerServiceLondon.lastYear) + 2
         let place = london(year)
         let api = TimetableAPI()
-        let defaults = UserDefaults.makeTest()
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
+        let folder = try makeFolder()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, directory: folder)
         let newYearsDay = try place.date(year, 1, 1, 12)
 
         // When
@@ -83,13 +83,13 @@ extension PrayerServiceLondonTests {
         }
 
         await api.publish(year)
-        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: year)) // as if hours had passed
+        try markAskedLongAgo(year, in: folder) // as if hours had passed
         let times = try await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
 
         // Then
         let fajr = try #require(times.first { $0.type == .fajr })
         #expect(fajr.dateInterval.start == (try place.date(year, 1, 1, 6, 26)))
-        #expect(defaults.object(forKey: PrayerServiceLondon.cacheKey(forYear: year)) != nil, "The fetched year is saved")
+        #expect(isSaved(year, in: folder), "The fetched year is saved")
     }
 
     /// A year the API hasn't published yet waits a few hours before it's asked for again, so every widget reload and
@@ -100,8 +100,8 @@ extension PrayerServiceLondonTests {
         let year = try #require(PrayerServiceLondon.lastYear) + 5
         let place = london(year)
         let api = TimetableAPI()
-        let defaults = UserDefaults.makeTest()
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: defaults)
+        let folder = try makeFolder()
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, directory: folder)
         let newYearsDay = try place.date(year, 1, 1, 12)
 
         // When
@@ -113,7 +113,7 @@ extension PrayerServiceLondonTests {
         #expect(await api.requestedURLs.count == 1)
 
         // When
-        defaults.set(Date.distantPast, forKey: PrayerServiceLondon.askedKey(forYear: year)) // as if hours had passed
+        try markAskedLongAgo(year, in: folder) // as if hours had passed
         _ = try? await service.calculate(for: newYearsDay, using: try place.calendar(), with: try place.request())
 
         // Then
@@ -127,7 +127,7 @@ extension PrayerServiceLondonTests {
         let year = try #require(PrayerServiceLondon.lastYear) + 4
         let place = london(year)
         let api = HeldAPI()
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, defaults: .makeTest())
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "", log: log, directory: try makeFolder())
         let days = try (1...8).map { try place.date(year, 1, $0, 12) }
         let calendar = try place.calendar()
         let request = try place.request()
@@ -152,7 +152,7 @@ extension PrayerServiceLondonTests {
         // Given
         let year = try #require(PrayerServiceLondon.lastYear) + 3
         let place = london(year)
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: OfflineNetwork()), apiKey: "", log: log, defaults: .makeTest())
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: OfflineNetwork()), apiKey: "", log: log, directory: try makeFolder())
 
         // When
         let error = await #expect(throws: PrayError.self) {
@@ -171,7 +171,7 @@ extension PrayerServiceLondonTests {
         // Given
         let place = london(2019)
         let api = TimetableAPI()
-        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "abc-123_XYZ", log: log, defaults: .makeTest())
+        let service = PrayerServiceLondon(networkManager: NetworkManager(service: api), apiKey: "abc-123_XYZ", log: log, directory: try makeFolder())
 
         // When
         await #expect(throws: PrayError.self) {
@@ -188,6 +188,25 @@ extension PrayerServiceLondonTests {
 private extension PrayerServiceLondonTests {
     func london(_ year: Int) -> DayFixture {
         DayFixture("London timetable", 51.5074, -0.1278, "Europe/London", .london, year, 6, 1)
+    }
+
+    func makeFolder() throws -> URL {
+        let folder = URL.temporaryDirectory.appending(path: "PrayerServiceLondonTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder
+    }
+
+    func save(_ json: String, asYear year: Int, in folder: URL) throws {
+        try Data(json.utf8).write(to: PrayerServiceLondon.savedFile(forYear: year, in: folder))
+    }
+
+    func isSaved(_ year: Int, in folder: URL) -> Bool {
+        FileManager.default.fileExists(atPath: PrayerServiceLondon.savedFile(forYear: year, in: folder).path)
+    }
+
+    func markAskedLongAgo(_ year: Int, in folder: URL) throws {
+        let file = PrayerServiceLondon.unpublishedFile(forYear: year, in: folder)
+        try FileManager.default.setAttributes([.modificationDate: Date.distantPast], ofItemAtPath: file.path)
     }
 }
 

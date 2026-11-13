@@ -10,27 +10,27 @@ import Foundation
 import PrayCore
 import ZamzamCore
 
-/// `UserDefaults` is documented as thread-safe, hence the unchecked conformance.
+/// `NetworkManager` and `FileManager` are safe to use from any thread, hence the unchecked conformance.
 public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
     private let networkManager: NetworkManager
-    private let defaults: UserDefaults
+    private let directory: URL
     private let apiKey: String
     private let log: LogManager
     private let cache = LondonPrayerTimetableCache()
 
     private static let filePrefix = "london-"
 
-    /// How long a year the API hasn't published waits before it's asked for again, by every process sharing the suite.
+    /// How long a year the API hasn't published waits before it's asked for again, by every process sharing the folder.
     private static let unpublishedRetryInterval: TimeInterval = 6 * 3600
 
-    /// Where a year fetched from the API is kept, apart from the settings that share the suite.
-    static func cacheKey(forYear year: Int) -> String {
-        "londonTimetable-\(year)"
+    /// A year fetched from the API, kept in the bundle's format.
+    static func savedFile(forYear year: Int, in directory: URL) -> URL {
+        directory.appending(path: "\(filePrefix)\(year).json")
     }
 
-    /// When the API last answered that a year had no days yet.
-    static func askedKey(forYear year: Int) -> String {
-        "londonTimetableAsked-\(year)"
+    /// An empty file whose date is when the API last answered that a year had no days yet.
+    static func unpublishedFile(forYear year: Int, in directory: URL) -> URL {
+        directory.appending(path: "\(filePrefix)\(year).unpublished")
     }
 
     /// The last year the bundled timetables cover, from the newest `london-<year>.json`.
@@ -41,14 +41,16 @@ public struct PrayerServiceLondon: PrayerService, @unchecked Sendable {
         }
         .max()
 
+    /// - Parameter directory: Where a year fetched from the API is saved; the app passes a folder in its App Group, so
+    ///   its widgets and extensions read the same copy.
     public init(
         networkManager: NetworkManager,
         apiKey: String,
         log: LogManager,
-        defaults: UserDefaults = UserDefaults(suiteName: "PrayerServiceLondon") ?? .standard
+        directory: URL = .cachesDirectory.appending(path: "LondonPrayerTimes", directoryHint: .isDirectory)
     ) {
         self.networkManager = networkManager
-        self.defaults = defaults
+        self.directory = directory
         self.apiKey = apiKey
         self.log = log
     }
@@ -210,78 +212,86 @@ private extension PrayerServiceLondon {
     }
 
     func load(_ year: Int) async throws -> [String: LondonPrayerTimes] {
-        let key = String(year)
-        let data: Data
+        let savedFile = Self.savedFile(forYear: year, in: directory)
 
         // The bundle comes first, so a copy saved from the network never hides a year the app ships
-        if let url = fileURL(forYear: year),
-            let contents = try? Data(contentsOf: url) {
-            // Retrieve from embedded file
-            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from bundle")
-            data = contents
-        } else if let value = defaults.data(forKey: Self.cacheKey(forYear: year)) {
-            // Retrieve from user defaults
-            log.debug("Fetched Unified London Prayer Timetable for '\(key)' from User Defaults")
-            data = value
-        } else if let asked = defaults.object(forKey: Self.askedKey(forYear: year)) as? Date,
-                  Date.now.timeIntervalSince(asked) < Self.unpublishedRetryInterval {
-            log.debug("Unified London Prayer Timetable for '\(key)' had no days when last asked, so it isn't asked again yet")
-            return [:]
-        } else {
-            // Retrieve remotely from endpoint
-            log.warning("Fetching Unified London Prayer Timetable for '\(key)' from network...")
-            let url = URL(safeString: "https://www.londonprayertimes.com/api/times/").appending(
-                queryItems: [
-                    URLQueryItem(name: "key", value: apiKey),
-                    URLQueryItem(name: "year", value: key),
-                    URLQueryItem(name: "24hours", value: "true"),
-                    URLQueryItem(name: "format", value: "json")
-                ]
-            )
-
-            do {
-                data = try await networkManager.send(URLRequest(url: url)).data
-                log.debug("Fetched Unified London Prayer Timetable for '\(key)' from network successfully")
-            } catch {
-                // A year that can't be fetched has no times, like a day its timetable doesn't reach
-                log.error("Could not fetch the Unified London Prayer Timetable for '\(key)'", error: error)
-                throw PrayError.invalidTimes
-            }
+        if let url = fileURL(forYear: year), let data = try? Data(contentsOf: url) {
+            log.debug("Read the Unified London Prayer Timetable for '\(year)' from the bundle")
+            return try decode(data, forYear: year)
         }
 
-        // Parse and save to cache
-        return try save(data: data, for: year)
+        if let data = try? Data(contentsOf: savedFile), let times = try? decode(data, forYear: year), !times.isEmpty {
+            log.debug("Read the Unified London Prayer Timetable for '\(year)' from its saved file")
+            return times
+        }
+
+        if let asked = modificationDate(of: Self.unpublishedFile(forYear: year, in: directory)),
+           Date.now.timeIntervalSince(asked) < Self.unpublishedRetryInterval {
+            log.debug("The Unified London Prayer Timetable for '\(year)' had no days when last asked, so it isn't asked again yet")
+            return [:]
+        }
+
+        log.warning("Fetching the Unified London Prayer Timetable for '\(year)' from the network...")
+        let url = URL(safeString: "https://www.londonprayertimes.com/api/times/").appending(
+            queryItems: [
+                URLQueryItem(name: "key", value: apiKey),
+                URLQueryItem(name: "year", value: String(year)),
+                URLQueryItem(name: "24hours", value: "true"),
+                URLQueryItem(name: "format", value: "json")
+            ]
+        )
+
+        let data: Data
+        do {
+            data = try await networkManager.send(URLRequest(url: url)).data
+        } catch {
+            // A year that can't be fetched has no times, like a day its timetable doesn't reach
+            log.error("Could not fetch the Unified London Prayer Timetable for '\(year)'", error: error)
+            throw PrayError.invalidTimes
+        }
+
+        let times = try decode(data, forYear: year)
+        save(data, hasDays: !times.isEmpty, forYear: year)
+        return times
     }
 
-    func save(data: Data, for year: Int) throws -> [String: PrayerServiceLondon.LondonPrayerTimes] {
-        let key = String(year)
-        let cacheKey = Self.cacheKey(forYear: year)
-        let decoded: PrayerServiceLondon.ServerResponse
-
+    func decode(_ data: Data, forYear year: Int) throws -> [String: LondonPrayerTimes] {
         do {
-            decoded = try JSONDecoder().decode(ServerResponse.self, from: data)
+            return try JSONDecoder().decode(ServerResponse.self, from: data).times
         } catch {
-            log.error("An error occured while storing Unified London Prayer Timetable for '\(key)' into cache", error: error)
+            log.error("Could not read the Unified London Prayer Timetable for '\(year)'", error: error)
             throw error
         }
+    }
 
-        // The API answers a year it hasn't published with no days, so it's asked again once the wait has passed
-        guard !decoded.times.isEmpty else {
-            log.warning("Unified London Prayer Timetable for '\(key)' has no days yet, so it isn't kept")
-            defaults.removeObject(forKey: cacheKey)
-            defaults.set(Date.now, forKey: Self.askedKey(forYear: year))
-            return [:]
+    /// Saves a published year as a file, or marks when the API answered it has no days yet, so it's asked again only
+    /// once the wait has passed.
+    func save(_ data: Data, hasDays: Bool, forYear year: Int) {
+        let fileManager = FileManager.default
+        let savedFile = Self.savedFile(forYear: year, in: directory)
+        let unpublishedFile = Self.unpublishedFile(forYear: year, in: directory)
+
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+
+            guard hasDays else {
+                log.warning("The Unified London Prayer Timetable for '\(year)' has no days yet, so it isn't saved")
+                try? fileManager.removeItem(at: savedFile)
+                try Data().write(to: unpublishedFile, options: .atomic)
+                return
+            }
+
+            try data.write(to: savedFile, options: .atomic)
+            try? fileManager.removeItem(at: unpublishedFile)
+            try? fileManager.removeItem(at: Self.savedFile(forYear: year - 2, in: directory))
+            log.debug("Saved the Unified London Prayer Timetable for '\(year)'")
+        } catch {
+            log.error("Could not save the Unified London Prayer Timetable for '\(year)'", error: error)
         }
+    }
 
-        // Persist in user preferences
-        defaults.removeObject(forKey: Self.askedKey(forYear: year))
-        if defaults.object(forKey: cacheKey) == nil {
-            defaults.set(data, forKey: cacheKey)
-            defaults.removeObject(forKey: Self.cacheKey(forYear: year - 2))
-        }
-
-        log.debug("Stored Unified London Prayer Timetable for '\(key)' into cache successfully")
-        return decoded.times
+    func modificationDate(of file: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: file.path))?[.modificationDate] as? Date
     }
 
     func fileURL(forYear year: Int) -> URL? {

@@ -29,7 +29,7 @@ struct PrayTestFixture {
                 networkManager: NetworkManager(service: OfflineNetwork()),
                 apiKey: "",
                 log: log,
-                defaults: .makeTest()
+                directory: .temporaryDirectory.appending(path: "PrayKitTests-London-\(UUID().uuidString)", directoryHint: .isDirectory)
             ),
             log: log
         )

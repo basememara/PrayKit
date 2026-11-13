@@ -239,7 +239,7 @@ Asia/Calcutta	Karachi	map
 Asia/Chita	Russia	map
 Asia/Choibalsan	MWL	map
 Asia/Chongqing	Moon	fallback
-Asia/Colombo	MWL	map
+Asia/Colombo	Singapore	map
 Asia/Damascus	Makkah	map
 Asia/Dhaka	MWL	map
 Asia/Dili	MWL	map
@@ -254,7 +254,7 @@ Asia/Hong_Kong	MWL	map
 Asia/Hovd	MWL	map
 Asia/Irkutsk	Russia	map
 Asia/Jakarta	Indonesia	map
-Asia/Jayapura	MWL	map
+Asia/Jayapura	Indonesia	map
 Asia/Jerusalem	MWL	map
 Asia/Kabul	Karachi	map
 Asia/Kamchatka	Russia	map
@@ -269,7 +269,7 @@ Asia/Kuching	MWL	map
 Asia/Kuwait	Kuwait	map
 Asia/Macau	MWL	map
 Asia/Magadan	Russia	map
-Asia/Makassar	MWL	map
+Asia/Makassar	Indonesia	map
 Asia/Manila	MWL	map
 Asia/Muscat	Dubai	map
 Asia/Nicosia	MWL	map
@@ -278,13 +278,13 @@ Asia/Novosibirsk	Russia	map
 Asia/Omsk	Russia	map
 Asia/Oral	MWL	map
 Asia/Phnom_Penh	Moon	fallback
-Asia/Pontianak	MWL	map
+Asia/Pontianak	Indonesia	map
 Asia/Pyongyang	MWL	map
 Asia/Qatar	Qatar	map
 Asia/Qostanay	MWL	map
 Asia/Qyzylorda	MWL	map
 Asia/Rangoon	MWL	map
-Asia/Riyadh	Makkah	map
+Asia/Riyadh	MakkahRamadan	map
 Asia/Sakhalin	Russia	map
 Asia/Samarkand	MWL	map
 Asia/Seoul	MWL	map
@@ -378,7 +378,7 @@ Europe/Skopje	MWL	map
 Europe/Sofia	MWL	map
 Europe/Stockholm	MWL	map
 Europe/Tallinn	MWL	map
-Europe/Tirane	MWL	map
+Europe/Tirane	Turkey	map
 Europe/Ulyanovsk	Russia	map
 Europe/Uzhgorod	MWL	map
 Europe/Vaduz	Moon	fallback
@@ -403,7 +403,7 @@ Indian/Mauritius	MWL	map
 Indian/Mayotte	MWL	map
 Indian/Reunion	MWL	map
 Pacific/Apia	MWL	map
-Pacific/Auckland	MWL	map
+Pacific/Auckland	Karachi	map
 Pacific/Bougainville	MWL	map
 Pacific/Chatham	MWL	map
 Pacific/Chuuk	MWL	map

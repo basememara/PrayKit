@@ -54,7 +54,7 @@ extension ManualMethodTests {
 
         settings.recommendMethod(at: .zone(riyadh))
 
-        #expect(settings.calculationMethod == .ummAlQura)
+        #expect(settings.calculationMethod == .ummAlQuraRamadan)
         #expect(settings.manualMethod == nil)
     }
 }
@@ -69,7 +69,7 @@ extension ManualMethodTests {
         var settings = Settings()
         settings.pickMethod(.northAmerica, at: .zone(winnipeg))
 
-        #expect(settings.methodSuggestion(at: .zone(riyadh)) == .ummAlQura)
+        #expect(settings.methodSuggestion(at: .zone(riyadh)) == .ummAlQuraRamadan)
     }
 
     @Test

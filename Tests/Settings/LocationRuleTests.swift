@@ -117,7 +117,7 @@ struct LocationRuleTests {
         let updated = try #require(LocationRule.apply(nearby, timeZone: current, at: date + 60, to: state))
 
         #expect(updated.place?.timeZone == current)
-        #expect(updated.document.settings.calculationMethod == .ummAlQura)
+        #expect(updated.document.settings.calculationMethod == .ummAlQuraRamadan)
         #expect(updated.document.revision(of: .calculationMethod) > state.document.revision(of: .calculationMethod))
     }
 
@@ -134,7 +134,7 @@ struct LocationRuleTests {
 
         let updated = try #require(LocationRule.apply(toronto, timeZone: current, at: date, to: state))
 
-        #expect(updated.document.settings.calculationMethod == .ummAlQura)
+        #expect(updated.document.settings.calculationMethod == .ummAlQuraRamadan)
     }
 
     @Test(arguments: [CalculationMethod.moonsightingCommittee, .muslimWorldLeague])
@@ -168,7 +168,7 @@ struct LocationRuleTests {
 
         #expect(updated.place?.timeZone == current)
         #expect(updated.document == state.document)
-        #expect(updated.document.settings.methodSuggestion(at: .zone(current)) == .ummAlQura)
+        #expect(updated.document.settings.methodSuggestion(at: .zone(current)) == .ummAlQuraRamadan)
     }
 
     // London's timetable is printed for London's clock: read in Riyadh it put Maghrib an hour and a half early
@@ -189,8 +189,8 @@ struct LocationRuleTests {
         let place = try #require(updated.place)
 
         #expect(abroad.calculationMethod == .london)
-        #expect(abroad.method(at: place) == .ummAlQura)
-        #expect(PrayerAPI.Request(settings: abroad, place: place)?.method == .ummAlQura)
+        #expect(abroad.method(at: place) == .ummAlQuraRamadan)
+        #expect(PrayerAPI.Request(settings: abroad, place: place)?.method == .ummAlQuraRamadan)
         #expect(abroad.methodSuggestion(at: place) == nil)
 
         let home = try #require(LocationRule.apply(Coordinates(latitude: 51.5074, longitude: -0.1278), timeZone: london, at: date + 120, to: updated))
@@ -206,7 +206,7 @@ struct LocationRuleTests {
         settings.pickMethod(.london, at: .zone(london))
         let place = Place(coordinates: Coordinates(latitude: 21.4225, longitude: 39.8262), timeZone: riyadh, regionName: "Makkah", fixedAt: date)
 
-        #expect(PrayerAPI.Request(settings: settings, place: place)?.method == .ummAlQura)
+        #expect(PrayerAPI.Request(settings: settings, place: place)?.method == .ummAlQuraRamadan)
     }
 
     @Test
@@ -236,7 +236,7 @@ struct LocationRuleTests {
         let saved = storage.setManualPlace(Coordinates(latitude: 21.4225, longitude: 39.8262), timeZone: riyadh, regionName: "Makkah", at: date)
 
         #expect(saved.document.settings.calculationMethod == .london)
-        #expect(try saved.document.settings.method(at: #require(saved.place)) == .ummAlQura)
+        #expect(try saved.document.settings.method(at: #require(saved.place)) == .ummAlQuraRamadan)
     }
 
     @Test

@@ -45,16 +45,42 @@ public enum LocationRule {
     }
 }
 
+public extension DeviceState {
+    /// This device after a copy of the account's settings arrives: the newer revision of every setting, and, when the
+    /// place picked for the account changed, that place in place of this device's own. A pick cleared with location on
+    /// lets this device follow its location again, its old place replaced by the next fix however near.
+    func receiving(_ remote: SettingsDocument) -> DeviceState {
+        var document = document.merging(remote)
+        let picked = document.settings.pickedPlace
+
+        guard picked != self.document.settings.pickedPlace else { return DeviceState(document: document, place: place) }
+
+        if let picked {
+            document.settings.isPlacePinned = false
+            return DeviceState(document: document, place: picked)
+        }
+
+        guard document.settings.isGPSEnabled else { return DeviceState(document: document, place: place) }
+
+        document.settings.isPlacePinned = false
+        var stale = place
+        stale?.fixedAt = nil
+        return DeviceState(document: document, place: stale)
+    }
+}
+
 public extension Settings {
     /// Whether this device takes its place from its location: GPS is on for the account and no place is pinned here.
     var followsLocation: Bool {
         isGPSEnabled && !isPlacePinned
     }
 
-    /// Has this device follow its location, which turns GPS on for the account and lets go of a place pinned here.
+    /// Has this device follow its location, which turns GPS on for the account, lets go of the place picked for it
+    /// and of one pinned here, so every device follows its own.
     mutating func followLocation() {
         isGPSEnabled = true
         isPlacePinned = false
+        pickedPlace = nil
     }
 }
 
@@ -141,9 +167,9 @@ extension Settings {
 }
 
 public extension SettingsStorage {
-    /// Saves a place picked by hand and pins it to this device, so no fix replaces it while the account's other
-    /// devices go on following their location. As on arriving somewhere new, the method recommended for it applies,
-    /// unless the method was picked by hand too or minutes were adjusted.
+    /// Saves a place picked by hand as the account's, which turns location off and moves every device there. As on
+    /// arriving somewhere new, the method recommended for it applies, unless the method was picked by hand too or
+    /// minutes were adjusted.
     @discardableResult
     func setManualPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
         let place = Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
@@ -151,7 +177,9 @@ public extension SettingsStorage {
         return update { state in
             DeviceState(
                 document: state.document.editing(at: date) {
-                    $0.isPlacePinned = true
+                    $0.isGPSEnabled = false
+                    $0.isPlacePinned = false
+                    $0.pickedPlace = place
 
                     guard $0.manualMethod == nil else { return }
                     $0.followPlace(place, from: $0.method(at: state.place))
@@ -161,8 +189,9 @@ public extension SettingsStorage {
         }
     }
 
-    /// Saves the place a first-run screen picks, as `setManualPlace` does, but only proposes its recommended
-    /// method, so a method chosen on another device still wins when iCloud brings it.
+    /// Saves the place a first-run screen picks and pins it to this device, so the account's other devices go on as
+    /// they were. Its recommended method is only proposed, so one chosen on another device still wins when iCloud
+    /// brings it.
     @discardableResult
     func setUpPlace(_ coordinates: Coordinates, timeZone: TimeZone, regionName: String?, at date: Date = .now) -> DeviceState {
         let place = Place(coordinates: coordinates, timeZone: timeZone, regionName: regionName, fixedAt: date)
@@ -173,6 +202,22 @@ public extension SettingsStorage {
                     .editing(at: date) { $0.isPlacePinned = true }
                     .proposing { $0.recommendMethod(at: place) },
                 place: place
+            )
+        }
+    }
+
+    /// Turns location off for the account and shares the place this device is on, so every device stays on one place
+    /// rather than wherever each last was.
+    @discardableResult
+    func stopFollowingLocation(at date: Date = .now) -> DeviceState {
+        update { state in
+            DeviceState(
+                document: state.document.editing(at: date) {
+                    $0.isGPSEnabled = false
+                    $0.isPlacePinned = false
+                    $0.pickedPlace = state.place
+                },
+                place: state.place
             )
         }
     }

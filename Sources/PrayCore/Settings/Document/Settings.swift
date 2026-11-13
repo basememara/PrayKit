@@ -28,6 +28,8 @@ public struct Settings: Codable, Equatable, Sendable {
 
     // Location
     public var isGPSEnabled = true
+    /// The place picked by hand for the account, which every device takes; `nil` while devices follow their location.
+    public var pickedPlace: Place?
     public var geofenceRadius: Double = 75_000
 
     // Iqama
@@ -103,8 +105,8 @@ public struct Settings: Codable, Equatable, Sendable {
     public var theme: AppTheme = .default
 
     // Device
-    /// Whether this device keeps a place picked on it. The GPS switch syncs as the account's privacy choice, so a
-    /// city picked on one device is kept here rather than by turning location off everywhere.
+    /// Whether this device keeps the place picked during its first-run setup, so setting up a new device never takes
+    /// the others off their location. A place picked in settings is the account's (`pickedPlace`).
     public var isPlacePinned = false
     public var prayerActivity: PrayerActivityMode = .off
     public var matchesAppIcon = false
@@ -130,6 +132,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case adjustmentElevation
     case polarResolution
     case isGPSEnabled
+    case pickedPlace
     case geofenceRadius
     case iqamaTimes
     case iqamaReminders

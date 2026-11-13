@@ -6,6 +6,7 @@
 //  Copyright © 2026 Zamzam Inc. All rights reserved.
 //
 
+import Foundation
 import PrayCore
 
 extension Settings {
@@ -58,6 +59,9 @@ extension Settings {
         settings.alarms = [.fajr, .sunrise]
         settings.isPlacePinned = true
         settings.clearsOneNotification = true
+        settings.pickedPlace = TimeZone(identifier: "Asia/Kuala_Lumpur").map {
+            Place(coordinates: Coordinates(latitude: 3.139, longitude: 101.687), timeZone: $0, regionName: "Kuala Lumpur", fixedAt: Date(timeIntervalSince1970: 1_800_000_000))
+        }
         return settings
     }()
 

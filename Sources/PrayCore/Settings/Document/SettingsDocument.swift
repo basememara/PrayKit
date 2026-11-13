@@ -86,7 +86,7 @@ public extension Settings {
     }
 }
 
-/// Where prayer times are calculated for: one device's location, which never syncs through iCloud.
+/// Where prayer times are calculated for: one device's location, or the place picked by hand for the account.
 public struct Place: Codable, Equatable, Sendable {
     public var coordinates: Coordinates
     public var timeZone: TimeZone

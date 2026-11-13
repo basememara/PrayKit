@@ -22,6 +22,7 @@ extension Settings {
         SettingField(.adjustmentElevation, optional: \.adjustmentElevation, .string),
         SettingField(.polarResolution, \.polarResolution, .string),
         SettingField(.isGPSEnabled, \.isGPSEnabled, .bool),
+        SettingField(.pickedPlace, optional: \.pickedPlace, .json),
         SettingField(.geofenceRadius, \.geofenceRadius, .double, synced: false),
         SettingField(.iqamaTimes, \.iqamaTimes, .json),
         SettingField(.iqamaReminders, \.iqamaReminders, .json),

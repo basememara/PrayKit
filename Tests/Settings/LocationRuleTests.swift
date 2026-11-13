@@ -68,16 +68,17 @@ struct LocationRuleTests {
     }
 
     @Test
-    func aPlacePickedHerePinsThisDeviceAndLeavesGPSOnForTheOthers() throws {
+    func aPlacePickedHereIsTheAccountsWithLocationOff() throws {
         let timeZone = try #require(TimeZone(identifier: "America/Toronto"))
         let storage = SettingsStorage(defaults: .makeTest())
 
         let picked = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Toronto", at: date)
 
-        #expect(picked.document.settings.isGPSEnabled)
-        #expect(picked.document.settings.isPlacePinned)
+        #expect(!picked.document.settings.isGPSEnabled)
+        #expect(!picked.document.settings.isPlacePinned)
         #expect(!picked.document.settings.followsLocation)
-        #expect(picked.document.wireFields[SettingKey.isPlacePinned.rawValue] == nil)
+        #expect(picked.document.settings.pickedPlace == picked.place)
+        #expect(picked.document.wireFields[SettingKey.pickedPlace.rawValue] != nil)
         #expect(LocationRule.apply(Coordinates(latitude: 45.5, longitude: -73.6), timeZone: timeZone, at: date + 60, to: picked) == nil)
 
         var settings = picked.document.settings
@@ -313,7 +314,7 @@ extension LocationRuleTests {
     }
 
     @Test
-    func aManualPlaceIsPinnedHereAndTakesItsRecommendedMethod() throws {
+    func aManualPlaceIsTheAccountsAndTakesItsRecommendedMethod() throws {
         let timeZone = try #require(TimeZone(identifier: "Asia/Kuala_Lumpur"))
         let storage = SettingsStorage(defaults: .makeTest())
         storage.edit { $0.calculationMethod = .muslimWorldLeague }
@@ -321,8 +322,8 @@ extension LocationRuleTests {
         let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
 
         #expect(saved.place == Place(coordinates: toronto, timeZone: timeZone, regionName: "Kuala Lumpur", fixedAt: date))
-        #expect(saved.document.settings.isPlacePinned)
-        #expect(saved.document.settings.isGPSEnabled)
+        #expect(saved.document.settings.pickedPlace == saved.place)
+        #expect(!saved.document.settings.isGPSEnabled)
         #expect(saved.document.settings.calculationMethod == .jakim)
         #expect(storage.load() == saved)
     }
@@ -354,7 +355,7 @@ extension LocationRuleTests {
 
         let saved = storage.setManualPlace(toronto, timeZone: timeZone, regionName: "Kuala Lumpur", at: date)
 
-        #expect(saved.document.settings.isPlacePinned)
+        #expect(saved.document.settings.pickedPlace == saved.place)
         #expect(saved.document.settings.calculationMethod == .northAmerica)
         #expect(saved.document.settings.methodSuggestion(at: .zone(timeZone)) == .jakim)
     }

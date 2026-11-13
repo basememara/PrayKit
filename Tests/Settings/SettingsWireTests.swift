@@ -25,6 +25,7 @@ extension SettingsWireTests {
         expected["soundsBeforeMute"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.soundsBeforeMute))
         expected["manualMethod"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.manualMethod))
         expected["polarResolution"] = .string(PolarResolution.nearestDay.rawValue)
+        expected["pickedPlace"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.pickedPlace))
         let fields = SettingsDocument(settings: .everyFieldChanged).wireFields
 
         #expect(Set(fields.keys) == Set(expected.keys))
@@ -39,6 +40,7 @@ extension SettingsWireTests {
         #expect(try Self.decode(NotificationSounds.self, fields["soundsBeforeMute"]) == Settings.everyFieldChanged.soundsBeforeMute)
         #expect(try Self.decode(ReminderSounds.self, fields["reminderSounds"]) == Settings.everyFieldChanged.reminderSounds)
         #expect(try Self.decode(ManualMethod.self, fields["manualMethod"]) == Settings.everyFieldChanged.manualMethod)
+        #expect(try Self.decode(Place.self, fields["pickedPlace"]) == Settings.everyFieldChanged.pickedPlace)
     }
 
     @Test
@@ -55,6 +57,7 @@ extension SettingsWireTests {
         expected.soundsBeforeMute = Settings().soundsBeforeMute
         expected.manualMethod = Settings().manualMethod
         expected.polarResolution = Settings().polarResolution
+        expected.pickedPlace = Settings().pickedPlace
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])

@@ -13,17 +13,55 @@ public extension Settings {
     /// Whether every prayer sound and reminder is off and no iqama time is set, so nothing is scheduled.
     var isPrayerSoundsDisabled: Bool {
         notificationSounds.rawValue.allSatisfy { $0.value == .off }
-            && reminderSounds.rawValue.allSatisfy { $0.value == .off }
+            && !hasReminders
             && iqamaTimes.isEmpty
+    }
+
+    /// Whether any reminder is due to arrive. A reminder time of 0 turns a reminder off; a reminder sound of Off, which
+    /// a device on an earlier version can still sync, does too.
+    var hasReminders: Bool {
+        Prayer.allCases.contains { preAdhanMinutes[$0] > 0 && (reminderSounds[$0] ?? .off) != .off }
+            || preAdhanMinutes.imsak > 0 && (reminderSounds[.fajr] ?? .off) != .off
+            || duhaReminder != nil && duhaSound != .off
     }
 
     mutating func disablePrayerSounds() {
         Prayer.allCases.forEach {
             notificationSounds[$0] = .off
-            reminderSounds[$0] = .off
         }
 
+        preAdhanMinutes = PreAdhanMinutes(rawValue: [:])
+        duhaReminder = nil
         iqamaTimes = IqamaTimes()
+    }
+
+    /// Reminder sounds no longer offer Off, since a reminder time of 0 is the one way to turn a reminder off. A reminder
+    /// whose sound was Off stays off with its time at 0 and gets its default sound back. Duha played Sunrise's reminder
+    /// sound and never arrived while that was Off, so it keeps what it had: off then, else that sound unless it's
+    /// Sunrise's own default, which is no sound for Duha.
+    mutating func moveReminderOffToReminderTimes() {
+        switch reminderSounds[.sunrise] {
+        case .off?:
+            duhaReminder = nil
+        case let sound? where sound != Settings().reminderSounds[.sunrise]:
+            duhaSound = sound
+        default:
+            break
+        }
+
+        Prayer.allCases
+            .filter { reminderSounds[$0] == .off }
+            .forEach { prayer in
+                if preAdhanMinutes[prayer] > 0 {
+                    preAdhanMinutes[prayer] = 0
+                }
+
+                if prayer == .fajr, preAdhanMinutes.imsak > 0 {
+                    preAdhanMinutes.imsak = 0
+                }
+
+                reminderSounds[prayer] = Settings().reminderSounds[prayer]
+            }
     }
 
     /// Whether a prayer's notification makes no sound: silent, off, or never set.
@@ -73,9 +111,10 @@ public extension Settings {
             .compactMap(notificationSoundFile(for:))
 
         let reminders = Prayer.allCases.compactMap { reminderSounds[$0]?.file }
+        let duha = duhaReminder == nil ? nil : duhaSound.file
         let iqama = iqamaTimes.isEmpty ? nil : iqamaReminders.sound.file
 
-        return Set(prayers + reminders + [iqama].compactMap(\.self))
+        return Set(prayers + reminders + [duha, iqama].compactMap(\.self))
     }
 
     /// Every sound file an app playing the full adhan by itself plays at prayer time, by name, so a device can have

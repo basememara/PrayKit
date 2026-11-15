@@ -35,6 +35,7 @@ extension SettingsStorageTests {
         expected.manualMethod = Settings().manualMethod
         expected.polarResolution = Settings().polarResolution
         expected.pickedPlace = Settings().pickedPlace
+        expected.duhaSound = Settings().duhaSound
         expected.prayerActivity = Settings().prayerActivity
         expected.matchesAppIcon = Settings().matchesAppIcon
         expected.isFullAdhanEnabled = Settings().isFullAdhanEnabled
@@ -62,6 +63,7 @@ extension SettingsStorageTests {
         #expect(settings.alarms == [.fajr])
         #expect(settings.isPlacePinned)
         #expect(settings.clearsOneNotification)
+        #expect(settings.duhaSound == .chime)
     }
 
     @Test
@@ -336,6 +338,7 @@ private extension SettingsStorageTests {
             // One prayer, since a set's encoded order isn't stable
             "alarms": Data(#"["fajr"]"#.utf8),
             "clearsOneNotification": true,
+            "duhaSound": "chime",
             "isFullAdhanEnabled": true,
             "isPlacePinned": true,
             "manualMethod": Data(#"{"keptTimeZones":["America\/Winnipeg","Europe\/Istanbul"]}"#.utf8),

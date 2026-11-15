@@ -48,6 +48,7 @@ extension Settings {
         settings.notificationSounds = NotificationSounds(rawValue: ["fajr": .chimes, "maghrib": .silent])
         settings.soundsBeforeMute = NotificationSounds(rawValue: ["maghrib": .beep])
         settings.reminderSounds = ReminderSounds(rawValue: ["asr": .beep, "isha": .off])
+        settings.duhaSound = .chime
         settings.isPlayOnTapEnabled = false
         settings.isPrayerAbbrEnabled = true
         settings.sunriseAfterIsha = true

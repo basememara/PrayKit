@@ -194,8 +194,8 @@ private extension Draft {
             let duhaIdentifier = "\(identifier)-duha-reminder"
             let duhaDate = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
-            if let date = slot(for: duhaIdentifier, at: duhaDate, isOff: reminderSound == .off) {
-                add(duhaIdentifier, at: date, .duha(at: date), sound: reminderSound.file, for: prayerTime)
+            if let date = slot(for: duhaIdentifier, at: duhaDate, isOff: settings.duhaSound == .off) {
+                add(duhaIdentifier, at: date, .duha(at: date), sound: settings.duhaSound.file, for: prayerTime)
             }
         }
     }

@@ -30,10 +30,10 @@ struct NotificationClearTests {
     }
 
     @Test
-    func oneSoundBackOnPlans() {
+    func oneReminderBackOnPlans() {
         var settings = Settings()
         settings.disablePrayerSounds()
-        settings.reminderSounds[.fajr] = .beep
+        settings.preAdhanMinutes[.fajr] = 30
 
         #expect(NotificationPlan.clearedCategories(for: settings) == nil)
     }

@@ -1,5 +1,5 @@
 # kuala-lumpur.everything-off  lat 3.139  lon 101.6869  tz Asia/Kuala_Lumpur  method JAKIM  adjustments -  day 2026-10-12 Monday
-# settings: sound/reminder/minutes fajr off/off/0, sunrise off/off/20, dhuhr off/off/20, asr off/off/20, maghrib off/off/20, isha off/off/20, midnight off/off/0, lastThird off/off/0  imsak 0  duha -  alarms -  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder off 10/45 update off  follows location true radius 75000
+# settings: sound/reminder/minutes fajr off/tone/0, sunrise off/fajr-long/0, dhuhr off/tone/0, asr off/tone/0, maghrib off/tone/0, isha off/tone/0, midnight off/tone/0, lastThird off/tone/0  imsak 0  duha -  alarms -  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder off 10/45 update off  follows location true radius 75000
 # now 2026-10-12 10:00:00+0800 (10:00)  budget 58  iqama update origin -
 # requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
 entry	kind	fire	body	sound	level	category	payload

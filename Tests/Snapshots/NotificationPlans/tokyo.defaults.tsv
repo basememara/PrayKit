@@ -64,15 +64,40 @@ entry	kind	fire	body	sound	level	category	payload
 calibrate	add	2026-10-17 05:04:00+0900	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-10-12|2026-10-19
 calibrate-beacon	add	region 35.676,139.65 75000m	beacon	default	-	beaconCategory	coordinates 35.676,139.65
 2026-10-12-midnight	remove
+2026-10-12-midnight-reminder	remove
 2026-10-12-lastThird	remove
+2026-10-12-lastThird-reminder	remove
+2026-10-13-fajr-reminder	remove
+2026-10-13-fajr-imsak-reminder	remove
+2026-10-13-sunrise-duha-reminder	remove
 2026-10-13-midnight	remove
+2026-10-13-midnight-reminder	remove
 2026-10-13-lastThird	remove
+2026-10-13-lastThird-reminder	remove
+2026-10-14-fajr-reminder	remove
+2026-10-14-fajr-imsak-reminder	remove
+2026-10-14-sunrise-duha-reminder	remove
 2026-10-14-midnight	remove
+2026-10-14-midnight-reminder	remove
 2026-10-14-lastThird	remove
+2026-10-14-lastThird-reminder	remove
+2026-10-15-fajr-reminder	remove
+2026-10-15-fajr-imsak-reminder	remove
+2026-10-15-sunrise-duha-reminder	remove
 2026-10-15-midnight	remove
+2026-10-15-midnight-reminder	remove
 2026-10-15-lastThird	remove
+2026-10-15-lastThird-reminder	remove
+2026-10-16-fajr-reminder	remove
+2026-10-16-fajr-imsak-reminder	remove
+2026-10-16-sunrise-duha-reminder	remove
 2026-10-16-midnight	remove
+2026-10-16-midnight-reminder	remove
 2026-10-16-lastThird	remove
+2026-10-16-lastThird-reminder	remove
+2026-10-17-fajr-reminder	remove
+2026-10-17-fajr-imsak-reminder	remove
+2026-10-17-sunrise-duha-reminder	remove
 update-interval-iqama-reminder	remove
 shortcuts	43	dhuhr 10-12 11:29:00	asr 10-12 14:41:00	maghrib 10-12 17:11:00	isha 10-12 18:30:00	midnight 10-12 22:46:00	lastThird 10-13 00:38:00	fajr 10-13 04:21:00	sunrise 10-13 05:46:00	dhuhr 10-13 11:29:00	asr 10-13 14:41:00	maghrib 10-13 17:09:00	isha 10-13 18:29:00	midnight 10-13 22:46:00	lastThird 10-14 00:38:00	fajr 10-14 04:22:00	sunrise 10-14 05:47:00	dhuhr 10-14 11:28:00	asr 10-14 14:40:00	maghrib 10-14 17:08:00	isha 10-14 18:28:00	midnight 10-14 22:46:00	lastThird 10-15 00:38:00	fajr 10-15 04:23:00	sunrise 10-15 05:47:00	dhuhr 10-15 11:28:00	asr 10-15 14:39:00	maghrib 10-15 17:07:00	isha 10-15 18:26:00	midnight 10-15 22:45:00	lastThird 10-16 00:38:00	fajr 10-16 04:23:00	sunrise 10-16 05:48:00	dhuhr 10-16 11:28:00	asr 10-16 14:38:00	maghrib 10-16 17:05:00	isha 10-16 18:25:00	midnight 10-16 22:45:00	lastThird 10-17 00:38:00	fajr 10-17 04:24:00	sunrise 10-17 05:49:00	dhuhr 10-17 11:28:00	asr 10-17 14:37:00	maghrib 10-17 17:04:00
 firstScheduled	2026-10-12 14:41:00+0900

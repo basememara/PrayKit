@@ -64,15 +64,40 @@ entry	kind	fire	body	sound	level	category	payload
 calibrate	add	2026-06-25 04:55:00+1000	calibrate	default	-	calibrateCategory	prayer_request_hash 2026-06-20|2026-06-27
 calibrate-beacon	add	region -33.869,151.209 75000m	beacon	default	-	beaconCategory	coordinates -33.869,151.209
 2026-06-20-midnight	remove
+2026-06-20-midnight-reminder	remove
 2026-06-20-lastThird	remove
+2026-06-20-lastThird-reminder	remove
+2026-06-21-fajr-reminder	remove
+2026-06-21-fajr-imsak-reminder	remove
+2026-06-21-sunrise-duha-reminder	remove
 2026-06-21-midnight	remove
+2026-06-21-midnight-reminder	remove
 2026-06-21-lastThird	remove
+2026-06-21-lastThird-reminder	remove
+2026-06-22-fajr-reminder	remove
+2026-06-22-fajr-imsak-reminder	remove
+2026-06-22-sunrise-duha-reminder	remove
 2026-06-22-midnight	remove
+2026-06-22-midnight-reminder	remove
 2026-06-22-lastThird	remove
+2026-06-22-lastThird-reminder	remove
+2026-06-23-fajr-reminder	remove
+2026-06-23-fajr-imsak-reminder	remove
+2026-06-23-sunrise-duha-reminder	remove
 2026-06-23-midnight	remove
+2026-06-23-midnight-reminder	remove
 2026-06-23-lastThird	remove
+2026-06-23-lastThird-reminder	remove
+2026-06-24-fajr-reminder	remove
+2026-06-24-fajr-imsak-reminder	remove
+2026-06-24-sunrise-duha-reminder	remove
 2026-06-24-midnight	remove
+2026-06-24-midnight-reminder	remove
 2026-06-24-lastThird	remove
+2026-06-24-lastThird-reminder	remove
+2026-06-25-fajr-reminder	remove
+2026-06-25-fajr-imsak-reminder	remove
+2026-06-25-sunrise-duha-reminder	remove
 update-interval-iqama-reminder	remove
 shortcuts	43	dhuhr 06-20 11:58:00	asr 06-20 14:36:00	maghrib 06-20 16:54:00	isha 06-20 18:18:00	midnight 06-20 23:13:00	lastThird 06-21 01:19:00	fajr 06-21 05:31:00	sunrise 06-21 07:00:00	dhuhr 06-21 11:58:00	asr 06-21 14:36:00	maghrib 06-21 16:54:00	isha 06-21 18:18:00	midnight 06-21 23:13:00	lastThird 06-22 01:19:00	fajr 06-22 05:31:00	sunrise 06-22 07:00:00	dhuhr 06-22 11:58:00	asr 06-22 14:36:00	maghrib 06-22 16:54:00	isha 06-22 18:18:00	midnight 06-22 23:13:00	lastThird 06-23 01:19:00	fajr 06-23 05:31:00	sunrise 06-23 07:00:00	dhuhr 06-23 11:58:00	asr 06-23 14:36:00	maghrib 06-23 16:54:00	isha 06-23 18:19:00	midnight 06-23 23:13:00	lastThird 06-24 01:19:00	fajr 06-24 05:31:00	sunrise 06-24 07:01:00	dhuhr 06-24 11:59:00	asr 06-24 14:37:00	maghrib 06-24 16:55:00	isha 06-24 18:19:00	midnight 06-24 23:13:00	lastThird 06-25 01:19:00	fajr 06-25 05:31:00	sunrise 06-25 07:01:00	dhuhr 06-25 11:59:00	asr 06-25 14:37:00	maghrib 06-25 16:55:00
 firstScheduled	2026-06-20 14:36:00+1000

@@ -26,7 +26,12 @@ entry	kind	fire	body	sound	level	category	payload
 calibrate	add	2019-06-15 08:33:00-0700	calibrate	default	-	calibrateCategory	prayer_request_hash 2019-06-14|2019-06-21
 calibrate-beacon	add	region 37.774,-122.431 75000m	beacon	default	-	beaconCategory	coordinates 37.774,-122.431
 2019-06-14-midnight	remove
+2019-06-14-midnight-reminder	remove
 2019-06-14-lastThird	remove
+2019-06-14-lastThird-reminder	remove
+2019-06-15-fajr-reminder	remove
+2019-06-15-fajr-imsak-reminder	remove
+2019-06-15-sunrise-duha-reminder	remove
 update-interval-iqama-reminder	remove
 shortcuts	11	dhuhr 06-14 13:11:00	asr 06-14 17:04:00	maghrib 06-14 20:33:00	isha 06-14 22:05:00	midnight 06-15 00:25:00	lastThird 06-15 01:42:00	fajr 06-15 04:16:00	sunrise 06-15 05:47:00	dhuhr 06-15 13:11:00	asr 06-15 17:04:00	maghrib 06-15 20:33:00
 firstScheduled	2019-06-14 17:04:00-0700

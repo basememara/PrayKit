@@ -1,5 +1,5 @@
 # toronto-in-winter.everything-on  lat 43.651  lon -79.347  tz America/Toronto  method ISNA  adjustments -  day 2021-01-02 Saturday
-# settings: sound/reminder/minutes fajr adhan/tone/30, sunrise tone/tone/15, dhuhr adhan/tone/20, asr adhan/tone/25, maghrib adhan/tone/10, isha adhan/tone/35, midnight tone/beep/10, lastThird chime/tone/20  imsak 10  duha 25 mins  alarms fajr+sunrise  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder iqama2 10/45 update weekly  follows location true radius 75000
+# settings: sound/reminder/minutes fajr adhan/tone/30, sunrise tone/fajr-long/15, dhuhr adhan/tone/20, asr adhan/tone/25, maghrib adhan/tone/10, isha adhan/tone/35, midnight tone/beep/10, lastThird chime/tone/20  imsak 10  duha 25 mins  alarms fajr+sunrise  iqamas 20 mins, 13:30, 15 mins, 5 mins, 21:00, 13:30  iqama reminder iqama2 10/45 update weekly  follows location true radius 75000
 # now 2021-01-02 05:25:00-0500 (an hour before Fajr)  budget 58  iqama update origin -
 # requests in the order they are added, then the removals; a payload of prayer_time alone carries the body's own prayer
 entry	kind	fire	body	sound	level	category	payload

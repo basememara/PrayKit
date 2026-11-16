@@ -87,15 +87,16 @@ public struct Settings: Codable, Equatable, Sendable {
     public var reminderSounds = ReminderSounds(
         rawValue: [
             Prayer.fajr.rawValue: .default,
-            Prayer.sunrise.rawValue: .default,
+            Prayer.sunrise.rawValue: .fajrLong,
             Prayer.dhuhr.rawValue: .default,
             Prayer.asr.rawValue: .default,
             Prayer.maghrib.rawValue: .default,
             Prayer.isha.rawValue: .default,
-            Prayer.midnight.rawValue: .off,
-            Prayer.lastThird.rawValue: .off
+            Prayer.midnight.rawValue: .default,
+            Prayer.lastThird.rawValue: .default
         ]
     )
+    public var duhaSound: NotificationSound = .default
     public var isPlayOnTapEnabled = true
 
     // Display
@@ -150,6 +151,7 @@ public enum SettingKey: String, CaseIterable, Sendable {
     case notificationSounds
     case soundsBeforeMute
     case reminderSounds
+    case duhaSound
     case isPlayOnTapEnabled
     case isPrayerAbbrEnabled
     case sunriseAfterIsha

@@ -138,7 +138,7 @@ private extension NotificationPlan.Request {
                 + (hasBegun ? [.iqamaForBegunPrayer] : [])
                 + (replaces ? [.jumuahReplacesDhuhr] : [])
         case .reminder:
-            let isSilenced = sound == nil && prayerTime.flatMap { input.settings.reminderSounds[$0.type]?.file } != nil
+            let isSilenced = sound == nil && prayerTime.flatMap { input.settings.reminderSound(for: $0.type).file } != nil
             let fromDhuhr = prayerTime.map { $0.dateInterval.start - .minutes(input.settings.preAdhanMinutes[$0.type]) }
 
             return [.reminderAdded]

@@ -26,6 +26,7 @@ extension SettingsWireTests {
         expected["manualMethod"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.manualMethod))
         expected["polarResolution"] = .string(PolarResolution.nearestDay.rawValue)
         expected["pickedPlace"] = .data(try JSONEncoder().encode(Settings.everyFieldChanged.pickedPlace))
+        expected["duhaSound"] = .string(NotificationSound.chime.rawValue)
         let fields = SettingsDocument(settings: .everyFieldChanged).wireFields
 
         #expect(Set(fields.keys) == Set(expected.keys))
@@ -58,6 +59,7 @@ extension SettingsWireTests {
         expected.manualMethod = Settings().manualMethod
         expected.polarResolution = Settings().polarResolution
         expected.pickedPlace = Settings().pickedPlace
+        expected.duhaSound = Settings().duhaSound
 
         #expect(document.settings == expected)
         #expect(Set(document.revisions.values) == [Revision(saved)])
@@ -109,7 +111,7 @@ extension SettingsWireTests {
     func onlyThisCopyCanSupplyTheChangedSettingsAnOlderVersionNeverSynced() throws {
         let record = try Self.legacyRecord(of: .everyFieldChanged)
 
-        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute, .polarResolution])
+        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute, .polarResolution, .duhaSound])
         #expect(SettingsDocument().keysMissing(from: record).isEmpty)
         #expect(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: Self.revised.wireFields).isEmpty)
     }

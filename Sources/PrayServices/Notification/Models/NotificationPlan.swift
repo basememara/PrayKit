@@ -170,14 +170,14 @@ private extension Draft {
         shortcutPrayers.append(prayerTime)
 
         let reminderIdentifier = "\(identifier)-reminder"
-        let reminderSound = settings.reminderSounds[prayer] ?? .off
+        let reminderSound = settings.reminderSound(for: prayer)
         let reminderMinutes = settings.preAdhanMinutes[prayer]
         let reminderDate = fireDate(reminderMinutes, before: isJumuah ? iqamaTime ?? start : start)
 
         // An alarm rings at the reminder's time, so the reminder still shows but stays silent
         let isSilenced = settings.ringsAlarm(for: prayer)
 
-        if let date = slot(for: reminderIdentifier, at: reminderDate, isOff: reminderSound == .off) {
+        if let date = slot(for: reminderIdentifier, at: reminderDate, isOff: reminderMinutes == 0) {
             add(reminderIdentifier, at: date, .reminder(prayerTime, minutes: reminderMinutes), sound: isSilenced ? nil : reminderSound.file, for: prayerTime)
         }
 
@@ -185,7 +185,7 @@ private extension Draft {
             let imsakIdentifier = "\(identifier)-imsak-reminder"
             let imsakMinutes = settings.preAdhanMinutes.imsak
 
-            if let date = slot(for: imsakIdentifier, at: fireDate(imsakMinutes, before: start), isOff: reminderSound == .off) {
+            if let date = slot(for: imsakIdentifier, at: fireDate(imsakMinutes, before: start), isOff: imsakMinutes == 0) {
                 add(imsakIdentifier, at: date, .reminder(prayerTime, minutes: imsakMinutes), sound: reminderSound.file, for: prayerTime)
             }
         }
@@ -194,8 +194,8 @@ private extension Draft {
             let duhaIdentifier = "\(identifier)-duha-reminder"
             let duhaDate = settings.duhaReminder?.date(from: prayerTime.dateInterval, using: calendar)
 
-            if let date = slot(for: duhaIdentifier, at: duhaDate, isOff: reminderSound == .off) {
-                add(duhaIdentifier, at: date, .duha(at: date), sound: reminderSound.file, for: prayerTime)
+            if let date = slot(for: duhaIdentifier, at: duhaDate, isOff: settings.duhaReminder == nil) {
+                add(duhaIdentifier, at: date, .duha(at: date), sound: settings.duhaSound.file, for: prayerTime)
             }
         }
     }

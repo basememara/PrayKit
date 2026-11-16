@@ -21,6 +21,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
     let iqamaTimes: IqamaTimes
     let iqamaReminders: IqamaReminders
     let duhaReminder: DuhaType?
+    let duhaSound: NotificationSound
     let isGPSEnabled: Bool
     let geofenceRadius: Double
     let enable24hTimeFormat: Bool
@@ -35,6 +36,7 @@ struct PrayerRequestHash: Identifiable, Equatable, Codable {
         self.iqamaTimes = settings.iqamaTimes
         self.iqamaReminders = settings.iqamaReminders
         self.duhaReminder = settings.duhaReminder
+        self.duhaSound = settings.duhaSound
         self.isGPSEnabled = settings.followsLocation
         self.geofenceRadius = settings.geofenceRadius
         self.enable24hTimeFormat = settings.enable24hTimeFormat

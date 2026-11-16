@@ -16,7 +16,7 @@ struct PrayerRequestHashTests {
     private static let notificationKeys: Set<SettingKey> = [
         .calculationMethod, .juristicMethod, .fajrDegrees, .maghribDegrees, .ishaDegrees, .elevationRule,
         .adjustmentMinutes, .adjustmentElevation, .polarResolution, .isGPSEnabled, .geofenceRadius, .iqamaTimes, .iqamaReminders,
-        .preAdhanMinutes, .duhaReminder, .notificationAdhan, .notificationSounds, .reminderSounds, .alarms, .isPlacePinned,
+        .preAdhanMinutes, .duhaReminder, .duhaSound, .notificationAdhan, .notificationSounds, .reminderSounds, .alarms, .isPlacePinned,
         .enable24hTimeFormat
     ]
 

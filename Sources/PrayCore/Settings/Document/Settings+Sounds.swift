@@ -13,16 +13,29 @@ public extension Settings {
     /// Whether every prayer sound and reminder is off and no iqama time is set, so nothing is scheduled.
     var isPrayerSoundsDisabled: Bool {
         notificationSounds.rawValue.allSatisfy { $0.value == .off }
-            && reminderSounds.rawValue.allSatisfy { $0.value == .off }
+            && !hasReminders
             && iqamaTimes.isEmpty
     }
 
+    /// A reminder is off only at a time of 0.
+    private var hasReminders: Bool {
+        Prayer.allCases.contains { preAdhanMinutes[$0] > 0 } || preAdhanMinutes.imsak > 0 || duhaReminder != nil
+    }
+
+    /// The sound a prayer's reminder plays. A reminder is turned off by its time, so a sound of Off, which an earlier
+    /// version could save and sync, plays the prayer's default.
+    func reminderSound(for prayer: Prayer) -> NotificationSound {
+        reminderSounds[prayer].flatMap { $0 == .off ? nil : $0 } ?? Settings().reminderSounds[prayer] ?? .default
+    }
+
+    /// Turns every prayer's sound off, and every reminder off by its time, since a reminder sound has no Off.
     mutating func disablePrayerSounds() {
         Prayer.allCases.forEach {
             notificationSounds[$0] = .off
-            reminderSounds[$0] = .off
         }
 
+        preAdhanMinutes = PreAdhanMinutes(rawValue: [:])
+        duhaReminder = nil
         iqamaTimes = IqamaTimes()
     }
 
@@ -72,10 +85,11 @@ public extension Settings {
             .filter { notificationSounds[$0] != .adhan || notificationAdhan[$0] != .shuffle }
             .compactMap(notificationSoundFile(for:))
 
-        let reminders = Prayer.allCases.compactMap { reminderSounds[$0]?.file }
+        let reminders = Prayer.allCases.compactMap { reminderSound(for: $0).file }
+        let duha = duhaReminder == nil ? nil : duhaSound.file
         let iqama = iqamaTimes.isEmpty ? nil : iqamaReminders.sound.file
 
-        return Set(prayers + reminders + [iqama].compactMap(\.self))
+        return Set(prayers + reminders + [duha, iqama].compactMap(\.self))
     }
 
     /// Every sound file an app playing the full adhan by itself plays at prayer time, by name, so a device can have

@@ -40,6 +40,7 @@ extension Settings {
         SettingField(.notificationSounds, \.notificationSounds, .map(.string)),
         SettingField(.soundsBeforeMute, \.soundsBeforeMute, .map(.string)),
         SettingField(.reminderSounds, \.reminderSounds, .map(.string)),
+        SettingField(.duhaSound, \.duhaSound, .string),
         SettingField(.isPlayOnTapEnabled, \.isPlayOnTapEnabled, .bool),
         SettingField(.isPrayerAbbrEnabled, \.isPrayerAbbrEnabled, .bool),
         SettingField(.sunriseAfterIsha, \.sunriseAfterIsha, .bool),

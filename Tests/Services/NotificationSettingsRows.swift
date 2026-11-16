@@ -70,7 +70,7 @@ extension NotificationSettingsRow {
     static let defaults = NotificationSettingsRow(
         "defaults",
         reaches: [
-            .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .reminderRemoved,
+            .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .reminderRemoved, .imsakRemoved, .duhaRemoved,
             .iqamaUpdateRemoved, .calibrate, .beaconAdded
         ]
     )
@@ -80,8 +80,10 @@ extension NotificationSettingsRow {
         NotificationSettingsRow("notification-sounds-off", reaches: [.prayerRemoved, .reminderAdded]) { settings in
             Prayer.allCases.forEach { settings.notificationSounds[$0] = .off }
         },
-        NotificationSettingsRow("reminder-sounds-off", reaches: [.reminderRemoved, .imsakRemoved, .duhaRemoved]) { settings in
+        // A sound of Off, which an earlier version could save and sync, plays the prayer's default
+        NotificationSettingsRow("reminder-sounds-off", reaches: [.reminderAdded, .imsakAdded, .duhaAdded]) { settings in
             Prayer.allCases.forEach { settings.reminderSounds[$0] = .off }
+            settings.preAdhanMinutes[.fajr] = 15
             settings.preAdhanMinutes.imsak = 10
             settings.duhaReminder = .minutes(20)
         },
@@ -102,7 +104,7 @@ extension NotificationSettingsRow {
             $0.preAdhanMinutes[.midnight] = 10
             $0.preAdhanMinutes[.lastThird] = 15
         },
-        NotificationSettingsRow("mixed-sounds", reaches: [.prayerAdded, .prayerAddedSilent, .prayerRemoved, .reminderRemoved]) {
+        NotificationSettingsRow("mixed-sounds", reaches: [.prayerAdded, .prayerAddedSilent, .prayerRemoved]) {
             $0.notificationAdhan[.fajr] = .makkah
             $0.notificationSounds[.dhuhr] = .tone
             $0.notificationSounds[.asr] = .silent
@@ -220,14 +222,14 @@ extension NotificationSettingsRow {
         $0.reminderSounds[.lastThird] = .default
     }
 
-    /// Every sound off with iqama times still set, so every removal is taken.
+    /// Every sound and reminder off with iqama times still set, so every removal is taken.
     private static let everythingOff = NotificationSettingsRow(
         "everything-off",
         reaches: [.prayerRemoved, .iqamaRemoved, .reminderRemoved, .imsakRemoved, .duhaRemoved, .iqamaUpdateRemoved, .nothingScheduled]
     ) { settings in
         Prayer.allCases.forEach {
             settings.notificationSounds[$0] = .off
-            settings.reminderSounds[$0] = .off
+            settings.preAdhanMinutes[$0] = 0
         }
 
         settings.iqamaTimes = iqamaTimes

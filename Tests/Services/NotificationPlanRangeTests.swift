@@ -47,9 +47,10 @@ extension NotificationPlanRangeTests {
         let input = try await input { settings in
             Prayer.allCases.forEach {
                 settings.notificationSounds[$0] = .off
-                settings.reminderSounds[$0] = .off
+                settings.preAdhanMinutes[$0] = 0
             }
 
+            settings.preAdhanMinutes[.dhuhr] = 20
             settings.reminderSounds[.dhuhr] = .beep
         }
 

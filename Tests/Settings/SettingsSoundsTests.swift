@@ -17,16 +17,18 @@ struct SettingsSoundsTests {
     }
 
     @Test(arguments: [Settings(), .everyFieldChanged])
-    func disablingTurnsEverySoundOffAndClearsTheIqamaTimes(settings: Settings) {
+    func disablingTurnsEverySoundAndReminderOffAndClearsTheIqamaTimes(settings: Settings) {
         var disabled = settings
         disabled.disablePrayerSounds()
 
         #expect(disabled.isPrayerSoundsDisabled)
         #expect(disabled.iqamaTimes == IqamaTimes())
+        #expect(disabled.preAdhanMinutes.imsak == 0)
+        #expect(disabled.duhaReminder == nil)
 
         Prayer.allCases.forEach { prayer in
             #expect(disabled.notificationSounds[prayer] == .off, "\(prayer)")
-            #expect(disabled.reminderSounds[prayer] == .off, "\(prayer)")
+            #expect(disabled.preAdhanMinutes[prayer] == 0, "\(prayer)")
         }
     }
 
@@ -165,8 +167,20 @@ struct SettingsSoundsTests {
     }
 
     @Test
-    func theDefaultsPlayTheBundledAdhanAndTone() {
-        #expect(Settings().notificationSoundFiles == ["al.aqsa-short.m4a", "tone.m4a"])
+    func theDefaultsPlayTheBundledAdhanAndTones() {
+        #expect(Settings().notificationSoundFiles == ["al.aqsa-short.m4a", "tone.m4a", "fajr-long.m4a"])
+    }
+
+    @Test
+    func duhaAddsItsSoundOnlyWhileItsOn() {
+        var settings = Settings()
+        settings.duhaSound = .chime
+
+        #expect(!settings.notificationSoundFiles.contains("chime.m4a"))
+
+        settings.duhaReminder = .minutes(30)
+
+        #expect(settings.notificationSoundFiles.contains("chime.m4a"))
     }
 
     @Test
@@ -287,5 +301,59 @@ struct SettingsSoundsTests {
 
         settings.iqamaTimes = IqamaTimes(fajr: .minutes(20), dhuhr: nil, asr: nil, maghrib: nil, isha: nil, jumuah: nil)
         #expect(settings.notificationSoundFiles.contains("iqama.m4a"))
+    }
+}
+
+// MARK: - Reminder sounds without Off
+
+extension SettingsSoundsTests {
+    @Test
+    func aReminderTimeOfZeroIsTheReminderTurnedOff() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
+        settings.reminderSounds[.dhuhr] = .beep
+
+        #expect(settings.isPrayerSoundsDisabled)
+
+        settings.preAdhanMinutes[.dhuhr] = 10
+
+        #expect(!settings.isPrayerSoundsDisabled)
+    }
+
+    /// A device on an earlier version can still save or sync a reminder sound of Off, which plays the prayer's default.
+    @Test
+    func aReminderSoundOfOffPlaysThePrayersDefault() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
+        settings.preAdhanMinutes[.asr] = 15
+        settings.reminderSounds[.asr] = .off
+        settings.reminderSounds[.sunrise] = .off
+
+        #expect(!settings.isPrayerSoundsDisabled)
+        #expect(settings.reminderSound(for: .asr) == .default)
+        #expect(settings.reminderSound(for: .sunrise) == .fajrLong)
+    }
+
+    @Test
+    func aReminderPlaysTheSoundChosenForIt() {
+        var settings = Settings()
+        settings.reminderSounds[.dhuhr] = .beep
+
+        #expect(settings.reminderSound(for: .dhuhr) == .beep)
+    }
+
+    @Test
+    func duhaCountsAsAReminder() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
+        settings.duhaReminder = .minutes(30)
+
+        #expect(!settings.isPrayerSoundsDisabled)
+    }
+
+    @Test
+    func theDefaultsHaveNoReminderSoundOfOff() {
+        #expect(!Prayer.allCases.contains { Settings().reminderSounds[$0] == .off })
+        #expect(Settings().reminderSounds[.sunrise] == .fajrLong)
     }
 }

@@ -17,11 +17,15 @@ public extension Settings {
             && iqamaTimes.isEmpty
     }
 
-    /// A reminder is off at a time of 0, or with a sound of Off, which a device on an earlier version can still sync.
+    /// A reminder is off only at a time of 0.
     private var hasReminders: Bool {
-        Prayer.allCases.contains { preAdhanMinutes[$0] > 0 && (reminderSounds[$0] ?? .off) != .off }
-            || preAdhanMinutes.imsak > 0 && (reminderSounds[.fajr] ?? .off) != .off
-            || duhaReminder != nil && duhaSound != .off
+        Prayer.allCases.contains { preAdhanMinutes[$0] > 0 } || preAdhanMinutes.imsak > 0 || duhaReminder != nil
+    }
+
+    /// The sound a prayer's reminder plays. A reminder is turned off by its time, so a sound of Off, which an earlier
+    /// version could save and sync, plays the prayer's default.
+    func reminderSound(for prayer: Prayer) -> NotificationSound {
+        reminderSounds[prayer].flatMap { $0 == .off ? nil : $0 } ?? Settings().reminderSounds[prayer] ?? .default
     }
 
     /// Turns every prayer's sound off, and every reminder off by its time, since a reminder sound has no Off.
@@ -81,7 +85,7 @@ public extension Settings {
             .filter { notificationSounds[$0] != .adhan || notificationAdhan[$0] != .shuffle }
             .compactMap(notificationSoundFile(for:))
 
-        let reminders = Prayer.allCases.compactMap { reminderSounds[$0]?.file }
+        let reminders = Prayer.allCases.compactMap { reminderSound(for: $0).file }
         let duha = duhaReminder == nil ? nil : duhaSound.file
         let iqama = iqamaTimes.isEmpty ? nil : iqamaReminders.sound.file
 

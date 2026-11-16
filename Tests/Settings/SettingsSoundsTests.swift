@@ -320,15 +320,26 @@ extension SettingsSoundsTests {
         #expect(!settings.isPrayerSoundsDisabled)
     }
 
-    /// A device on an earlier version can still sync a reminder sound of Off, which keeps that reminder off.
+    /// A device on an earlier version can still save or sync a reminder sound of Off, which plays the prayer's default.
     @Test
-    func aSyncedReminderSoundOfOffStillTurnsTheReminderOff() {
+    func aReminderSoundOfOffPlaysThePrayersDefault() {
         var settings = Settings()
         settings.disablePrayerSounds()
         settings.preAdhanMinutes[.asr] = 15
         settings.reminderSounds[.asr] = .off
+        settings.reminderSounds[.sunrise] = .off
 
-        #expect(settings.isPrayerSoundsDisabled)
+        #expect(!settings.isPrayerSoundsDisabled)
+        #expect(settings.reminderSound(for: .asr) == .default)
+        #expect(settings.reminderSound(for: .sunrise) == .fajrLong)
+    }
+
+    @Test
+    func aReminderPlaysTheSoundChosenForIt() {
+        var settings = Settings()
+        settings.reminderSounds[.dhuhr] = .beep
+
+        #expect(settings.reminderSound(for: .dhuhr) == .beep)
     }
 
     @Test

@@ -262,7 +262,7 @@ public extension NotificationServiceUN {
         let date = Date(timeIntervalSinceNow: timeInterval)
         let calendar = state.placeCalendar
         let identifier = "\(date.shortString(calendar: calendar))-\(prayerTime.type)-snooze"
-        let sound = state.document.settings.reminderSounds[prayerTime.type] ?? .off
+        let sound = state.document.settings.reminderSound(for: prayerTime.type)
 
         do {
             try await userNotification.add(

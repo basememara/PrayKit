@@ -21,10 +21,10 @@ struct NotificationClearTests {
     }
 
     @Test
-    func noSoundsSetClearsThePrayerNotifications() {
+    func noSoundsOrReminderTimesSetClearsThePrayerNotifications() {
         var settings = Settings()
         settings.notificationSounds = NotificationSounds(rawValue: [:])
-        settings.reminderSounds = ReminderSounds(rawValue: [:])
+        settings.preAdhanMinutes = PreAdhanMinutes(rawValue: [:])
 
         #expect(NotificationPlan.clearedCategories(for: settings) == [.main, .reminder, .calibrate])
     }

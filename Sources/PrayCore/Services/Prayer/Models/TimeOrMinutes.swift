@@ -43,7 +43,7 @@ public extension TimeOrMinutes {
 }
 
 public extension TimeOrMinutesChoice {
-    /// The setting a choice starts at: a time of day at `start` on `calendar`'s clock, no minutes yet, or none.
+    /// The setting a choice starts at: a time of day at `start` on `calendar`'s clock, 15 minutes, or none.
     func setting<Setting: TimeOrMinutes>(startingAt start: Date, using calendar: Calendar) -> Setting? {
         switch self {
         case .off:
@@ -51,7 +51,7 @@ public extension TimeOrMinutesChoice {
         case .time:
             Setting(date: start, using: calendar)
         case .minutes:
-            Setting.minutes(0)
+            Setting.minutes(15)
         }
     }
 }

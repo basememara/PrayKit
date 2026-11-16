@@ -49,12 +49,12 @@ extension TimeOrMinutesTests {
     }
 
     @Test
-    func minutesStartAtZeroAndOffIsNone() throws {
+    func minutesStartAtFifteenAndOffIsNone() throws {
         let calendar = try Self.calendar("Asia/Kuala_Lumpur")
         let minutes: IqamaTimes.IqamaType? = TimeOrMinutesChoice.minutes.setting(startingAt: start, using: calendar)
         let off: DuhaType? = TimeOrMinutesChoice.off.setting(startingAt: start, using: calendar)
 
-        #expect(minutes == .minutes(0))
+        #expect(minutes == .minutes(15))
         #expect(off == nil)
     }
 

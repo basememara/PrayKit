@@ -70,8 +70,7 @@ extension NotificationSettingsRow {
     static let defaults = NotificationSettingsRow(
         "defaults",
         reaches: [
-            .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .reminderRemoved,
-            .iqamaUpdateRemoved, .calibrate, .beaconAdded
+            .prayerAdded, .sideTimeAdded, .prayerAddedSilent, .prayerRemoved, .reminderAdded, .iqamaUpdateRemoved, .calibrate, .beaconAdded
         ]
     )
 
@@ -82,6 +81,7 @@ extension NotificationSettingsRow {
         },
         NotificationSettingsRow("reminder-sounds-off", reaches: [.reminderRemoved, .imsakRemoved, .duhaRemoved]) { settings in
             Prayer.allCases.forEach { settings.reminderSounds[$0] = .off }
+            settings.duhaSound = .off
             settings.preAdhanMinutes.imsak = 10
             settings.duhaReminder = .minutes(20)
         },
@@ -230,6 +230,7 @@ extension NotificationSettingsRow {
             settings.reminderSounds[$0] = .off
         }
 
+        settings.duhaSound = .off
         settings.iqamaTimes = iqamaTimes
         settings.iqamaReminders = IqamaReminders(sound: .off, minutes: 10, jumuahMinutes: 45, updateInterval: .off)
     }

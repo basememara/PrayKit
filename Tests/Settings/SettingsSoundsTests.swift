@@ -22,7 +22,6 @@ struct SettingsSoundsTests {
         disabled.disablePrayerSounds()
 
         #expect(disabled.isPrayerSoundsDisabled)
-        #expect(!disabled.hasReminders)
         #expect(disabled.iqamaTimes == IqamaTimes())
         #expect(disabled.preAdhanMinutes.imsak == 0)
         #expect(disabled.duhaReminder == nil)
@@ -31,39 +30,6 @@ struct SettingsSoundsTests {
             #expect(disabled.notificationSounds[prayer] == .off, "\(prayer)")
             #expect(disabled.preAdhanMinutes[prayer] == 0, "\(prayer)")
         }
-    }
-
-    @Test
-    func aReminderTimeOfZeroIsTheReminderTurnedOff() {
-        var settings = Settings()
-        settings.disablePrayerSounds()
-        settings.reminderSounds[.dhuhr] = .beep
-
-        #expect(!settings.hasReminders)
-
-        settings.preAdhanMinutes[.dhuhr] = 10
-
-        #expect(settings.hasReminders)
-    }
-
-    /// A device on an earlier version can still sync a reminder sound of Off, which keeps that reminder off.
-    @Test
-    func aSyncedReminderSoundOfOffStillTurnsTheReminderOff() {
-        var settings = Settings()
-        settings.disablePrayerSounds()
-        settings.preAdhanMinutes[.asr] = 15
-        settings.reminderSounds[.asr] = .off
-
-        #expect(!settings.hasReminders)
-    }
-
-    @Test
-    func duhaCountsAsAReminder() {
-        var settings = Settings()
-        settings.disablePrayerSounds()
-        settings.duhaReminder = .minutes(30)
-
-        #expect(settings.hasReminders)
     }
 
     @Test
@@ -342,83 +308,36 @@ struct SettingsSoundsTests {
 
 extension SettingsSoundsTests {
     @Test
-    func aReminderSoundOfOffBecomesAReminderTimeOfZero() {
+    func aReminderTimeOfZeroIsTheReminderTurnedOff() {
         var settings = Settings()
-        settings.reminderSounds[.dhuhr] = .off
-        settings.preAdhanMinutes[.dhuhr] = 20
-        settings.reminderSounds[.asr] = .beep
+        settings.disablePrayerSounds()
+        settings.reminderSounds[.dhuhr] = .beep
+
+        #expect(settings.isPrayerSoundsDisabled)
+
+        settings.preAdhanMinutes[.dhuhr] = 10
+
+        #expect(!settings.isPrayerSoundsDisabled)
+    }
+
+    /// A device on an earlier version can still sync a reminder sound of Off, which keeps that reminder off.
+    @Test
+    func aSyncedReminderSoundOfOffStillTurnsTheReminderOff() {
+        var settings = Settings()
+        settings.disablePrayerSounds()
         settings.preAdhanMinutes[.asr] = 15
+        settings.reminderSounds[.asr] = .off
 
-        settings.moveReminderOffToReminderTimes()
-
-        #expect(settings.preAdhanMinutes[.dhuhr] == 0)
-        #expect(settings.reminderSounds[.dhuhr] == Settings().reminderSounds[.dhuhr])
-        #expect(settings.preAdhanMinutes[.asr] == 15)
-        #expect(settings.reminderSounds[.asr] == .beep)
-    }
-
-    /// Fajr's second reminder played Fajr's reminder sound, so it was off with it.
-    @Test
-    func fajrsSecondReminderTurnsOffWithFajrsSound() {
-        var settings = Settings()
-        settings.reminderSounds[.fajr] = .off
-        settings.preAdhanMinutes[.fajr] = 30
-        settings.preAdhanMinutes.imsak = 10
-
-        settings.moveReminderOffToReminderTimes()
-
-        #expect(settings.preAdhanMinutes[.fajr] == 0)
-        #expect(settings.preAdhanMinutes.imsak == 0)
-        #expect(settings.reminderSounds[.fajr] == .default)
+        #expect(settings.isPrayerSoundsDisabled)
     }
 
     @Test
-    func duhaTakesSunrisesReminderSound() {
+    func duhaCountsAsAReminder() {
         var settings = Settings()
-        settings.reminderSounds[.sunrise] = .beep
+        settings.disablePrayerSounds()
         settings.duhaReminder = .minutes(30)
 
-        settings.moveReminderOffToReminderTimes()
-
-        #expect(settings.duhaSound == .beep)
-        #expect(settings.duhaReminder == .minutes(30))
-        #expect(settings.reminderSounds[.sunrise] == .beep)
-    }
-
-    /// Duha never arrived while Sunrise's reminder sound was Off, so it stays off.
-    @Test
-    func duhaTurnsOffWhenSunrisesSoundWasOff() {
-        var settings = Settings()
-        settings.reminderSounds[.sunrise] = .off
-        settings.duhaReminder = .minutes(30)
-
-        settings.moveReminderOffToReminderTimes()
-
-        #expect(settings.duhaReminder == nil)
-        #expect(settings.duhaSound == Settings().duhaSound)
-        #expect(settings.reminderSounds[.sunrise] == .fajrLong)
-    }
-
-    /// Sunrise's default wakes for the end of Fajr, which isn't a sound for Duha.
-    @Test
-    func duhaKeepsItsOwnDefaultOverSunrisesDefault() {
-        var settings = Settings()
-        settings.duhaReminder = .minutes(30)
-
-        settings.moveReminderOffToReminderTimes()
-
-        #expect(settings.duhaSound == .default)
-    }
-
-    @Test(arguments: [Settings(), .everyFieldChanged])
-    func movingTwiceChangesNothingMore(settings: Settings) {
-        var once = settings
-        once.moveReminderOffToReminderTimes()
-        var twice = once
-        twice.moveReminderOffToReminderTimes()
-
-        #expect(twice == once)
-        #expect(!Prayer.allCases.contains { once.reminderSounds[$0] == .off })
+        #expect(!settings.isPrayerSoundsDisabled)
     }
 
     @Test
@@ -427,4 +346,3 @@ extension SettingsSoundsTests {
         #expect(Settings().reminderSounds[.sunrise] == .fajrLong)
     }
 }
-

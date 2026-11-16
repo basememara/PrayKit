@@ -111,7 +111,7 @@ extension SettingsWireTests {
     func onlyThisCopyCanSupplyTheChangedSettingsAnOlderVersionNeverSynced() throws {
         let record = try Self.legacyRecord(of: .everyFieldChanged)
 
-        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute, .polarResolution])
+        #expect(Set(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: record)) == [.adhanDuaa, .soundsBeforeMute, .polarResolution, .duhaSound])
         #expect(SettingsDocument().keysMissing(from: record).isEmpty)
         #expect(SettingsDocument(settings: .everyFieldChanged).keysMissing(from: Self.revised.wireFields).isEmpty)
     }

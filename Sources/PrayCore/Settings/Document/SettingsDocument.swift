@@ -41,6 +41,21 @@ public extension SettingsDocument {
         }
     }
 
+    /// Merges the iCloud record, which also wins where both copies hold the same revision with different values.
+    ///
+    /// Such a tie means a device couldn't read the record's value and kept its own under the record's revision,
+    /// as an older version does with a value from a newer one, so the record holds the choice.
+    func merging(record: SettingsDocument) -> SettingsDocument {
+        Settings.fields.reduce(into: self) { result, field in
+            let theirs = record.revision(of: field.key)
+            let isRevisedTie = theirs == revision(of: field.key) && theirs != .legacy && !field.isEqual(settings, record.settings)
+            guard isRevisedTie || record.wins(field, over: self) else { return }
+
+            field.copy(from: record.settings, into: &result.settings)
+            result.revisions[field.key] = theirs == .legacy ? nil : theirs
+        }
+    }
+
     /// Applies a local edit, stamping only the settings whose values changed.
     func editing(at date: Date, _ edit: (inout Settings) -> Void) -> SettingsDocument {
         var edited = settings

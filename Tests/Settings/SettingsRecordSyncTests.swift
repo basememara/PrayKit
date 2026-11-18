@@ -44,6 +44,26 @@ struct SettingsRecordSyncTests {
         #expect(mac.keysToSend(over: record).isEmpty)
         #expect(phoneDevice.document.settings.theme == .aqua)
     }
+
+    /// The Pray Watch Mac on 2026-11-18: back after weeks away, it held another reminder sound than the record under
+    /// the same revision, won the tie and saved its value, and the phone and watch each sent it back again. A tied
+    /// device now takes the record's value and sends nothing, for any value either side holds.
+    @Test(arguments: [NotificationSound.chime, .tone, .xylophone, .alert])
+    func aDeviceTiedWithTheRecordTakesItsValueAndSendsNothing(macSound: NotificationSound) {
+        let phone = SettingsDocument().editing(at: start) { $0.reminderSounds[.fajr] = .beep }
+        let record = Record.firstSave(of: phone, at: start + 1)
+
+        var settings = phone.settings
+        settings.reminderSounds[.fajr] = macSound
+        var mac = Device(document: SettingsDocument(settings: settings, revisions: phone.revisions), lastRecord: record)
+
+        #expect(mac.keysToSend(over: record).isEmpty)
+
+        mac.receive(record)
+        #expect(mac.document.settings.reminderSounds[.fajr] == .beep)
+        #expect(mac.document.revision(of: .reminderSounds) == phone.revision(of: .reminderSounds))
+        #expect(mac.keysToSend(over: record).isEmpty)
+    }
 }
 
 // MARK: - Helpers
@@ -81,7 +101,7 @@ private struct Device {
             previous: lastRecord?.fields
         )
 
-        document = document.merging(remote)
+        document = document.merging(record: remote)
         lastRecord = record
     }
 

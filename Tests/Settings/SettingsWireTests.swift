@@ -306,19 +306,30 @@ extension SettingsWireTests {
         #expect(local.keysNewer(than: server) == [.snoozeMinutes])
     }
 
-    /// Two devices that edit a setting in the same millisecond tie: the copy whose value wins the merge uploads
-    /// it, so iCloud carries the winner and every device converges.
+    /// Two copies holding different values under the same revision upload neither; the tied copy takes the
+    /// record's value instead, so every device converges on what iCloud holds.
     @Test
-    func anEqualRevisionUploadsFromTheCopyWhoseValueWins() {
+    func anEqualRevisionIsNeverUploadedAndTheRecordsValueIsTaken() {
         let date = Date(timeIntervalSince1970: 1_900_000_000)
         let ten = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 10 }
         let twenty = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 20 }
-        let (winning, losing) = ten.merging(twenty).settings.snoozeMinutes == 20 ? (twenty, ten) : (ten, twenty)
 
         #expect(ten.revision(of: .snoozeMinutes) == twenty.revision(of: .snoozeMinutes))
-        #expect(winning.keysNewer(than: losing) == [.snoozeMinutes])
-        #expect(losing.keysNewer(than: winning).isEmpty)
-        #expect(losing.merging(winning).keysNewer(than: winning).isEmpty)
+        #expect(ten.keysNewer(than: twenty).isEmpty)
+        #expect(twenty.keysNewer(than: ten).isEmpty)
+        #expect(ten.merging(record: twenty).settings.snoozeMinutes == 20)
+        #expect(twenty.merging(record: ten).settings.snoozeMinutes == 10)
+        #expect(ten.merging(record: twenty).revision(of: .snoozeMinutes) == twenty.revision(of: .snoozeMinutes))
+    }
+
+    /// The record wins a tie only between revised copies: an unrevised setting keeps the merge's own order.
+    @Test
+    func anUnrevisedTieKeepsTheMergesOrder() {
+        var other = Settings()
+        other.snoozeMinutes = 45
+        let record = SettingsDocument(settings: other)
+
+        #expect(SettingsDocument().merging(record: record) == SettingsDocument().merging(record))
     }
 
     /// An offline edit older than the record's last save still uploads, which needs the saved copy compared

@@ -59,6 +59,11 @@ struct SettingsRecordSyncTests {
 
         #expect(mac.keysToSend(over: record).isEmpty)
 
+        var waiting = mac
+        waiting.settleTies(with: record)
+        #expect(waiting.document.settings.reminderSounds[.fajr] == .beep)
+        #expect(waiting.keysToSend(over: record).isEmpty)
+
         mac.receive(record)
         #expect(mac.document.settings.reminderSounds[.fajr] == .beep)
         #expect(mac.document.revision(of: .reminderSounds) == phone.revision(of: .reminderSounds))
@@ -103,6 +108,12 @@ private struct Device {
 
         document = document.merging(record: remote)
         lastRecord = record
+    }
+
+    /// What every reconcile does with the last record seen, without a new one arriving.
+    mutating func settleTies(with record: Record) {
+        let server = SettingsDocument(wireFields: record.fields, base: document.settings, modifiedAt: record.modifiedAt, previous: record.fields)
+        document = document.adoptingTies(from: server)
     }
 
     mutating func saw(_ record: Record) {

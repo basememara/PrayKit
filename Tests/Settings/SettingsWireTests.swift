@@ -322,6 +322,40 @@ extension SettingsWireTests {
         #expect(ten.merging(record: twenty).revision(of: .snoozeMinutes) == twenty.revision(of: .snoozeMinutes))
     }
 
+    /// Only a tie is taken: a later revision on either side, and an unrevised setting, are left as they are.
+    @Test
+    func adoptingTiesTakesOnlyARevisedTie() {
+        let date = Date(timeIntervalSince1970: 1_900_000_000)
+        let record = SettingsDocument().editing(at: date) {
+            $0.snoozeMinutes = 20
+            $0.preAdhanMinutes[.fajr] = 25
+        }
+
+        var tied = record.settings
+        tied.snoozeMinutes = 10
+        tied.isPlayOnTapEnabled.toggle()
+        let local = SettingsDocument(settings: tied, revisions: record.revisions)
+            .editing(at: date + 60) { $0.preAdhanMinutes[.fajr] = 5 }
+
+        let adopted = local.adoptingTies(from: record)
+        #expect(adopted.settings.snoozeMinutes == 20)
+        #expect(adopted.settings.preAdhanMinutes[.fajr] == 5)
+        #expect(adopted.settings.isPlayOnTapEnabled == local.settings.isPlayOnTapEnabled)
+        #expect(adopted.revisions == local.revisions)
+    }
+
+    /// A value this version can't read keeps the device's own under the copy's revision, which is no tie to settle.
+    @Test
+    func aValueThisVersionCantReadIsNeverAdopted() {
+        let date = Date(timeIntervalSince1970: 1_900_000_000)
+        let local = SettingsDocument().editing(at: date) { $0.snoozeMinutes = 10 }
+        var fields = local.wireFields
+        fields[SettingKey.snoozeMinutes.rawValue] = .string("from a newer version")
+
+        let copy = SettingsDocument(wireFields: fields, base: local.settings, modifiedAt: date, previous: fields)
+        #expect(local.adoptingTies(from: copy) == local)
+    }
+
     /// The record wins a tie only between revised copies: an unrevised setting keeps the merge's own order.
     @Test
     func anUnrevisedTieKeepsTheMergesOrder() {

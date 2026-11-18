@@ -42,17 +42,20 @@ public extension SettingsDocument {
     }
 
     /// Merges the iCloud record, which also wins where both copies hold the same revision with different values.
+    func merging(record: SettingsDocument) -> SettingsDocument {
+        merging(record).adoptingTies(from: record)
+    }
+
+    /// Takes the record's value of every setting both copies revised at the same moment but hold differently.
     ///
     /// Such a tie means a device couldn't read the record's value and kept its own under the record's revision,
-    /// as an older version does with a value from a newer one, so the record holds the choice.
-    func merging(record: SettingsDocument) -> SettingsDocument {
+    /// as an older version does with a value from a newer one, so the record holds the choice. An unrevised
+    /// setting is left alone.
+    func adoptingTies(from record: SettingsDocument) -> SettingsDocument {
         Settings.fields.reduce(into: self) { result, field in
             let theirs = record.revision(of: field.key)
-            let isRevisedTie = theirs == revision(of: field.key) && theirs != .legacy && !field.isEqual(settings, record.settings)
-            guard isRevisedTie || record.wins(field, over: self) else { return }
-
+            guard theirs != .legacy, theirs == revision(of: field.key), !field.isEqual(settings, record.settings) else { return }
             field.copy(from: record.settings, into: &result.settings)
-            result.revisions[field.key] = theirs == .legacy ? nil : theirs
         }
     }
 

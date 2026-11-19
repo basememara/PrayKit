@@ -1,7 +1,7 @@
 # PrayKit
 
-[![Platform](https://img.shields.io/badge/platform-macos%20%7C%20ios%20%7C%20watchos%20%7C%20ipados-lightgrey)](https://github.com/ZamzamInc/PrayKit)
-[![Swift](https://img.shields.io/badge/Swift-5-orange.svg)](https://swift.org)
+[![Platform](https://img.shields.io/badge/platform-macos%20%7C%20ios%20%7C%20watchos%20%7C%20ipados-lightgrey)](https://github.com/basememara/PrayKit)
+[![Swift](https://img.shields.io/badge/Swift-6-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-27-blue.svg)](https://developer.apple.com/xcode)
 [![SPM](https://img.shields.io/badge/SPM-Compatible-blue)](https://swift.org/package-manager)
 [![MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
@@ -16,7 +16,7 @@ Agent-driven maintenance (build and test loop, conventions, consumer contract) i
 
 ### Swift Package Manager
 
-`.package(url: "git@github.com:ZamzamInc/PrayKit.git", .upToNextMajor(from: "1.0.0"))`
+`.package(url: "https://github.com/basememara/PrayKit.git", .upToNextMajor(from: "3.0.0"))`
 
 ## Usage
 
@@ -82,5 +82,5 @@ Tests live flat in `Tests/` and run with `swift test`. In Xcode, the shared `Pra
 
 ## License
 
-`PrayKit` is available under the MIT license. See the [LICENSE](https://github.com/ZamzamInc/ZamzamKit/blob/master/LICENSE) file for more info.
+`PrayKit` is available under the MIT license. See the [LICENSE](https://github.com/basememara/ZamzamKit/blob/main/LICENSE) file for more info.
 
